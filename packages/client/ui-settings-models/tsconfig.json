@@ -12,6 +12,12 @@
       "path": "../../../vendor/cordis"
     },
     {
+      "path": "../../../vendor/schemastery"
+    },
+    {
+      "path": "../../host/webserver"
+    },
+    {
       "path": "../ui-slots"
     },
     {

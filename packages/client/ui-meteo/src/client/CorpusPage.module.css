@@ -1,0 +1,266 @@
+/**
+ * Corpus page layout. Everything is expressed through `--dsw-*` tokens so the
+ * panel follows the active theme, and every rule is scoped to this module.
+ */
+
+.page {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  padding: 20px 24px 32px;
+  overflow-y: auto;
+  height: 100%;
+  color: var(--dsw-alias-label-primary);
+}
+
+.header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.title {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 600;
+}
+
+.description {
+  margin: 4px 0 0;
+  font-size: 13px;
+  color: var(--dsw-alias-label-secondary);
+}
+
+.section {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.sectionTitle {
+  margin: 0;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--dsw-alias-label-secondary);
+}
+
+.list {
+  display: flex;
+  flex-direction: column;
+  border: 0.5px solid var(--dsw-alias-border-l1);
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 12px;
+}
+
+.row + .row {
+  border-top: 0.5px solid var(--dsw-alias-border-l1);
+}
+
+.rowMain {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.rowTitle {
+  font-size: 13px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.rowMeta {
+  font-size: 12px;
+  color: var(--dsw-alias-label-tertiary);
+}
+
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.label {
+  font-size: 12px;
+  color: var(--dsw-alias-label-secondary);
+}
+
+.fileInput {
+  font-size: 13px;
+}
+
+.hint {
+  font-size: 12px;
+  color: var(--dsw-alias-label-tertiary);
+}
+
+.staged {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 8px 10px;
+  border: 0.5px solid var(--dsw-alias-border-l1);
+  border-radius: 6px;
+}
+
+.stagedRow {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.stagedName {
+  flex: 1;
+  min-width: 0;
+  font-size: 13px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.chunkList {
+  flex-basis: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 8px 0 0;
+}
+
+.chunkRow {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.chunkHead {
+  font-size: 12px;
+  color: var(--dsw-alias-label-tertiary);
+}
+
+.chunkText {
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.6;
+  color: var(--dsw-alias-label-secondary);
+  white-space: pre-wrap;
+  word-break: break-word;
+  max-height: 120px;
+  overflow-y: auto;
+}
+
+.actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.searchRow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.searchRow > :first-child {
+  flex: 1;
+}
+
+.error {
+  margin: 0;
+  font-size: 13px;
+  color: var(--dsw-alias-label-error);
+}
+
+.notice {
+  margin: 0;
+  font-size: 12px;
+  color: var(--dsw-alias-label-secondary);
+}
+
+.empty {
+  padding: 12px;
+  font-size: 13px;
+  color: var(--dsw-alias-label-tertiary);
+}
+
+.results {
+  display: flex;
+  flex-direction: column;
+  border: 0.5px solid var(--dsw-alias-border-l1);
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.hit {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 10px 12px;
+}
+
+.hit + .hit {
+  border-top: 0.5px solid var(--dsw-alias-border-l1);
+}
+
+.hitHead {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.hitTitle {
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.hitTrail {
+  font-size: 12px;
+  color: var(--dsw-alias-label-tertiary);
+}
+
+.hitExcerpt {
+  margin: 0;
+  font-size: 13px;
+  color: var(--dsw-alias-label-secondary);
+  white-space: pre-wrap;
+}
+
+.evidence {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.evidenceText {
+  margin: 0;
+  padding: 10px 12px;
+  font: inherit;
+  font-size: 13px;
+  line-height: 1.7;
+  white-space: pre-wrap;
+  word-break: break-word;
+  background: var(--dsw-alias-bg-base);
+  border: 0.5px solid var(--dsw-alias-border-l1);
+  border-radius: 6px;
+}
+
+.evidenceRange {
+  font-size: 12px;
+  color: var(--dsw-alias-label-tertiary);
+}

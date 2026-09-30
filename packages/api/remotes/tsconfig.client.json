@@ -75,6 +75,9 @@
       "path": "../settings-controller"
     },
     {
+      "path": "../meteo-controller"
+    },
+    {
       "path": "../workspace-controller/tsconfig.client.json"
     },
     {

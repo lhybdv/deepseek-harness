@@ -114,6 +114,7 @@ flowchart TD
   end
   subgraph group_api["packages/api"]
     pkg_api_gateway["api-gateway"]
+    pkg_api_meteo_controller["api-meteo-controller"]
     pkg_api_remotes["api-remotes"]
     pkg_api_session_controller["api-session-controller"]
     pkg_api_settings_controller["api-settings-controller"]
@@ -132,6 +133,7 @@ flowchart TD
     pkg_acp_app["acp-app"]
     pkg_base["base"]
     pkg_headless["headless"]
+    pkg_meteo_app["meteo-app"]
     pkg_sdk_app["sdk-app"]
     pkg_sdk_minimal["sdk-minimal"]
     pkg_web_app["web-app"]
@@ -274,6 +276,12 @@ flowchart TD
   end
   subgraph group_mcp["packages/mcp"]
     pkg_mcp_client["mcp-client"]
+  end
+  subgraph group_meteo["packages/meteo"]
+    pkg_meteo_corpus["meteo-corpus"]
+    pkg_meteo_data["meteo-data"]
+    pkg_tool_corpus["tool-corpus"]
+    pkg_tool_meteo["tool-meteo"]
   end
   subgraph group_preset["packages/preset"]
     pkg_agent_presets["agent-presets"]
@@ -601,6 +609,9 @@ flowchart TD
   pkg_lsp_stdio --> pkg_lsp
   pkg_lsp_stdio --> pkg_subprocess
   pkg_lsp_stdio --> pkg_timeout
+  pkg_meteo_data --> pkg_agent
+  pkg_meteo_data --> pkg_session
+  pkg_meteo_data --> pkg_session_projection
   pkg_sandbox_policy --> pkg_agent
   pkg_sandbox_policy --> pkg_invariants
   pkg_sandbox_policy --> pkg_sandbox
@@ -654,6 +665,10 @@ flowchart TD
   pkg_fs_sandbox --> pkg_fs_local
   pkg_fs_sandbox --> pkg_sandbox
   pkg_fs_sandbox --> pkg_sandbox_policy
+  pkg_api_meteo_controller --> pkg_agent
+  pkg_api_meteo_controller --> pkg_meteo_corpus
+  pkg_api_meteo_controller --> pkg_meteo_data
+  pkg_api_meteo_controller --> pkg_typert_protocol
   pkg_headless --> pkg_agent
   pkg_headless --> pkg_agent_default_model
   pkg_headless --> pkg_llm
@@ -833,6 +848,13 @@ flowchart TD
   pkg_mcp_client --> pkg_subprocess
   pkg_mcp_client --> pkg_timeout
   pkg_mcp_client --> pkg_tools
+  pkg_tool_corpus --> pkg_meteo_corpus
+  pkg_tool_corpus --> pkg_system_prompt
+  pkg_tool_corpus --> pkg_tools
+  pkg_tool_meteo --> pkg_meteo_corpus
+  pkg_tool_meteo --> pkg_meteo_data
+  pkg_tool_meteo --> pkg_system_prompt
+  pkg_tool_meteo --> pkg_tools
   pkg_agent_presets --> pkg_agent
   pkg_agent_presets --> pkg_atomic_write
   pkg_agent_presets --> pkg_home_paths
@@ -1210,6 +1232,7 @@ flowchart TD
 | [`cmdline`](../packages/boot/cmdline) | `boot` | — |
 | [`acp-app`](../packages/bundle/acp-app) | `bundle` | — |
 | [`base`](../packages/bundle/base) | `bundle` | — |
+| [`meteo-app`](../packages/bundle/meteo-app) | `bundle` | — |
 | [`sdk-app`](../packages/bundle/sdk-app) | `bundle` | — |
 | [`sdk-minimal`](../packages/bundle/sdk-minimal) | `bundle` | — |
 | [`client-connection`](../packages/client/connection) | `client` | — |
@@ -1273,6 +1296,7 @@ flowchart TD
 | [`host-directory-picker-native`](../packages/host/directory-picker-native) | `host` | — |
 | [`host-open-in-app`](../packages/host/open-in-app) | `host` | — |
 | [`host-webserver`](../packages/host/webserver) | `host` | — |
+| [`meteo-corpus`](../packages/meteo/meteo-corpus) | `meteo` | — |
 | [`invariants`](../packages/runtime-diagnostics/invariants) | `runtime-diagnostics` | — |
 | [`sandbox-windows-acl`](../packages/sandbox/sandbox-windows-acl) | `sandbox` | — |
 | [`session-format`](../packages/session/session-format) | `session` | — |
@@ -1360,6 +1384,7 @@ flowchart TD
 | [`user-questions`](../packages/interaction/user-questions) | `interaction` | [`agent`](../packages/core/agent), [`llm`](../packages/llm/llm), [`scope`](../packages/core/scope) |
 | [`jobs`](../packages/jobs/jobs) | `jobs` | [`agent`](../packages/core/agent), [`brand`](../packages/util/brand), [`invariants`](../packages/runtime-diagnostics/invariants), [`session`](../packages/core/session) |
 | [`lsp-stdio`](../packages/lsp/lsp-stdio) | `lsp` | [`brand`](../packages/util/brand), [`fs`](../packages/fs/fs), [`llm`](../packages/llm/llm), [`lsp`](../packages/lsp/lsp), [`subprocess`](../packages/subprocess/subprocess), [`timeout`](../packages/util/timeout) |
+| [`meteo-data`](../packages/meteo/meteo-data) | `meteo` | [`agent`](../packages/core/agent), [`session`](../packages/core/session), [`session-projection`](../packages/session/session-projection) |
 | [`sandbox-policy`](../packages/sandbox/sandbox-policy) | `sandbox` | [`agent`](../packages/core/agent), [`invariants`](../packages/runtime-diagnostics/invariants), [`sandbox`](../packages/sandbox/sandbox), [`session`](../packages/core/session), [`session-projection`](../packages/session/session-projection), [`system-prompt`](../packages/core/system-prompt) |
 | [`session-telemetry`](../packages/session/session-telemetry) | `session` | [`agent`](../packages/core/agent), [`session`](../packages/core/session) |
 | [`session-title`](../packages/session/session-title) | `session` | [`agent`](../packages/core/agent), [`brand`](../packages/util/brand), [`invariants`](../packages/runtime-diagnostics/invariants), [`llm`](../packages/llm/llm), [`session`](../packages/core/session), [`session-projection`](../packages/session/session-projection) |
@@ -1372,6 +1397,7 @@ flowchart TD
 | [`command-goal`](../packages/goal/command-goal) | `goal` | [`commands`](../packages/interaction/commands), [`goal`](../packages/goal/goal), [`llm`](../packages/llm/llm) |
 | [`goal-round-driver`](../packages/goal/goal-round-driver) | `goal` | [`agent`](../packages/core/agent), [`goal`](../packages/goal/goal), [`invariants`](../packages/runtime-diagnostics/invariants), [`llm`](../packages/llm/llm), [`session`](../packages/core/session) |
 | [`fs-sandbox`](../packages/fs/fs-sandbox) | `fs` | [`fs`](../packages/fs/fs), [`fs-local`](../packages/fs/fs-local), [`sandbox`](../packages/sandbox/sandbox), [`sandbox-policy`](../packages/sandbox/sandbox-policy) |
+| [`api-meteo-controller`](../packages/api/meteo-controller) | `api` | [`agent`](../packages/core/agent), [`meteo-corpus`](../packages/meteo/meteo-corpus), [`meteo-data`](../packages/meteo/meteo-data), [`typert-protocol`](../packages/typert/protocol) |
 | [`headless`](../packages/bundle/headless) | `bundle` | [`agent`](../packages/core/agent), [`agent-default-model`](../packages/core/agent-default-model), [`llm`](../packages/llm/llm), [`session`](../packages/core/session) |
 | [`compaction`](../packages/compaction/compaction) | `compaction` | [`brand`](../packages/util/brand), [`commands`](../packages/interaction/commands), [`invariants`](../packages/runtime-diagnostics/invariants), [`llm`](../packages/llm/llm), [`session`](../packages/core/session) |
 | [`command-feedback`](../packages/feedback/command-feedback) | `feedback` | [`anonymous-user-id`](../packages/identity/anonymous-user-id), [`commands`](../packages/interaction/commands), [`session`](../packages/core/session), [`typert-protocol`](../packages/typert/protocol) |
@@ -1406,6 +1432,8 @@ flowchart TD
 | [`tool-jobs`](../packages/jobs/tool-jobs) | `jobs` | [`agent`](../packages/core/agent), [`jobs`](../packages/jobs/jobs), [`llm`](../packages/llm/llm), [`output-retention`](../packages/util/output-retention), [`system-prompt`](../packages/core/system-prompt), [`tools`](../packages/core/tools) |
 | [`tool-lsp`](../packages/lsp/tool-lsp) | `lsp` | [`llm`](../packages/llm/llm), [`lsp`](../packages/lsp/lsp), [`system-prompt`](../packages/core/system-prompt), [`timeout`](../packages/util/timeout), [`tools`](../packages/core/tools) |
 | [`mcp-client`](../packages/mcp/mcp-client) | `mcp` | [`attachment`](../packages/attachment/attachment), [`llm`](../packages/llm/llm), [`scope`](../packages/core/scope), [`subprocess`](../packages/subprocess/subprocess), [`timeout`](../packages/util/timeout), [`tools`](../packages/core/tools) |
+| [`tool-corpus`](../packages/meteo/tool-corpus) | `meteo` | [`meteo-corpus`](../packages/meteo/meteo-corpus), [`system-prompt`](../packages/core/system-prompt), [`tools`](../packages/core/tools) |
+| [`tool-meteo`](../packages/meteo/tool-meteo) | `meteo` | [`meteo-corpus`](../packages/meteo/meteo-corpus), [`meteo-data`](../packages/meteo/meteo-data), [`system-prompt`](../packages/core/system-prompt), [`tools`](../packages/core/tools) |
 | [`agent-presets`](../packages/preset/agent-presets) | `preset` | [`agent`](../packages/core/agent), [`atomic-write`](../packages/util/atomic-write), [`home-paths`](../packages/util/home-paths), [`invariants`](../packages/runtime-diagnostics/invariants), [`scope`](../packages/core/scope), [`session`](../packages/core/session), [`session-projection`](../packages/session/session-projection), [`settings`](../packages/settings/settings), [`system-prompt`](../packages/core/system-prompt), [`tools`](../packages/core/tools), [`typert-protocol`](../packages/typert/protocol) |
 | [`schedule`](../packages/schedule/schedule) | `schedule` | [`agent`](../packages/core/agent), [`brand`](../packages/util/brand), [`invariants`](../packages/runtime-diagnostics/invariants), [`llm`](../packages/llm/llm), [`session`](../packages/core/session), [`session-persistence`](../packages/session/session-persistence), [`session-projection`](../packages/session/session-projection), [`tools`](../packages/core/tools) |
 | [`session-checkpoint-policy`](../packages/session/session-checkpoint-policy) | `session` | [`agent`](../packages/core/agent), [`llm`](../packages/llm/llm), [`session`](../packages/core/session), [`session-persistence`](../packages/session/session-persistence), [`tools`](../packages/core/tools) |

@@ -184,6 +184,9 @@ function mount(
       seatOwners.push({ key, owner })
     }
     if (key === 'conversation.hero.workspace') { pickerOwner = owner; return null }
+    // The headline is shell welcome copy behind a seat, so the recorded calls
+    // still observe the seat while the tests read the shell's own fallback.
+    if (key === 'conversation.hero.headline') return opts?.fallback ?? null
     if (key === 'conversation.session.header.lineage') {
       lineageOwners.push(owner as ConversationHeaderLineageOwnerProps)
       return opts?.fallback ?? null
@@ -325,13 +328,19 @@ function mount(
 }
 
 describe('Hero chrome', () => {
-  it('renders the English preview badge through the hero locale seat', () => {
+  it('routes the headline and the mark through their seats, and claims no badge off the shell build', () => {
     const renderSlot = vi.fn<HeroShellProps['renderSlot']>(() => null)
     const view = render(<HeroShell t={makeTranslate(en, commonEn)} renderSlot={renderSlot} />)
-    expect(view.getByText('Into the Unknown')).toBeTruthy()
-    expect(view.getByText('Preview')).toBeTruthy()
-    expect(renderSlot).toHaveBeenCalledOnce()
-    expect(renderSlot.mock.calls[0]?.[0]).toBe('conversation.hero.brand.mark')
+    // Both hero seats are rendered as seats: the headline's welcome copy is the
+    // shell's fallback, so a mocked renderSlot shows nothing of it.
+    expect(renderSlot.mock.calls.map(call => call[0])).toEqual([
+      'conversation.hero.brand.mark',
+      'conversation.hero.headline',
+    ])
+    expect(renderSlot.mock.calls[1]?.[2]?.fallback).toBeTruthy()
+    // The preview badge is the shell's claim about its own build, so a build
+    // that does not claim it shows none.
+    expect(view.queryByText('Preview')).toBeNull()
     const brandMarkOwner = renderSlot.mock.calls[0]?.[1]
     if (brandMarkOwner === undefined || !('size' in brandMarkOwner) || !('className' in brandMarkOwner)) {
       throw new Error('hero brand-mark owner must provide size and className')
@@ -339,6 +348,18 @@ describe('Hero chrome', () => {
     expect(brandMarkOwner.size).toBe(34)
     expect(brandMarkOwner.className).toBeTypeOf('string')
     expect(renderSlot.mock.calls[0]?.[2]?.fallback).toBeTruthy()
+  })
+
+  it('claims the preview badge for the shell build, through the hero locale seat', () => {
+    vi.stubEnv('DSH_CLIENT_BUILD_PROFILE', 'official')
+    try {
+      const view = render(
+        <HeroShell t={makeTranslate(en, commonEn)} renderSlot={vi.fn<HeroShellProps['renderSlot']>(() => null)} />,
+      )
+      expect(view.getByText('Preview')).toBeTruthy()
+    } finally {
+      vi.unstubAllEnvs()
+    }
   })
 })
 
@@ -476,7 +497,8 @@ describe('ConversationRoot resident composer', () => {
     expect(host).not.toBeNull()
     expect(header?.getAttribute('aria-hidden')).toBe('true')
     expect(b.view.getByText('探索未至之境')).toBeTruthy()
-    expect(b.view.getByText('预览版')).toBeTruthy()
+    // The badge is the shell build's own claim; this build makes none.
+    expect(b.view.queryByText('预览版')).toBeNull()
     expect(b.view.queryByTestId('view-chat')).toBeNull()
     // The same machine-backed textarea is live in the hero, and the
     // persistence mirror stays bound (ConversationSession mounts chrome-hidden
@@ -609,6 +631,16 @@ describe('ConversationRoot resident composer', () => {
     // The agent-preset chip sits in the same row, for the same reason: both
     // choices are only open before the first message.
     expect(b.slotCalls).toContain('conversation.hero.agentPreset')
+  })
+
+  it('routes the welcome footer through its seat on the blank Hero', () => {
+    const b = mount(sessionSnapshotOf({ blank: true }))
+    expect(b.slotCalls).toContain('conversation.hero.footer')
+  })
+
+  it('leaves the welcome footer unmounted once the conversation is showing', () => {
+    const b = mount(sessionSnapshotOf())
+    expect(b.slotCalls).not.toContain('conversation.hero.footer')
   })
 
   it('prompt failure renders the promptError strip (ordinary failure, no transaction UI)', () => {

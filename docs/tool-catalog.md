@@ -34,6 +34,8 @@ This table connects model-visible tool names to the plugin package and service s
 | `@deepseek-ai/dsh-tool-ralph` | `ralph` | `ctx.tools`, `ctx.workflowEngine`, `ctx.subagents`, `ctx.systemPrompt`, `a calling Agent (exec.agent parents every fresh round)` | `tool/call`, `tool/result`, `workflow and child session events during execution` | - | A fixed foreground workflow starts one fresh structured child per round; the model selects only the immutable objective and an optional round cap. |
 | `@deepseek-ai/dsh-tool-skill` | `skill` | `ctx.tools`, `ctx.agents`, `ctx.skills` | `tool/call`, `tool/result`, `user/message replacement catalogs via agent.inject()` | - | - |
 | `@deepseek-ai/dsh-tool-session-query` | `session_event_read`, `session_event_search`, `session_event_trace`, `session_search`, `session_trace` | `ctx.tools`, `ctx.systemPrompt`, `ctx.sessionQuery`, `a calling Agent for workspace authority` | `tool/call`, `tool/result` | - | The five read-only tools hide provider cursors and authorize every result from the immutable calling agent session. The package is opt-in; compositions that need enforced deadlines or bounded inline output also mount the generic timeout or spill policies. |
+| `@deepseek-ai/dsh-tool-corpus` | `corpus_ingest`, `corpus_read`, `corpus_search` | `ctx.tools`, `ctx.systemPrompt`, `ctx.corpus` | `tool/call`, `tool/result` | - | The three tools expose the corpus seam to the model. Ingest splits and indexes documents and reports each rejection separately; search is recall-oriented, so an empty result is a legitimate answer the tool reports as such rather than papering over; read returns one stored chunk verbatim with the offsets a citation needs. The search result carries its citation list in presentation metadata so a client renders sources without re-deriving them. |
+| `@deepseek-ai/dsh-tool-meteo` | `meteo_consult`, `meteo_set_focus`, `meteo_station_lookup` | `ctx.tools`, `ctx.systemPrompt`, `ctx.meteoData`, `ctx.corpus` | `tool/call`, `tool/result`, `meteo/focus` | - | One consultation runs a fixed pipeline — resolve the station, read observations and forecast, grade per-day suitability and one hazard level against the deployment thresholds, retrieve corpus chunks — and returns findings plus a step trace rather than an answer. A station the tool cannot resolve returns a clarification and runs no further step, so a wrong place can never produce a confident verdict. |
 | `@deepseek-ai/dsh-tool-subagent` | `list_subagent_models`, `subagent` | `ctx.tools`, `ctx.subagents`, `ctx.systemPrompt`, `ctx.llm for model discovery and selected-route validation` | `tool/call`, `tool/result`, `child session events through the chosen provider` | `subagent`, `subagent_fork` | The registered delegation name is the load-time `toolName` config (default `subagent`); the default schema above has model selection off, while the discovery schema is shown as the fixed companion available in an enabled Session. Web presets sample the Plugins preference for each new top-level Session and preserve that decision for its child Sessions; `subagent_fork` remains fixed-route. Each instance independently controls whether it reads model-selection settings and its background behavior through `modelSelectionSettings`, `backgroundMode`, and `enableRunInBackground`. |
 | `@deepseek-ai/dsh-tool-subagent-control` | `interrupt_agent`, `list_agents`, `send_message` | `ctx.tools`, `ctx.subagents`, `ctx.agents and ctx.sessionProjections (list_agents only)` | `tool/call`, `tool/result`, `child session events through ctx.subagents` | - | The globally named control tools over continuable background subagents: provider-bound `tool-subagent` instances register distinct delegation tools, while this package registers `send_message` and `interrupt_agent` once, plus `list_agents` from its separately loaded `/list-agents` plugin (whose catalog rows use the sessionProjections and live Agent registries). |
 | `@deepseek-ai/dsh-tool-jobs` | `job_kill`, `job_list`, `job_output` | `ctx.tools`, `ctx.jobs`, `ctx.systemPrompt` | `tool/call`, `tool/result`, `user/message via agent.inject() for background completion notices` | - | The kind-agnostic background-job controller: background bash commands, PTY sends, and subagents are read, listed, and killed through the same three tools. Loading the plugin attaches the controller that arms producers' `ctx.jobs.start()`. |
@@ -1575,6 +1577,208 @@ Read the authorized session lineage around one session, including complete visib
 Source: [`packages/session-query/tool-session-query/src/index.ts`](../packages/session-query/tool-session-query/src/index.ts)
 
 The five read-only tools hide provider cursors and authorize every result from the immutable calling agent session. The package is opt-in; compositions that need enforced deadlines or bounded inline output also mount the generic timeout or spill policies.
+
+<a id="deepseek-aidsh-tool-corpus"></a>
+
+## `@deepseek-ai/dsh-tool-corpus`
+
+### `corpus_ingest`
+
+Index documents into the deployment's retrieval corpus so corpus_search can answer from them. Provide 1-10 documents per call and 200000 characters at most across them. Each accepted document is split into citable chunks.
+
+```json
+{
+  "type": "object",
+  "properties": {
+    "documents": {
+      "type": "array",
+      "description": "Documents to index; 1-10 per call.",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "title": {
+            "type": "string",
+            "description": "Document title; the label retrieval results and citations show."
+          },
+          "text": {
+            "type": "string",
+            "description": "Complete document text as plain text or Markdown."
+          },
+          "source": {
+            "type": "string",
+            "description": "Where the text came from (a filename, an uploader note); shown with citations."
+          }
+        },
+        "required": [
+          "title",
+          "text"
+        ]
+      }
+    }
+  },
+  "required": [
+    "documents"
+  ]
+}
+```
+
+Source: [`packages/meteo/tool-corpus/src/index.ts`](../packages/meteo/tool-corpus/src/index.ts)
+
+### `corpus_read`
+
+Read one corpus chunk verbatim, by the docId and chunk ordinal a corpus_search hit reported. Use it when a retrieved excerpt is not enough; the chunk comes back whole with its character range.
+
+```json
+{
+  "type": "object",
+  "properties": {
+    "docId": {
+      "type": "string",
+      "description": "Document identity, exactly as a corpus_search hit or corpus_ingest result gave it."
+    },
+    "ordinal": {
+      "type": "integer",
+      "description": "Chunk position within that document, zero-based."
+    }
+  },
+  "required": [
+    "docId",
+    "ordinal"
+  ]
+}
+```
+
+Source: [`packages/meteo/tool-corpus/src/index.ts`](../packages/meteo/tool-corpus/src/index.ts)
+
+### `corpus_search`
+
+Search the deployment's ingested corpus for the chunks that answer a question. Pass the question as query plus terms you derive from it (disaster type, crop, activity, weather element); recall unions those with the question's own words. Returns at most limit chunks (default 8, 20 at the most), most relevant first, each with its document title, chunk ordinal, character range, and text.
+
+```json
+{
+  "type": "object",
+  "properties": {
+    "query": {
+      "type": "string",
+      "description": "The question, in the caller's own words."
+    },
+    "terms": {
+      "type": "array",
+      "description": "Domain terms derived from the question, including synonyms; recall unions them with the question.",
+      "items": {
+        "type": "string"
+      }
+    },
+    "limit": {
+      "type": "integer",
+      "description": "Chunks to return, 1-20. Defaults to 8."
+    }
+  },
+  "required": [
+    "query"
+  ]
+}
+```
+
+Source: [`packages/meteo/tool-corpus/src/index.ts`](../packages/meteo/tool-corpus/src/index.ts)
+
+The three tools expose the corpus seam to the model. Ingest splits and indexes documents and reports each rejection separately; search is recall-oriented, so an empty result is a legitimate answer the tool reports as such rather than papering over; read returns one stored chunk verbatim with the offsets a citation needs. The search result carries its citation list in presentation metadata so a client renders sources without re-deriving them.
+
+<a id="deepseek-aidsh-tool-meteo"></a>
+
+## `@deepseek-ai/dsh-tool-meteo`
+
+### `meteo_consult`
+
+Gather the published evidence that answers a farming or disaster question for one place. Runs six steps and returns their findings: the station resolve, its recent observations, its forecast horizon, per-day suitability verdicts for the crop windows in force, one disaster grade for the criteria in force, and the indexed corpus chunks that bear on the question. Pass every slot you understood; an omitted slot falls back to the session focus. It returns findings and a step trace, never an answer: you compose the answer from these.
+
+```json
+{
+  "type": "object",
+  "properties": {
+    "question": {
+      "type": "string",
+      "description": "The question, in the caller's own words; it is also the corpus query."
+    },
+    "station": {
+      "type": "string",
+      "description": "Station id, station name, or township the question is about. Defaults to the station the session focus holds."
+    },
+    "crop": {
+      "type": "string",
+      "description": "Crop the question is about, e.g. 冬小麦. Defaults to the crop the session focus holds."
+    },
+    "activity": {
+      "type": "string",
+      "description": "Farming activity the question is about, e.g. 播种. Narrows the suitability verdicts to that activity."
+    },
+    "period": {
+      "type": "string",
+      "description": "Period the question is about, in the caller's own words; carried through for the answer to name."
+    },
+    "disaster": {
+      "type": "string",
+      "description": "Disaster the question asks about, e.g. 倒伏. Selects the criteria the hazard grade is graded from."
+    },
+    "limit": {
+      "type": "integer",
+      "description": "Corpus chunks to retrieve, 1-20. Defaults to 6."
+    }
+  },
+  "required": [
+    "question"
+  ]
+}
+```
+
+Source: [`packages/meteo/tool-meteo/src/index.ts`](../packages/meteo/tool-meteo/src/index.ts)
+
+### `meteo_set_focus`
+
+Record the place and crop this session is about, so later turns answer about them without being told again. Naming only one slot keeps whatever the session already held for the other; naming neither releases the focus. The station must be an identifier this deployment publishes — call meteo_station_lookup first, and ask the farmer which station they mean before recording one.
+
+```json
+{
+  "type": "object",
+  "properties": {
+    "stationId": {
+      "type": "string",
+      "description": "Station identifier to anchor the session to, as returned by meteo_station_lookup. Omit to keep the station the focus already holds."
+    },
+    "crop": {
+      "type": "string",
+      "description": "Crop to anchor the session to, e.g. 冬小麦. Omit to keep the crop the focus already holds."
+    }
+  }
+}
+```
+
+Source: [`packages/meteo/tool-meteo/src/index.ts`](../packages/meteo/tool-meteo/src/index.ts)
+
+### `meteo_station_lookup`
+
+List the meteorological stations this deployment publishes, narrowed to one county or to a place word. Returns each station's identifier, name, county, township, and siting. Call it when a place could mean more than one station, then ask the farmer which one; pass the identifier you settle on as the station slot of meteo_consult.
+
+```json
+{
+  "type": "object",
+  "properties": {
+    "county": {
+      "type": "string",
+      "description": "County-level division to list, e.g. 新乡县. Omit to list the whole network."
+    },
+    "text": {
+      "type": "string",
+      "description": "Place word to match against station names and townships, e.g. 小冀."
+    }
+  }
+}
+```
+
+Source: [`packages/meteo/tool-meteo/src/index.ts`](../packages/meteo/tool-meteo/src/index.ts)
+
+One consultation runs a fixed pipeline — resolve the station, read observations and forecast, grade per-day suitability and one hazard level against the deployment thresholds, retrieve corpus chunks — and returns findings plus a step trace rather than an answer. A station the tool cannot resolve returns a clarification and runs no further step, so a wrong place can never produce a confident verdict.
 
 <a id="deepseek-aidsh-tool-subagent"></a>
 

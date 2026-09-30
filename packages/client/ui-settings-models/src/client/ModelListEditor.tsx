@@ -42,6 +42,18 @@ function numberOf(model: ModelDraft, key: string): number | undefined {
   return typeof value === 'number' ? value : undefined
 }
 
+/**
+ * A row's declared input modalities as the select's value, or `undefined` while
+ * the field is absent or empty — both mean "no answer here", so the catalog or
+ * the route's `defaultInput` still decides.
+ */
+function modalitiesOf(model: ModelDraft): string | undefined {
+  const value = model['input']
+  if (!Array.isArray(value)) return undefined
+  const modalities = value.filter((item): item is string => typeof item === 'string')
+  return modalities.length === 0 ? undefined : modalities.join(',')
+}
+
 /** What an interrogation needs, taken from the live form. */
 export interface ProbeTarget {
   /** Settings namespace whose adapter family answers. */
@@ -209,7 +221,7 @@ export function ModelListEditor(props: ModelListEditorProps): ReactNode {
     })
   }
 
-  const patch = (index: number, next: Record<string, string | number | undefined>): void => {
+  const patch = (index: number, next: Record<string, string | number | readonly string[] | undefined>): void => {
     onChange(models.map((model, at) => {
       if (at !== index) return model
       // Rebuilt rather than spread over: an emptied optional field has to leave
@@ -432,6 +444,22 @@ export function ModelListEditor(props: ModelListEditorProps): ReactNode {
                     disabled={disabled}
                     onChange={(event) => { editCapacity(index, 'maxTokens', event.target.value) }}
                   />
+                </label>
+                <label className={styles['modelField']}>
+                  <span className={styles['modelFieldLabel']}>{t('modelInput')}</span>
+                  <select
+                    className={`${styles['input']} ${styles['selectInput']}`}
+                    value={modalitiesOf(model) ?? ''}
+                    aria-label={`${t('modelInput')} ${index + 1}`}
+                    disabled={disabled}
+                    onChange={(event) => {
+                      patch(index, { input: event.target.value === '' ? undefined : event.target.value.split(',') })
+                    }}
+                  >
+                    <option value="">{t('modelInputInherit')}</option>
+                    <option value="text">{t('modelInputText')}</option>
+                    <option value="text,image">{t('modelInputTextImage')}</option>
+                  </select>
                 </label>
               </div>
             )

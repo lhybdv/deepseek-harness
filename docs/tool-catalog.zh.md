@@ -38,6 +38,8 @@
 | `@deepseek-ai/dsh-tool-ralph` | `ralph` | `ctx.tools`、`ctx.workflowEngine`、`ctx.subagents`、`ctx.systemPrompt`、`a calling Agent (exec.agent parents every fresh round)` | `tool/call`、`tool/result`、`workflow and child session events during execution` | - | 固定的前台工作流会在每个 Round 启动一个全新的结构化子级；模型只能选择不可变目标和可选的 Round 上限。 |
 | `@deepseek-ai/dsh-tool-skill` | `skill` | `ctx.tools`、`ctx.agents`、`ctx.skills` | `tool/call`、`tool/result`、`user/message replacement catalogs via agent.inject()` | - | - |
 | `@deepseek-ai/dsh-tool-session-query` | `session_event_read`、`session_event_search`、`session_event_trace`、`session_search`、`session_trace` | `ctx.tools`、`ctx.systemPrompt`、`ctx.sessionQuery`、`a calling Agent for workspace authority` | `tool/call`、`tool/result` | - | 这 5 个只读工具会隐藏提供方游标，并根据不可变的调用 agent 会话为每个结果授权。该包需要选择启用；需要强制截止时间或限制行内输出的组合还会挂载通用超时或 spill 策略。 |
+| `@deepseek-ai/dsh-tool-corpus` | `corpus_ingest`、`corpus_read`、`corpus_search` | `ctx.tools`、`ctx.systemPrompt`、`ctx.corpus` | `tool/call`、`tool/result` | - | 这 3 个工具把语料接缝暴露给模型。摄取会切分并索引文档，并分别报告每一条被拒的源；检索以召回为导向，因此空结果是工具如实报告的合法答案，而不是被粉饰过去；读取原样返回一个已存片段，并带上引用所需的偏移。检索结果把引用清单放在展示元数据里，客户端无需自行推导来源。 |
+| `@deepseek-ai/dsh-tool-meteo` | `meteo_consult`、`meteo_set_focus`、`meteo_station_lookup` | `ctx.tools`、`ctx.systemPrompt`、`ctx.meteoData`、`ctx.corpus` | `tool/call`、`tool/result`、`meteo/focus` | - | 一次咨询按固定管线执行——解析站点、读实况与预报、按部署阈值给出逐日适宜性与一个灾害等级、检索语料片段——返回的是发现加步骤轨迹，而不是答案。工具无法解析站点时返回澄清并停止后续步骤，因此错误的地点绝不会产出自信的结论。 |
 | `@deepseek-ai/dsh-tool-subagent` | `list_subagent_models`、`subagent` | `ctx.tools`、`ctx.subagents`、`ctx.systemPrompt`、`用于模型发现和所选路由校验的 ctx.llm` | `tool/call`、`tool/result`、`child session events through the chosen provider` | `subagent`、`subagent_fork` | 注册的委派工具名称取决于加载时 `toolName` 配置（默认为 `subagent`）；上述默认 schema 关闭模型选择，而发现 schema 则展示为已启用 Session 中可用的固定配套工具。Web preset 会在每个新顶层 Session 创建时读取插件页偏好，并为其子 Session 保留该决定；`subagent_fork` 始终使用固定路由。每个实例通过 `modelSelectionSettings`、`backgroundMode` 与 `enableRunInBackground` 独立控制是否读取模型选择设置及其后台行为。 |
 | `@deepseek-ai/dsh-tool-subagent-control` | `interrupt_agent`、`list_agents`、`send_message` | `ctx.tools`、`ctx.subagents`、`ctx.agents and ctx.sessionProjections (list_agents only)` | `tool/call`、`tool/result`、`child session events through ctx.subagents` | - | 这些是控制可继续后台 subagent 的全局命名工具：绑定提供方的 `tool-subagent` 实例注册不同的委派工具；本包注册一次 `send_message` 和 `interrupt_agent`，另由 `list_agents` 通过单独加载的 `/list-agents` 插件提供，其目录行使用 sessionProjections 和实时 Agent 注册表。 |
 | `@deepseek-ai/dsh-tool-jobs` | `job_kill`、`job_list`、`job_output` | `ctx.tools`、`ctx.jobs`、`ctx.systemPrompt` | `tool/call`、`tool/result`、`user/message via agent.inject() for background completion notices` | - | 与任务种类无关的后台任务控制器：后台 bash 命令、PTY 发送和 subagent 都通过相同的 3 个工具读取、列出和终止。加载该插件会挂接控制器，从而启用生产方的 `ctx.jobs.start()`。 |
@@ -1581,6 +1583,208 @@ lsp 工具将提供方选择和语言服务器子进程置于 ctx.lsp 之后，�
 来源：[`packages/session-query/tool-session-query/src/index.ts`](../packages/session-query/tool-session-query/src/index.ts)
 
 这 5 个只读工具会隐藏提供方游标，并根据不可变的调用 agent 会话为每个结果授权。该包需要选择启用；需要强制截止时间或限制行内输出的组合还会挂载通用超时或 spill 策略。
+
+<a id="deepseek-aidsh-tool-corpus"></a>
+
+## `@deepseek-ai/dsh-tool-corpus`
+
+### `corpus_ingest`
+
+把文档索引进部署的检索语料，供 corpus_search 据此作答。每次调用提供 1-10 个文档，合计不超过 200000 个字符。每个被接受的文档会被切分为可引用的片段。
+
+```json
+{
+  "type": "object",
+  "properties": {
+    "documents": {
+      "type": "array",
+      "description": "Documents to index; 1-10 per call.",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "title": {
+            "type": "string",
+            "description": "Document title; the label retrieval results and citations show."
+          },
+          "text": {
+            "type": "string",
+            "description": "Complete document text as plain text or Markdown."
+          },
+          "source": {
+            "type": "string",
+            "description": "Where the text came from (a filename, an uploader note); shown with citations."
+          }
+        },
+        "required": [
+          "title",
+          "text"
+        ]
+      }
+    }
+  },
+  "required": [
+    "documents"
+  ]
+}
+```
+
+来源：[`packages/meteo/tool-corpus/src/index.ts`](../packages/meteo/tool-corpus/src/index.ts)
+
+### `corpus_read`
+
+按 corpus_search 命中给出的 docId 与片段序号，原样读取一个语料片段。当检索到的节选不够用时使用它；该片段会连同其字符范围完整返回。
+
+```json
+{
+  "type": "object",
+  "properties": {
+    "docId": {
+      "type": "string",
+      "description": "Document identity, exactly as a corpus_search hit or corpus_ingest result gave it."
+    },
+    "ordinal": {
+      "type": "integer",
+      "description": "Chunk position within that document, zero-based."
+    }
+  },
+  "required": [
+    "docId",
+    "ordinal"
+  ]
+}
+```
+
+来源：[`packages/meteo/tool-corpus/src/index.ts`](../packages/meteo/tool-corpus/src/index.ts)
+
+### `corpus_search`
+
+在部署已摄取的语料中检索最能回答某个提问的片段。把提问原样作为 query 传入，并附上你从提问中推导出的 terms（灾种、作物、农事活动、气象要素）；召回会把它们与提问自身的用词取并集。至多返回 limit 个片段（默认 8，最多 20），最相关的排在前面，每个片段带文档标题、片段序号、字符范围与文本。
+
+```json
+{
+  "type": "object",
+  "properties": {
+    "query": {
+      "type": "string",
+      "description": "The question, in the caller's own words."
+    },
+    "terms": {
+      "type": "array",
+      "description": "Domain terms derived from the question, including synonyms; recall unions them with the question.",
+      "items": {
+        "type": "string"
+      }
+    },
+    "limit": {
+      "type": "integer",
+      "description": "Chunks to return, 1-20. Defaults to 8."
+    }
+  },
+  "required": [
+    "query"
+  ]
+}
+```
+
+来源：[`packages/meteo/tool-corpus/src/index.ts`](../packages/meteo/tool-corpus/src/index.ts)
+
+这 3 个工具把语料接缝暴露给模型。摄取会切分并索引文档，并分别报告每一条被拒的源；检索以召回为导向，因此空结果是工具如实报告的合法答案，而不是被粉饰过去；读取原样返回一个已存片段，并带上引用所需的偏移。检索结果把引用清单放在展示元数据里，客户端无需自行推导来源。
+
+<a id="deepseek-aidsh-tool-meteo"></a>
+
+## `@deepseek-ai/dsh-tool-meteo`
+
+### `meteo_consult`
+
+汇集回答某个地点的农事或灾害问题所需的已发布证据。它运行六个步骤并返回其发现：站点解析、该站近期实况、预报时段、当前生效作物窗口的逐日适宜性结论、当前生效判据下的一个灾害等级，以及与该提问相关的已索引语料片段。把你理解到的每个槽位都传进来；省略的槽位回落到会话焦点。它返回发现与步骤轨迹，从不返回答案：答案由你据此撰写。
+
+```json
+{
+  "type": "object",
+  "properties": {
+    "question": {
+      "type": "string",
+      "description": "The question, in the caller's own words; it is also the corpus query."
+    },
+    "station": {
+      "type": "string",
+      "description": "Station id, station name, or township the question is about. Defaults to the station the session focus holds."
+    },
+    "crop": {
+      "type": "string",
+      "description": "Crop the question is about, e.g. 冬小麦. Defaults to the crop the session focus holds."
+    },
+    "activity": {
+      "type": "string",
+      "description": "Farming activity the question is about, e.g. 播种. Narrows the suitability verdicts to that activity."
+    },
+    "period": {
+      "type": "string",
+      "description": "Period the question is about, in the caller's own words; carried through for the answer to name."
+    },
+    "disaster": {
+      "type": "string",
+      "description": "Disaster the question asks about, e.g. 倒伏. Selects the criteria the hazard grade is graded from."
+    },
+    "limit": {
+      "type": "integer",
+      "description": "Corpus chunks to retrieve, 1-20. Defaults to 6."
+    }
+  },
+  "required": [
+    "question"
+  ]
+}
+```
+
+来源：[`packages/meteo/tool-meteo/src/index.ts`](../packages/meteo/tool-meteo/src/index.ts)
+
+### `meteo_set_focus`
+
+记录本会话所讨论的地点与作物，使后续回合无需再被告知即可就它们作答。只给一个槽位时，另一个保持会话此前的取值；两个都不给则释放焦点。站点必须是本部署已发布的标识——先调用 meteo_station_lookup，并在记录之前问清农民指的是哪个站。
+
+```json
+{
+  "type": "object",
+  "properties": {
+    "stationId": {
+      "type": "string",
+      "description": "Station identifier to anchor the session to, as returned by meteo_station_lookup. Omit to keep the station the focus already holds."
+    },
+    "crop": {
+      "type": "string",
+      "description": "Crop to anchor the session to, e.g. 冬小麦. Omit to keep the crop the focus already holds."
+    }
+  }
+}
+```
+
+来源：[`packages/meteo/tool-meteo/src/index.ts`](../packages/meteo/tool-meteo/src/index.ts)
+
+### `meteo_station_lookup`
+
+列出本部署已发布的气象站点，可按一个县或一个地名缩减。返回每个站的标识、名称、县、乡镇与选址。当地名可能指多个站时调用它，然后问清农民是哪一个；把你确定的标识作为 meteo_consult 的 station 槽位传入。
+
+```json
+{
+  "type": "object",
+  "properties": {
+    "county": {
+      "type": "string",
+      "description": "County-level division to list, e.g. 新乡县. Omit to list the whole network."
+    },
+    "text": {
+      "type": "string",
+      "description": "Place word to match against station names and townships, e.g. 小冀."
+    }
+  }
+}
+```
+
+来源：[`packages/meteo/tool-meteo/src/index.ts`](../packages/meteo/tool-meteo/src/index.ts)
+
+一次咨询按固定管线执行——解析站点、读实况与预报、按部署阈值给出逐日适宜性与一个灾害等级、检索语料片段——返回的是发现加步骤轨迹，而不是答案。工具无法解析站点时返回澄清并停止后续步骤，因此错误的地点绝不会产出自信的结论。
 
 <a id="deepseek-aidsh-tool-subagent"></a>
 

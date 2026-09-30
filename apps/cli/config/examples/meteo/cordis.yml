@@ -1,0 +1,86 @@
+# Opt-in meteorology overlay over the shipped Web composition.
+#
+#   pnpm run build
+#   pnpm dsh web --patch ./apps/cli/config/examples/meteo/cordis.yml
+#
+# Run it from the repository root: `fixtureDir` below is resolved against the
+# process working directory, because the demonstration fixtures live in the
+# repository and are deliberately not published with their package. A real
+# deployment publishes its own bundle and points `fixtureDir` (or `baseUrl`)
+# there instead.
+#
+# `skills` below points the skill provider at this directory's `skills/`, so the
+# consultation guidance ships with the demonstration rather than with a package.
+
+- insert:
+    # ── the corpus seam and its owned index ────────────────────────────────
+    - id: meteo-corpus
+      name: '@deepseek-ai/dsh-meteo-corpus'
+      config:
+        path: !!js dshHomePath('meteo', 'corpus.v1.sqlite')
+        journalMode: wal
+        defaultLimit: 8
+        maxLimit: 50
+        maxMatchTokens: 64
+        maxChunkChars: 800
+        maxDocumentBytes: 4000000
+
+    # ── the meteorological data seam ───────────────────────────────────────
+    - id: meteo-data
+      name: '@deepseek-ai/dsh-meteo-data'
+      config:
+        source: fixture
+        fixtureDir: !!js process.cwd() + '/packages/meteo/meteo-data/fixtures'
+        timeoutMs: 15000
+
+    # ── the model-facing tools ─────────────────────────────────────────────
+    - id: tool-corpus
+      name: '@deepseek-ai/dsh-tool-corpus'
+
+    - id: tool-meteo
+      name: '@deepseek-ai/dsh-tool-meteo'
+
+    # ── the Remote surface the browser panels call ─────────────────────────
+    - id: meteo-controller
+      name: '@deepseek-ai/dsh-api-meteo-controller'
+
+    # ── the browser surfaces ───────────────────────────────────────────────
+    # A `dsh.client` package needs only its Host Loader row: the modules node
+    # half scans every live entry that declares `dsh.client` and ships those
+    # bundles in `window.__DSH_BOOT__`, so there is no client-side allowlist to
+    # edit. Both packages' host halves are deliberately inert.
+    - id: ui-meteo
+      name: '@deepseek-ai/dsh-client-ui-meteo'
+
+    - id: ui-meteo-chat
+      name: '@deepseek-ai/dsh-client-ui-meteo-chat'
+
+    # ── the brand ──────────────────────────────────────────────────────────
+    # The shell declares the brand seats and falls back to its own fish; this
+    # row is what makes the deployment read as WindPilot.
+    - id: ui-brand-windpilot
+      name: '@deepseek-ai/dsh-client-ui-brand-windpilot'
+
+    # ── the consultation skills ────────────────────────────────────────────
+- id: skill-filesystem
+  config:
+    customSkillDirs:
+      - !!js process.cwd() + '/apps/cli/config/examples/meteo/skills'
+
+# `--host 0.0.0.0` is refused on the command line ("would expose remote code
+# execution to the network"), while the webserver's own config declares all
+# interfaces a supported value and `web-app`'s README documents the LAN
+# deployment. This overlay therefore takes the configuration route, which is the
+# operator-facing one: **it makes the GUI reachable from the LAN**, where a
+# browser can drive an agent that executes code on this machine. Delete this row
+# to go back to loopback-only.
+- id: webserver
+  config:
+    host: '0.0.0.0'
+    port: !!js ctx.webStartup.port ?? 3080
+    compression: gzip
+    compressionLevel: 1
+    compressionThresholdBytes: 1024
+
+- id: tool-skill
+  disabled: false

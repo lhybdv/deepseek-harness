@@ -9,7 +9,7 @@ English | [中文](README.zh.md)
 
 ## Summary
 
-`dsh-client-ui-settings-models` is the Models settings page of the dsh web client: users configure API keys (stored write-only under the profile's credential reference), edit each provider's model list, and hand-declare custom pi-ai routes, with provider rows and one editor card at a time. The page joins the provider directory, the settings document, and the credential descriptions into one shared snapshot, so a row's state stays consistent across all three. It also walks first-run users through two ordered dialogs — a versioned internal-testing notice and the conditional official-DeepSeek credential step.
+`dsh-client-ui-settings-models` is the Models settings page of the dsh web client: users configure API keys (stored write-only under the profile's credential reference), edit each provider's model list, and hand-declare custom pi-ai routes, one editor card at a time. The page joins the provider directory, the settings document, and the credential descriptions into one shared snapshot, so row state stays consistent across all three. It also walks first-run users through two ordered dialogs — a versioned internal-testing notice and the conditional official-DeepSeek credential step. The Host row takes an `onboarding` config; `false` drops both dialogs and keeps the Models page.
 
 ## Table of Contents
 
@@ -35,7 +35,7 @@ The primary field on an editor card is a single **API key** input — the page n
 
 ### Editing a provider
 
-The collapsed 自定义设置 fold carries the curated extras: `baseURL` for both families (the deepseek placeholder shows the public endpoint), each adapter's model catalog, and the **display name** and **API protocol** of a pi-ai route the adapter does not ship. Profile `headers` remain deployment configuration in `settings.yaml` or Cordis config and have no Models-page editor. The Provider ID stays fixed: it is the settings key, the name every other namespace and every logged session references, and the stem of a credential reference the page cannot read back to move. Reasoning effort is deliberately not among the editable fields: it is a per-model capability, so a provider-scoped control could only be set to a value some models reject. Each DeepSeek row edits `id`, optional display `name`, and optional `contextWindow`/`maxTokens`; existing fields outside that curated set survive edits.
+The collapsed 自定义设置 fold carries the curated extras: `baseURL` for both families (the deepseek placeholder shows the public endpoint), each adapter's model catalog, and the **display name** and **API protocol** of a pi-ai route the adapter does not ship. Profile `headers` remain deployment configuration in `settings.yaml` or Cordis config and have no Models-page editor. The Provider ID stays fixed: it is the settings key, the name every other namespace and every logged session references, and the stem of a credential reference the page cannot read back to move. Reasoning effort is deliberately not among the editable fields: it is a per-model capability, so a provider-scoped control could only be set to a value some models reject. Each DeepSeek row edits `id`, optional display `name`, and optional `contextWindow`/`maxTokens`; existing fields outside that curated set survive edits. A pi-ai model row additionally declares its **input modalities** behind the same fold — `text`, or `text` + `image` — which is what marks a route's vision-capable model for image prompts.
 
 ### Adding and deleting providers
 
@@ -43,7 +43,7 @@ The add flow is a card carrying the dormant-directory provider select — a bare
 
 ### First-run dialogs
 
-After the versioned notice step completes, the DeepSeek step projects first-run readiness from the same joined snapshot. ANY provider the user can already reach ends it without rendering; only a user with none is asked for the official DeepSeek key. Configure later completes only this coordinator pass, and an absent adapter, inactive route, failed join, read-only deployment, or unusable capability completes the step without rendering — Models remains the diagnostic surface.
+After the versioned notice step completes, the DeepSeek step projects first-run readiness from the same joined snapshot. ANY provider the user can already reach ends it without rendering; only a user with none is asked for the official DeepSeek key. Configure later completes only this coordinator pass, and an absent adapter, inactive route, failed join, read-only deployment, or unusable capability completes the step without rendering — Models remains the diagnostic surface. Both dialogs register only when the Host row's `onboarding` config is not `false`; a deployment that hides the internal-testing notice sets that field instead of disabling the plugin, which would take the Models page with it. The Host half projects the switch into the served index as `globalThis.__DSH_SETTINGS_ONBOARDING__`.
 
 ### Extension slots
 
@@ -120,4 +120,4 @@ None.
 
 </details>
 
-**Runtime invariant:** No companion is published. A nav-entry-only section plugin rendering a fixed empty content column — it emits no cordis events and owns no cross-plugin mutable relation.
+**Runtime invariant:** No companion is published. A nav-entry-only section plugin rendering a fixed empty content column — it emits no cordis events and owns no cross-plugin mutable relation; its Host half contributes one deterministic index-injection row.

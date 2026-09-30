@@ -160,8 +160,16 @@ declare module '@deepseek-ai/dsh-client-ui-slots' {
     'conversation.hero.workspace': { kind: 'single'; scope: 'root'; owner: EmptyWorkspaceOwnerProps }
     /** Brand mark shown before the blank-session headline. */
     'conversation.hero.brand.mark': { kind: 'single'; scope: 'root'; owner: HeroBrandMarkOwnerProps }
+    /**
+     * Headline shown beside the blank-session brand mark. Declared by this
+     * package's `conversation` entry; deployments may replace the shell's
+     * welcome copy without replacing the surrounding hero.
+     */
+    'conversation.hero.headline': { kind: 'single'; scope: 'root'; owner: HeroHeadlineOwnerProps }
     /** Agent-preset control staged for a New Session. */
     'conversation.hero.agentPreset': { kind: 'single'; scope: 'root'; owner: HeroAgentPresetOwnerProps }
+    /** Footer at the bottom of the blank-session Hero, below its composer. */
+    'conversation.hero.footer': { kind: 'single'; scope: 'root' }
     /** Full-width entries above the composer card. */
     'conversation.input.dock': { kind: 'list'; scope: 'session'; owner: InputZone }
     /** Floating entries rendered inside the resident composer card. */
@@ -363,6 +371,12 @@ export interface HeroBrandMarkOwnerProps {
   className?: string | undefined
 }
 
+/** Empty owner share for the blank-session headline occupant. */
+export interface HeroHeadlineOwnerProps {
+  /** Marker field: the occupant owns its own content and width. */
+  children?: never
+}
+
 /** Full props of the resident optional-Session Conversation shell. */
 export type ConversationSlotProps =
   PropsRuntime<'main.conversation'>
@@ -371,8 +385,10 @@ export type ConversationSlotProps =
     | 'conversation.composer' | 'conversation.composer.bar'
     | 'conversation.input.dock'
     | 'conversation.hero.brand.mark'
+    | 'conversation.hero.headline'
     | 'conversation.hero.workspace'
     | 'conversation.hero.agentPreset'
+    | 'conversation.hero.footer'
   >
   & InjectFace<ConversationInjected>
   & PropsLocale<'conversation'>

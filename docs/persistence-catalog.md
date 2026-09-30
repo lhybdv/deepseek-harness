@@ -538,6 +538,27 @@ Source: [`packages/llm/llm-retry/src/types.ts:9`](../packages/llm/llm-retry/src/
 
 Source: [`packages/llm/llm-retry/src/types.ts:11`](../packages/llm/llm-retry/src/types.ts)
 
+### `meteo/*`
+
+<a id="meteofocus--log-only"></a>
+
+#### `meteo/focus` — log-only
+
+```ts persistence-catalog
+/**
+ * The place and crop a meteorological consultation is working on, written
+ * whole by whichever turn last settled it. The payload is the complete
+ * snapshot the session now holds rather than a delta: an optional station
+ * id, an optional crop, and the millisecond instant the turn recorded them,
+ * or `null` when the session has stopped being about one place. A later turn
+ * reads the value carried by the last such write, so a turn that changes only
+ * the crop still names the station it means.
+ */
+'meteo/focus': MeteoFocusEvent
+```
+
+Source: [`packages/meteo/meteo-data/src/focus.ts:47`](../packages/meteo/meteo-data/src/focus.ts)
+
 ### `model/*`
 
 <a id="modelselection--log-only"></a>

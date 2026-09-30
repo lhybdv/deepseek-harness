@@ -249,8 +249,10 @@ export function apply(ctx: Context, config: Config = Config({})): void {
       'conversation.composer.bar': { kind: 'single', scope: 'session-maybe' },
       'conversation.input.dock': { kind: 'list', scope: 'session' },
       'conversation.hero.brand.mark': { kind: 'single', scope: 'root' },
+      'conversation.hero.headline': { kind: 'single', scope: 'root' },
       'conversation.hero.workspace': { kind: 'single', scope: 'root' },
       'conversation.hero.agentPreset': { kind: 'single', scope: 'root' },
+      'conversation.hero.footer': { kind: 'single', scope: 'root' },
     },
     inject: (sessionId: SessionId | undefined): ConversationInjected => ({
       hooks: {

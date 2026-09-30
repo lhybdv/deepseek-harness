@@ -1,0 +1,65 @@
+# The dsh-meteo-app bundle patch: the meteorological consultation surface over
+# dsh-base and dsh-web-app.
+#
+# Every row below is a capability a deployment enables by stacking this bundle.
+# Both seams are configuration-driven — `meteo-data` reads a published bundle and
+# `meteo-corpus` owns one SQLite index file — so a deployment points them at its
+# own data without changing the code above them, and the tools and the Remote
+# surface stay untouched.
+
+- insert:
+    # ── the corpus seam and its owned index ────────────────────────────────
+    - id: meteo-corpus
+      name: '@deepseek-ai/dsh-meteo-corpus'
+      config:
+        # Its own file, never a shared one: a sibling derived index refuses a
+        # database whose application_id belongs to another owner and drops every
+        # table when its own schema version moves.
+        path: !!js dshHomePath('meteo', 'corpus.v1.sqlite')
+        journalMode: wal
+        defaultLimit: 8
+        maxLimit: 50
+        maxMatchTokens: 64
+        maxChunkChars: 800
+        maxDocumentBytes: 4000000
+
+    # ── the meteorological data seam ───────────────────────────────────────
+    - id: meteo-data
+      name: '@deepseek-ai/dsh-meteo-data'
+      config:
+        source: fixture
+        # A deployment publishes its own bundle at this path. The example overlay
+        # in apps/cli/config/examples/meteo points it at the repository fixtures
+        # so the shipped demonstration runs without one.
+        fixtureDir: !!js dshHomePath('meteo', 'fixtures')
+        timeoutMs: 15000
+
+    # ── the model-facing tools ─────────────────────────────────────────────
+    - id: tool-corpus
+      name: '@deepseek-ai/dsh-tool-corpus'
+
+    - id: tool-meteo
+      name: '@deepseek-ai/dsh-tool-meteo'
+
+    # ── the Remote surface the browser panels call ─────────────────────────
+    - id: meteo-controller
+      name: '@deepseek-ai/dsh-api-meteo-controller'
+
+    # ── the browser surfaces ───────────────────────────────────────────────
+    # The client roster is not a static list: the modules node half scans every
+    # live Host Loader entry that declares `dsh.client` and ships those bundles
+    # in `window.__DSH_BOOT__`. A row here is therefore the whole wiring — these
+    # two plugins' `src/index.ts` host halves are deliberately inert.
+    - id: ui-meteo
+      name: '@deepseek-ai/dsh-client-ui-meteo'
+
+    - id: ui-meteo-chat
+      name: '@deepseek-ai/dsh-client-ui-meteo-chat'
+
+    # ── the brand ──────────────────────────────────────────────────────────
+    # Fills the shell's generic brand seats (the Sidebar's mark and name, and
+    # the blank-session hero's mark). Removing this row leaves the shell's own
+    # fish-and-text fallbacks in place, which is what keeps branding out of the
+    # shell rather than baked into it.
+    - id: ui-brand-windpilot
+      name: '@deepseek-ai/dsh-client-ui-brand-windpilot'

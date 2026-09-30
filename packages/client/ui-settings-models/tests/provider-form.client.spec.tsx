@@ -277,6 +277,24 @@ describe('model list editing', () => {
     })
   })
 
+  it('stores a row\'s declared input modalities and drops the field when inherited', async () => {
+    const { mutate } = await mountSection()
+    openEditor('openai')
+
+    fireEvent.click(screen.getByRole('button', { name: en.addModel }))
+    fireEvent.change(screen.getByLabelText(`${en.modelId} 1`), { target: { value: 'vision' } })
+    expandModel(1)
+    expect(screen.getByLabelText<HTMLSelectElement>(`${en.modelInput} 1`).value).toBe('')
+    fireEvent.change(screen.getByLabelText(`${en.modelInput} 1`), { target: { value: 'text,image' } })
+    fireEvent.click(screen.getByText(en.apply))
+
+    await waitFor(() => { expect(mutate).toHaveBeenCalled() })
+    expect(firstMutate(mutate)).toMatchObject({
+      ns: 'llm-pi-ai',
+      ops: [{ op: 'set', path: ['providers', 'openai', 'models'], value: [{ id: 'vision', input: ['text', 'image'] }] }],
+    })
+  })
+
   it('names a duplicate model id in the edit flow too', async () => {
     const { mutate } = await mountSection({
       providers: { openai: { baseURL: 'https://proxy.example/v1', models: [{ id: 'dup' }] } },

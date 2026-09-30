@@ -26,6 +26,7 @@ import { ModelsSettingsStore } from './store.ts'
 import { createModelsOperations } from './operations.ts'
 import { createSettingsSchemaOperations } from './schema-operations.ts'
 import { en, zh, type ModelsKey } from './locales.ts'
+import { DEFAULT_ONBOARDING, ONBOARDING_GLOBAL } from '../onboarding-switch.ts'
 import { WELCOME_NOTICE_SETTINGS_NAMESPACE } from '../onboarding-copy.ts'
 
 export type { ModelsSectionInjected, ModelsSectionProps } from './ModelsSection.tsx'
@@ -65,6 +66,17 @@ export const inject = [
   'slots', 'locale', 'remote', 'remote.credentials', 'remote.llm', 'remote.settings',
   'settingsScope', 'settingsSchema',
 ]
+
+/**
+ * Whether this deployment registers the first-run onboarding dialogs. The Host
+ * row's `onboarding` config reaches the browser through the served
+ * `globalThis` property; the Models section registers either way.
+ * @returns the resolved switch; an absent value keeps the deployment default.
+ */
+function onboardingEnabled(): boolean {
+  const value = (globalThis as Record<string, unknown>)[ONBOARDING_GLOBAL]
+  return typeof value === 'boolean' ? value : DEFAULT_ONBOARDING
+}
 
 /**
  * Register the Models section once the `settings.section` declaration is on
@@ -139,6 +151,7 @@ export function apply(ctx: ClientContext): void {
       'settings.models.footer': { kind: 'list', scope: 'root' },
     },
   }, ModelsSection))
+  if (!onboardingEnabled()) return
   ctx.slots.inject('settings.onboarding', () => ctx.slots.register({
     name: 'settings.onboarding',
     id: 'welcome-notice',

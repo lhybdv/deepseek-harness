@@ -1,0 +1,43 @@
+/**
+ * Brand layout.
+ *
+ * The sidebar's brand-name seat is a fixed 24px line box, so the wordmark and
+ * the tagline share one line rather than stacking: a two-line block is taller
+ * than the box and its second line is clipped. Both parts keep their own type
+ * size, and the row aligns on the baseline so the tagline sits with the wordmark
+ * instead of floating.
+ */
+
+.name {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 6px;
+  min-width: 0;
+  height: 24px;
+  line-height: 24px;
+}
+
+.wordmark {
+  font-size: 17px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  white-space: nowrap;
+}
+
+.tagline {
+  font-size: 11px;
+  color: var(--dsw-alias-label-secondary);
+  white-space: nowrap;
+}
+
+/* The welcome footer row centers its occupant, so the team footer only owns
+   its type and quiet colour. */
+.teamFooter {
+  font-size: 14px;
+  line-height: 20px;
+  font-weight: 500;
+  letter-spacing: 0.02em;
+  color: var(--dsw-alias-label-secondary);
+  white-space: nowrap;
+  user-select: none;
+}

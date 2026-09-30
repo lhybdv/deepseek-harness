@@ -1,0 +1,457 @@
+/* Meteorology conversation cards: the consultation step trace with its
+   citation list, the compact station-lookup row, and the session-focus row.
+   Row geometry matches the shared Tool row (figma Bash · description). */
+
+.card {
+  display: flex;
+  flex-direction: column;
+}
+
+.row {
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  height: 24px;
+  min-width: 0;
+}
+
+.row[data-expandable] {
+  cursor: pointer;
+}
+
+.card[data-state='running'] .row::after {
+  content: '';
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 300px;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    color-mix(in srgb, var(--dsw-alias-bg-base) 60%, transparent) 55%,
+    transparent 100%
+  );
+  animation: dsh-meteo-card-sweep 2.6s ease-out infinite;
+  pointer-events: none;
+}
+
+@keyframes dsh-meteo-card-sweep {
+  0% { left: -300px; }
+  90%, 100% { left: 100%; }
+}
+
+.leading {
+  position: relative;
+  flex: none;
+  width: 16px;
+  height: 16px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  margin-right: 6px;
+  color: var(--dsw-alias-label-tertiary);
+}
+
+.chevron {
+  color: var(--dsw-alias-label-secondary);
+}
+
+.iconIdle {
+  display: inline-flex;
+  opacity: 1;
+  transition: opacity 100ms ease;
+}
+
+.chevronHover {
+  position: absolute;
+  inset: 0;
+  margin: auto;
+  opacity: 0;
+  transition: opacity 100ms ease;
+}
+
+.row:hover .iconIdle {
+  opacity: 0;
+}
+
+.row:hover .chevronHover {
+  opacity: 1;
+}
+
+.title {
+  flex: none;
+  font-size: 14px;
+  line-height: 24px;
+  color: var(--dsw-alias-label-secondary);
+}
+
+.separator {
+  flex: none;
+  width: 2px;
+  height: 2px;
+  border-radius: 1px;
+  margin: 0 8px;
+  background: var(--dsw-alias-label-caption);
+}
+
+.summary {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 14px;
+  line-height: 24px;
+  color: var(--dsw-alias-label-tertiary);
+}
+
+.errorSummary {
+  color: var(--dsw-alias-state-error-primary);
+}
+
+.bodyWrap {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 2px 0 8px 22px;
+}
+
+.section {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.sectionTitle {
+  color: var(--dsw-alias-label-tertiary);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+/* ── the clarification question ──────────────────────────────────────── */
+
+.question {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 10px 12px;
+  border: 0.5px solid var(--dsw-alias-border-l2);
+  border-radius: 8px;
+  background: var(--dsw-alias-bg-layer-1);
+}
+
+.questionTitle {
+  color: var(--dsw-alias-label-primary);
+  font-weight: 600;
+}
+
+.questionReason {
+  margin: 0;
+  color: var(--dsw-alias-label-secondary);
+}
+
+.candidate {
+  min-width: 0;
+  color: var(--dsw-alias-label-primary);
+  word-break: break-word;
+}
+
+.candidateId,
+.stationId {
+  color: var(--dsw-alias-label-tertiary);
+}
+
+/* ── the pipeline steps ──────────────────────────────────────────────── */
+
+.stepRow {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  min-width: 0;
+}
+
+.stepState {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  align-self: center;
+}
+
+.stepName {
+  flex: none;
+  min-width: 64px;
+  color: var(--dsw-alias-label-primary);
+}
+
+.stepStatus {
+  flex: none;
+  color: var(--dsw-alias-label-tertiary);
+}
+
+.stepDetail {
+  flex: 0 1 auto;
+  min-width: 0;
+  color: var(--dsw-alias-label-secondary);
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+/* ── the per-step findings ───────────────────────────────────────────── */
+
+.findingRow {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  min-width: 0;
+  flex-wrap: wrap;
+}
+
+.findingValue {
+  flex: 0 1 auto;
+  min-width: 0;
+  color: var(--dsw-alias-label-primary);
+  word-break: break-word;
+}
+
+.seriesRow {
+  display: flex;
+  gap: 10px;
+  min-width: 0;
+  font-variant-numeric: tabular-nums;
+}
+
+.seriesTime {
+  flex: none;
+  color: var(--dsw-alias-label-tertiary);
+}
+
+.seriesEntries {
+  flex: 0 1 auto;
+  min-width: 0;
+  color: var(--dsw-alias-label-secondary);
+  word-break: break-word;
+}
+
+.dayLine {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  min-width: 0;
+  flex-wrap: wrap;
+}
+
+.dayScope {
+  flex: 0 1 auto;
+  min-width: 0;
+  color: var(--dsw-alias-label-primary);
+  word-break: break-word;
+}
+
+.verdict {
+  flex: none;
+  font-weight: 600;
+}
+
+.verdict[data-verdict='suitable'] {
+  color: var(--dsw-alias-state-success-primary);
+}
+
+.verdict[data-verdict='unsuitable'] {
+  color: var(--dsw-alias-state-error-primary);
+}
+
+.verdict[data-verdict='unknown'] {
+  color: var(--dsw-alias-label-tertiary);
+}
+
+.criterion {
+  color: var(--dsw-alias-label-secondary);
+}
+
+.criterionMuted {
+  color: var(--dsw-alias-label-tertiary);
+}
+
+.hazardLevel {
+  flex: none;
+  font-weight: 600;
+}
+
+.hazardLevel[data-level='low'] {
+  color: var(--dsw-alias-state-success-primary);
+}
+
+.hazardLevel[data-level='medium'] {
+  color: var(--dsw-alias-state-warn-primary);
+}
+
+.hazardLevel[data-level='high'] {
+  color: var(--dsw-alias-state-error-primary);
+}
+
+.hazardLevel[data-level='unknown'] {
+  color: var(--dsw-alias-label-tertiary);
+}
+
+/* ── the citation list ───────────────────────────────────────────────── */
+
+.citation {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 8px 10px;
+  border: 0.5px solid var(--dsw-alias-border-l2);
+  border-radius: 8px;
+}
+
+.citationHead {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  min-width: 0;
+  flex-wrap: wrap;
+}
+
+.citationIndex {
+  flex: none;
+  color: var(--dsw-alias-label-tertiary);
+}
+
+.citationTitle {
+  flex: 0 1 auto;
+  min-width: 0;
+  color: var(--dsw-alias-label-primary);
+  font-weight: 600;
+  word-break: break-word;
+}
+
+.citationMeta {
+  flex: 0 1 auto;
+  min-width: 0;
+  color: var(--dsw-alias-label-tertiary);
+  word-break: break-word;
+}
+
+.snippet {
+  margin: 0;
+  color: var(--dsw-alias-label-secondary);
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.truncatedNote {
+  color: var(--dsw-alias-label-tertiary);
+}
+
+/* ── the generic fallback body ───────────────────────────────────────── */
+
+.ioCard {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 8px 10px;
+  border: 0.5px solid var(--dsw-alias-border-l2);
+  border-radius: 8px;
+  background: var(--dsw-alias-bg-layer-1);
+}
+
+.ioLabel {
+  color: var(--dsw-alias-label-tertiary);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.ioText {
+  margin: 0;
+  overflow-x: auto;
+  color: var(--dsw-alias-label-secondary);
+  font-family: var(--dsw-font-markdown-code-block-small, monospace);
+  font-size: 12px;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.ioText[data-error] {
+  color: var(--dsw-alias-state-error-primary);
+}
+
+/* ── the station list ────────────────────────────────────────────────── */
+
+.stationRow {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  min-width: 0;
+  flex-wrap: wrap;
+}
+
+.stationName {
+  flex: 0 1 auto;
+  min-width: 0;
+  color: var(--dsw-alias-label-primary);
+  word-break: break-word;
+}
+
+.stationSiting {
+  flex: 0 1 auto;
+  min-width: 0;
+  color: var(--dsw-alias-label-tertiary);
+  word-break: break-word;
+}
+
+/* ── the inspect affordance ──────────────────────────────────────────── */
+
+.inspectButton {
+  display: inline-flex;
+  align-self: flex-start;
+  align-items: center;
+  gap: 4px;
+  margin: 4px 0 2px 4px;
+  padding: 2px 8px;
+  border: 0.5px solid var(--dsw-alias-border-l4);
+  border-radius: 999px;
+  corner-shape: round;
+  background: var(--dsw-alias-bg-base);
+  color: var(--dsw-alias-label-secondary);
+  font-size: 11px;
+  line-height: 16px;
+  cursor: pointer;
+  opacity: 0;
+  transition: opacity 100ms ease;
+}
+
+.card:hover .inspectButton,
+.inspectButton:focus-visible {
+  opacity: 1;
+}
+
+.inspectButton:hover {
+  background: var(--dsw-alias-interactive-bg-hover-solid);
+  color: var(--dsw-alias-label-primary);
+}
+
+.visuallyHidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .card[data-state='running'] .row::after {
+    animation: none;
+    display: none;
+  }
+
+  .iconIdle,
+  .chevronHover,
+  .inspectButton {
+    transition: none;
+  }
+}

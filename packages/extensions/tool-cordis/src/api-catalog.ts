@@ -730,6 +730,43 @@ export const SERVICE_API: readonly ServiceApiEntry[] = [
     ],
   },
   {
+    key: 'corpus',
+    summary: 'Abstract corpus store.',
+    description: 'Abstract corpus store. Subclass, implement every method, and load the subclass as a plugin — it registers as `ctx.corpus` (one implementation per context; loading a second throws, cordis\' standard duplicate-service behavior).\n\nSemantics every implementation must honor:\n\n- `ingest` indexes each accepted source independently: a source rejected for its own reason is reported in IngestResult.failures and never aborts the others.\n- `search` is recall-oriented. An empty result is a legitimate answer and callers must tolerate it; the implementation must not substitute a fallback query the caller did not ask for.\n- `readChunk` returns the stored chunk verbatim, so a citation rendered from it matches the source document\'s characters at `charStart`–`charEnd`.\n- Every method rejects only on a real backend failure.',
+    methods: [
+      {
+        signature: 'abstract ingest(request: IngestRequest): Promise<IngestResult>',
+        description: 'Split, tokenize, and index each source.',
+        parameters: [{ name: 'request', description: 'the sources to ingest.' }],
+        returns: 'the stored documents and the per-source failures.',
+      },
+      {
+        signature: 'abstract search(request: SearchRequest): Promise<SearchResult>',
+        description: 'Retrieve the chunks that best match a question.',
+        parameters: [{ name: 'request', description: 'the question, its expansion terms, and an optional hit limit.' }],
+        returns: 'ranked hits and the MATCH expression that produced them.',
+      },
+      {
+        signature: 'abstract readChunk(docId: CorpusDocumentId, ordinal: number): Promise<CorpusChunk | undefined>',
+        description: 'Read one stored chunk verbatim.',
+        parameters: [{ name: 'docId', description: 'the document to read from.' }, { name: 'ordinal', description: 'the chunk\'s position inside that document.' }],
+        returns: 'the chunk, or `undefined` when the document or ordinal is unknown.',
+      },
+      {
+        signature: 'abstract listDocuments(limit?: number): Promise<CorpusDocument[]>',
+        description: 'List the indexed documents, newest first.',
+        parameters: [{ name: 'limit', description: 'optional cap on the number of documents returned.' }],
+        returns: 'the document records without their chunk text.',
+      },
+      {
+        signature: 'abstract remove(docId: CorpusDocumentId): Promise<RemoveResult>',
+        description: 'Remove a document and its chunks.',
+        parameters: [{ name: 'docId', description: 'the document to remove.' }],
+        returns: 'whether a document was actually removed.',
+      },
+    ],
+  },
+  {
     key: 'credentials',
     summary: 'Abstract credential service over two key spaces that answer two questions.',
     description: 'Abstract credential service over two key spaces that answer two questions.\n\nA CredentialRef answers "what is behind this environment-variable name", layered over the process environment, the provider-managed store, and `.env` files. One seam-wide rule binds that half: an empty stored value is absent everywhere — `resolve` skips it, `describe` reports it unconfigured — so a blank never masquerades as a configured secret.\n\nA CredentialKey answers "what credential does this plugin hold for this id". Nothing can layer here — an authorization grant has no environment to be read from — so presence of the record is the whole fact, and modifyRecord is the only write path because a correct write depends on the current value (a token refresh is read-decide-replace under one lock).',
@@ -1338,6 +1375,116 @@ export const SERVICE_API: readonly ServiceApiEntry[] = [
         description: 'Delete one item after checking its version; absence succeeds without an event.',
         parameters: [{ name: 'request', description: 'Session, message, and observed item version.' }],
         returns: 'the stable absent postcondition or an explicit failure.',
+      },
+    ],
+  },
+  {
+    key: 'meteoController',
+    summary: 'Host service backing the generated `ctx.remote.meteo` namespace.',
+    description: 'Host service backing the generated `ctx.remote.meteo` namespace. Every method delegates to the seam that owns the answer and carries only what a browser call adds: the request bounds the wire codec cannot state, the view a panel renders, and a named failure where a seam\'s silence would otherwise read as success.',
+    methods: [
+      {
+        signature: '@Remote async corpusList(limit: number | undefined): Promise<MeteoDocument[]>',
+        description: 'List the indexed documents, newest ingest first.',
+        parameters: [{ name: 'limit', description: 'documents to return, at most {@link MAX_LIST_DOCS}; `undefined` returns the whole index.' }],
+        returns: 'one entry per stored document.',
+        throws: ['RemoteError when `limit` is not a positive integer within the bound.'],
+      },
+      {
+        signature: '@Remote async corpusIngest(sources: readonly MeteoIngestSource[]): Promise<MeteoIngestValue>',
+        description: 'Index submitted documents.',
+        parameters: [{ name: 'sources', description: 'one to {@link MAX_INGEST_SOURCES} documents; a title must not be empty, while a provenance label may be. Empty or oversized text is the store\'s per-document failure, reported in the result rather than raised here, so one rejected document never aborts its siblings.' }],
+        returns: 'the stored documents and the per-source refusals.',
+        throws: ['RemoteError when the batch is empty, oversized, or a source has no title.'],
+      },
+      {
+        signature: '@Remote async corpusSearch( query: string, terms: readonly string[] | undefined, limit: number | undefined, ): Promise<MeteoSearchValue>',
+        description: 'Search the indexed documents for one question.',
+        parameters: [{ name: 'query', description: 'the question, used as-is for recall.' }, { name: 'terms', description: 'domain terms derived from the question; recall unions them with its own tokens.' }, { name: 'limit', description: 'hits wanted; the store clamps it to its own configured ceiling. `undefined` takes its default.' }],
+        returns: 'the ranked hits with the citation fields and a capped excerpt, plus the match expression issued.',
+        throws: ['RemoteError when the query or a term is empty, or `limit` is not a positive integer.'],
+      },
+      {
+        signature: '@Remote async corpusRead(docId: MeteoDocumentId, ordinal: number): Promise<MeteoChunk>',
+        description: 'Reopen one stored chunk in full, which is what a panel does when a hit\'s excerpt is not enough to read the passage it cites.',
+        parameters: [{ name: 'docId', description: 'indexed document to read from.' }, { name: 'ordinal', description: 'zero-based chunk position inside that document.' }],
+        returns: 'the stored chunk verbatim, with the character offsets of the source document.',
+        throws: ['RemoteError when the address is malformed or the chunk is not in the index.'],
+      },
+      {
+        signature: '@Remote async corpusRemove(docId: MeteoDocumentId): Promise<MeteoRemoveValue>',
+        description: 'Withdraw one document from the index.',
+        parameters: [{ name: 'docId', description: 'document to remove.' }],
+        returns: 'the removal outcome; `removed: false` is an answer, not a failure — the document was already gone, which is the state the panel wanted.',
+        throws: ['RemoteError when the document id is empty.'],
+      },
+      {
+        signature: '@Remote focusGet(agent: Agent): MeteoFocus | null',
+        description: 'Read the place and crop this session\'s consultation is working on, which is how a panel shows what the model currently believes it is answering about.',
+        parameters: [{ name: 'agent', description: 'target Agent resolved from the Session identity on the wire.' }],
+        returns: 'the focus this session last wrote, or `null` when it has none.',
+      },
+      {
+        signature: '@Remote async stationLookup(text: string | undefined, county: string | undefined): Promise<readonly MeteoStation[]>',
+        description: 'Look stations up by name, township, or county.',
+        parameters: [{ name: 'text', description: 'substring matched against station name, township and county.' }, { name: 'county', description: 'keep only stations of this county-level division.' }],
+        returns: 'the matching stations, in dataset order.',
+        throws: ['RemoteError when neither filter is given, or the data seam cannot answer.'],
+      },
+    ],
+  },
+  {
+    key: 'meteoData',
+    summary: 'Abstract meteorological data seam.',
+    description: 'Abstract meteorological data seam. Subclass, implement every method, and load the subclass as a plugin — it registers as `ctx.meteoData` (one implementation per context; loading a second throws, cordis\' standard duplicate-service behavior).\n\nSemantics every implementation must honor:\n\n- Every method is read-only and idempotent: the same query returns the same answer until a dataset revision changes.\n- An empty list is a legitimate answer for a station that exists but has no data in the requested window; an unknown station id is not, and rejects with `METEO_STATION_NOT_FOUND`.\n- Times are ISO-8601 instants and window bounds are inclusive, so two consumers asking about the same period read the same rows.\n- A dataset that cannot be read or does not match its published shape rejects with `METEO_DATASET_UNAVAILABLE`; the seam never substitutes plausible numbers.',
+    methods: [
+      {
+        signature: 'abstract stations(query?: StationQuery): Promise<readonly Station[]>',
+        description: 'List the stations this deployment covers.',
+        parameters: [{ name: 'query', description: 'county filter and free-text filter over name, township, county.' }],
+        returns: 'the matching stations, in dataset order.',
+      },
+      {
+        signature: 'abstract station(id: string): Promise<Station | undefined>',
+        description: 'Resolve one station by id.',
+        parameters: [{ name: 'id', description: 'the station identifier to look up.' }],
+        returns: 'the station, or `undefined` when no station carries that id.',
+      },
+      {
+        signature: 'abstract observations(query: ObservationQuery): Promise<readonly Observation[]>',
+        description: 'Read observed weather for one station.',
+        parameters: [{ name: 'query', description: 'the station and an inclusive time window.' }],
+        returns: 'the observations in the window, oldest first.',
+      },
+      {
+        signature: 'abstract forecast(query: ForecastQuery): Promise<readonly ForecastPoint[]>',
+        description: 'Read the forecast guide for one station.',
+        parameters: [{ name: 'query', description: 'the station, an inclusive start, and a horizon in hours.' }],
+        returns: 'the forecast points in range, earliest first.',
+      },
+      {
+        signature: 'abstract thresholds(query?: ThresholdQuery): Promise<readonly Threshold[]>',
+        description: 'List graded disaster criteria.',
+        parameters: [{ name: 'query', description: 'disaster name and crop filters.' }],
+        returns: 'the criteria issued for the filter, in the order the dataset publishes them.',
+      },
+      {
+        signature: 'abstract cropCalendar(query?: ThresholdQuery): Promise<readonly CropWindow[]>',
+        description: 'List farming activity windows and the criteria that grade them.',
+        parameters: [{ name: 'query', description: 'crop filter, and a disaster filter over each window\'s criteria.' }],
+        returns: 'the matching windows, in the order the dataset publishes them.',
+      },
+      {
+        signature: 'abstract expandTerm(term: string): Promise<readonly string[]>',
+        description: 'Expand a colloquial disaster or element term into the vocabulary the datasets use, so a consumer can match a farmer\'s wording.',
+        parameters: [{ name: 'term', description: 'the term as a person wrote it.' }],
+        returns: 'related terms, or an empty list when the term is unknown.',
+      },
+      {
+        signature: 'abstract versions(): Promise<DatasetVersions>',
+        description: 'Report the revision of the dataset bundle behind this seam.',
+        parameters: [],
+        returns: 'the bundle revision and the revision of every dataset.',
       },
     ],
   },
@@ -4019,6 +4166,22 @@ export const TYPE_API: readonly TypeApiEntry[] = [
     declaration: 'export interface CordisRuntimeTreeReader {\n    getTree(): Promise<CordisRuntimeTree>;\n}',
   },
   {
+    name: 'CorpusChunk',
+    declaration: 'export interface CorpusChunk {\n    readonly docId: CorpusDocumentId;\n    readonly ordinal: number;\n    readonly headingPath: string;\n    readonly charStart: number;\n    readonly charEnd: number;\n    readonly text: string;\n}',
+  },
+  {
+    name: 'CorpusDocument',
+    declaration: 'export interface CorpusDocument {\n    readonly docId: CorpusDocumentId;\n    readonly title: string;\n    readonly source: string;\n    readonly bytes: number;\n    readonly chunkCount: number;\n    readonly ingestedAt: number;\n}',
+  },
+  {
+    name: 'CorpusDocumentId',
+    declaration: 'export type CorpusDocumentId = Branded<\'CorpusDocumentId\'>;',
+  },
+  {
+    name: 'CorpusHit',
+    declaration: 'export interface CorpusHit extends CorpusChunk {\n    readonly docTitle: string;\n    readonly score: number;\n}',
+  },
+  {
     name: 'CreateAgentOptions',
     declaration: 'export interface CreateAgentOptions {\n    readonly sessionId: SessionId;\n    readonly parentAgent?: Agent;\n    readonly meta?: {\n        readonly cwd?: string;\n        readonly parentSession?: SessionId;\n        readonly isSeeded?: boolean;\n        readonly origin?: \'subagent\';\n        readonly delegationDepth?: number;\n        readonly agentPreset?: string;\n    };\n    readonly inheritedEventCount?: SessionLogOffset;\n    readonly seed?: readonly SessionEvent[];\n    readonly agentOptions?: AgentOptions;\n    readonly signal?: AbortSignal;\n    readonly setup?: AgentSetup;\n}',
   },
@@ -4061,6 +4224,14 @@ export const TYPE_API: readonly TypeApiEntry[] = [
   {
     name: 'CredentialRef',
     declaration: 'export type CredentialRef = Branded<\'CredentialRef\'>;',
+  },
+  {
+    name: 'CropWindow',
+    declaration: 'export interface CropWindow {\n    readonly crop: string;\n    readonly activity: string;\n    readonly windowStart: string;\n    readonly windowEnd: string;\n    readonly criteria: readonly Threshold[];\n}',
+  },
+  {
+    name: 'DatasetVersions',
+    declaration: 'export interface DatasetVersions {\n    readonly version: string;\n    readonly datasets: Readonly<Record<MeteoDatasetKind, string>>;\n}',
   },
   {
     name: 'DeepSeekLlmApiExtensionMap',
@@ -4247,6 +4418,14 @@ export const TYPE_API: readonly TypeApiEntry[] = [
     declaration: 'export interface FinishReasonMap {\n    \'stop\': {\n        kind: \'stop\';\n    };\n    \'tool-calls\': {\n        kind: \'tool-calls\';\n    };\n    \'max-tokens\': {\n        kind: \'max-tokens\';\n    };\n    \'aborted\': {\n        kind: \'aborted\';\n        failure: LlmFailure;\n    };\n    \'error\': {\n        kind: \'error\';\n        failure: LlmFailure;\n    };\n}',
   },
   {
+    name: 'ForecastPoint',
+    declaration: 'export interface ForecastPoint {\n    readonly time: string;\n    readonly elements: Readonly<Record<string, number>>;\n}',
+  },
+  {
+    name: 'ForecastQuery',
+    declaration: 'export interface ForecastQuery {\n    readonly stationId: string;\n    readonly from?: string;\n    readonly hours?: number;\n}',
+  },
+  {
     name: 'FsDirEntry',
     declaration: 'export interface FsDirEntry {\n    name: string;\n    type: \'file\' | \'directory\' | \'other\';\n    target: FsTarget;\n    version?: FsVersion;\n    size?: number;\n}',
   },
@@ -4377,6 +4556,26 @@ export const TYPE_API: readonly TypeApiEntry[] = [
   {
     name: 'IndexInjectionPlacement',
     declaration: 'export type IndexInjectionPlacement = \'head\' | \'body\';',
+  },
+  {
+    name: 'IngestFailure',
+    declaration: 'export interface IngestFailure {\n    readonly title: string;\n    readonly code: \'CORPUS_EMPTY_DOCUMENT\' | \'CORPUS_DOCUMENT_TOO_LARGE\';\n    readonly message: string;\n}',
+  },
+  {
+    name: 'IngestRequest',
+    declaration: 'export interface IngestRequest {\n    readonly sources: readonly IngestSource[];\n}',
+  },
+  {
+    name: 'IngestResult',
+    declaration: 'export interface IngestResult {\n    readonly documents: readonly CorpusDocument[];\n    readonly failures: readonly IngestFailure[];\n}',
+  },
+  {
+    name: 'IngestSource',
+    declaration: 'export type IngestSource = IngestTextSource;',
+  },
+  {
+    name: 'IngestTextSource',
+    declaration: 'export interface IngestTextSource {\n    readonly title: string;\n    readonly text: string;\n    readonly source: string;\n}',
   },
   {
     name: 'InspectorId',
@@ -4703,6 +4902,54 @@ export const TYPE_API: readonly TypeApiEntry[] = [
     declaration: 'export interface MessageSourceMap {\n    user: {\n        kind: \'user\';\n    };\n    plugin: {\n        kind: \'plugin\';\n        plugin: string;\n    } & ContextFormed;\n    model: ModelMessageSource;\n    tool: ToolMessageSource;\n}',
   },
   {
+    name: 'MeteoChunk',
+    declaration: 'export interface MeteoChunk {\n    readonly docId: MeteoDocumentId;\n    readonly ordinal: number;\n    readonly headingPath: string;\n    readonly charStart: number;\n    readonly charEnd: number;\n    readonly text: string;\n}',
+  },
+  {
+    name: 'MeteoDatasetKind',
+    declaration: 'export type MeteoDatasetKind = \'stations\' | \'observations\' | \'forecast\' | \'thresholds\' | \'cropCalendar\' | \'synonyms\' | \'taxonomy\';',
+  },
+  {
+    name: 'MeteoDocument',
+    declaration: 'export interface MeteoDocument {\n    readonly docId: MeteoDocumentId;\n    readonly title: string;\n    readonly source: string;\n    readonly bytes: number;\n    readonly chunkCount: number;\n    readonly ingestedAt: number;\n}',
+  },
+  {
+    name: 'MeteoDocumentId',
+    declaration: 'export type MeteoDocumentId = string;',
+  },
+  {
+    name: 'MeteoFocus',
+    declaration: 'export interface MeteoFocus {\n    readonly stationId?: string;\n    readonly crop?: string;\n    readonly updatedAt: number;\n}',
+  },
+  {
+    name: 'MeteoIngestFailure',
+    declaration: 'export interface MeteoIngestFailure {\n    readonly title: string;\n    readonly code: \'CORPUS_EMPTY_DOCUMENT\' | \'CORPUS_DOCUMENT_TOO_LARGE\';\n    readonly message: string;\n}',
+  },
+  {
+    name: 'MeteoIngestSource',
+    declaration: 'export interface MeteoIngestSource {\n    readonly title: string;\n    readonly text: string;\n    readonly source: string;\n}',
+  },
+  {
+    name: 'MeteoIngestValue',
+    declaration: 'export interface MeteoIngestValue {\n    readonly documents: readonly MeteoDocument[];\n    readonly failures: readonly MeteoIngestFailure[];\n}',
+  },
+  {
+    name: 'MeteoRemoveValue',
+    declaration: 'export interface MeteoRemoveValue {\n    readonly docId: MeteoDocumentId;\n    readonly removed: boolean;\n}',
+  },
+  {
+    name: 'MeteoSearchHit',
+    declaration: 'export interface MeteoSearchHit {\n    readonly docId: MeteoDocumentId;\n    readonly docTitle: string;\n    readonly ordinal: number;\n    readonly headingPath: string;\n    readonly charStart: number;\n    readonly charEnd: number;\n    readonly score: number;\n    readonly excerpt: string;\n}',
+  },
+  {
+    name: 'MeteoSearchValue',
+    declaration: 'export interface MeteoSearchValue {\n    readonly hits: readonly MeteoSearchHit[];\n    readonly matchExpression: string;\n}',
+  },
+  {
+    name: 'MeteoStation',
+    declaration: 'export interface MeteoStation {\n    readonly id: string;\n    readonly name: string;\n    readonly county: string;\n    readonly township: string;\n    readonly lon: number;\n    readonly lat: number;\n    readonly altitudeM: number;\n}',
+  },
+  {
     name: 'ModelCatalog',
     declaration: 'export interface ModelCatalog {\n    readonly default: ModelSelection;\n    readonly routableProviders: readonly string[];\n    readonly groups: readonly ModelProviderGroup[];\n    readonly failures: readonly ModelCatalogFailure[];\n}',
   },
@@ -4741,6 +4988,14 @@ export const TYPE_API: readonly TypeApiEntry[] = [
   {
     name: 'ObjectJsonSchema',
     declaration: 'export type ObjectJsonSchema = JsonSchemaNode & {\n    type: \'object\';\n};',
+  },
+  {
+    name: 'Observation',
+    declaration: 'export interface Observation {\n    readonly stationId: string;\n    readonly time: string;\n    readonly elements: Readonly<Record<string, number>>;\n}',
+  },
+  {
+    name: 'ObservationQuery',
+    declaration: 'export interface ObservationQuery {\n    readonly stationId: string;\n    readonly from?: string;\n    readonly to?: string;\n}',
   },
   {
     name: 'OneShotSubagentDescriptorData',
@@ -4899,6 +5154,10 @@ export const TYPE_API: readonly TypeApiEntry[] = [
     declaration: 'export interface RemoteEventHostInfo {\n    readonly home: string;\n}',
   },
   {
+    name: 'RemoveResult',
+    declaration: 'export interface RemoveResult {\n    readonly docId: CorpusDocumentId;\n    readonly removed: boolean;\n}',
+  },
+  {
     name: 'ReplayEnvelope',
     declaration: 'export interface ReplayEnvelope {\n    response: unknown;\n    blocks?: readonly unknown[];\n}',
   },
@@ -5025,6 +5284,14 @@ export const TYPE_API: readonly TypeApiEntry[] = [
   {
     name: 'SearchPathsResultView',
     declaration: 'export interface SearchPathsResultView {\n    card: \'search\';\n    shape: \'paths\';\n    title?: string;\n    paths: string[];\n    truncated: boolean;\n    total: number;\n}',
+  },
+  {
+    name: 'SearchRequest',
+    declaration: 'export interface SearchRequest {\n    readonly query: string;\n    readonly terms?: readonly string[];\n    readonly limit?: number;\n}',
+  },
+  {
+    name: 'SearchResult',
+    declaration: 'export interface SearchResult {\n    readonly hits: readonly CorpusHit[];\n    readonly matchExpression: string;\n}',
   },
   {
     name: 'SearchResultView',
@@ -5695,6 +5962,14 @@ export const TYPE_API: readonly TypeApiEntry[] = [
     declaration: 'export type SpillSource = {\n    kind: \'tool\';\n    toolName: string;\n    callId: ToolCallId;\n    label: string;\n} | {\n    kind: \'session-reference\';\n    sessionId: SessionId;\n    label: string;\n};',
   },
   {
+    name: 'Station',
+    declaration: 'export interface Station {\n    readonly id: string;\n    readonly name: string;\n    readonly county: string;\n    readonly township: string;\n    readonly lon: number;\n    readonly lat: number;\n    readonly altitudeM: number;\n}',
+  },
+  {
+    name: 'StationQuery',
+    declaration: 'export interface StationQuery {\n    readonly county?: string;\n    readonly text?: string;\n}',
+  },
+  {
     name: 'StorageBackend',
     declaration: 'export interface StorageBackend {\n    readonly kv?: KvFacet;\n    close(): Promise<void>;\n}',
   },
@@ -6009,6 +6284,14 @@ export const TYPE_API: readonly TypeApiEntry[] = [
   {
     name: 'TerminalWaitReason',
     declaration: 'export type TerminalWaitReason = \'stdin_read\' | \'inferred_idle\' | \'timeout\' | \'session_exit\';',
+  },
+  {
+    name: 'Threshold',
+    declaration: 'export interface Threshold {\n    readonly disaster: string;\n    readonly element: string;\n    readonly op: \'>=\' | \'<=\';\n    readonly value: number;\n    readonly durationH: number;\n    readonly level: \'low\' | \'medium\' | \'high\';\n}',
+  },
+  {
+    name: 'ThresholdQuery',
+    declaration: 'export interface ThresholdQuery {\n    readonly disaster?: string;\n    readonly crop?: string;\n}',
   },
   {
     name: 'TokenMeasurement',

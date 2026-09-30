@@ -12,10 +12,10 @@ import { apply, inject, refreshIfLoaded } from '@deepseek-ai/dsh-client-ui-setti
 import {
   WELCOME_NOTICE_ACK_FIELD, WELCOME_NOTICE_SETTINGS_NAMESPACE, WELCOME_NOTICE_VERSION,
 } from '../src/onboarding-copy.ts'
+import { ONBOARDING_GLOBAL } from '../src/onboarding-switch.ts'
 import { ModelsSection } from '../src/client/ModelsSection.tsx'
 import { DeepSeekOnboardingDialog } from '../src/client/DeepSeekOnboardingDialog.tsx'
 import { WelcomeNotice } from '../src/client/WelcomeNotice.tsx'
-import { apply as hostApply } from '../src/index.ts'
 
 // These specs assert the shipped Chinese copy. The lane has no jsdom `window`,
 // so browser-language detection never runs and a fresh LocaleRuntime opens on
@@ -62,10 +62,6 @@ function declare(slots: SlotRegistry): () => void {
 }
 
 describe('ui-settings-models apply', () => {
-  it('keeps the host Loader entry inert', () => {
-    expect(hostApply).not.toThrow()
-  })
-
   it('declares the services it uses', () => {
     expect(inject).toEqual([
       'slots', 'locale', 'remote', 'remote.credentials', 'remote.llm', 'remote.settings',
@@ -116,6 +112,25 @@ describe('ui-settings-models apply', () => {
     expect(after.slots.entries('settings.onboarding')).toHaveLength(2)
     // The self-inflicted ledger notifications hit the duplicate guard.
     expect(after.slots.entries('settings.section')).toHaveLength(1)
+  })
+
+  it('registers only the Models section when the deployment switch is off', async () => {
+    const b = await bench()
+    declare(b.slots)
+    ;(globalThis as Record<string, unknown>)[ONBOARDING_GLOBAL] = false
+    onTestFinished(() => { Reflect.deleteProperty(globalThis, ONBOARDING_GLOBAL) })
+    await b.ctx.plugin({ inject: [...inject], apply }).await()
+    expect(b.slots.entries('settings.section')).toHaveLength(1)
+    expect(b.slots.entries('settings.onboarding')).toHaveLength(0)
+  })
+
+  it('registers the onboarding dialogs when the switch is absent', async () => {
+    const b = await bench()
+    declare(b.slots)
+    Reflect.deleteProperty(globalThis, ONBOARDING_GLOBAL)
+    await b.ctx.plugin({ inject: [...inject], apply }).await()
+    expect(b.slots.entries('settings.section')).toHaveLength(1)
+    expect(b.slots.entries('settings.onboarding')).toHaveLength(2)
   })
 
   it('the label thunk follows the active locale without re-registration', async () => {

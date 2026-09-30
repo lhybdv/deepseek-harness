@@ -9,7 +9,7 @@ kind: "package-reference"
 
 ## 概述
 
-`dsh-client-ui-settings-models` 是 dsh Web 客户端的 Models 设置页面：用户可以配置 API 密钥（以只写方式存入 profile 的凭据引用之下）、编辑每个提供方的模型列表，并手工声明自定义 pi-ai 路由；页面以提供方行展示，一次只展开一张编辑卡片。该页面把提供方目录、设置文档与凭据描述合并为一个共享快照，因此行的状态在三个方面始终一致。它还会带首次运行的用户走两个有序弹窗——版本化内测声明，以及按条件显示的官方 DeepSeek 凭据步骤。
+`dsh-client-ui-settings-models` 是 dsh Web 客户端的 Models 设置页面：用户可以配置 API 密钥（以只写方式存入 profile 的凭据引用之下）、编辑每个提供方的模型列表，并手工声明自定义 pi-ai 路由；一次只展开一张编辑卡片。该页面把提供方目录、设置文档与凭据描述合并为一个共享快照，因此行状态在三个方面始终一致。它还会带首次运行的用户走两个有序弹窗——版本化内测声明，以及按条件显示的官方 DeepSeek 凭据步骤。该 Host 行接受 `onboarding` 配置；设为 `false` 会去掉两个弹窗并保留 Models 页面。
 
 ## 目录
 
@@ -35,7 +35,7 @@ kind: "package-reference"
 
 ### 编辑提供方
 
-收起的「自定义设置」折叠区承载精选的额外字段：两个家族都有 `baseURL`（deepseek 的占位符显示公共端点）、各适配器自己的模型目录，以及适配器未提供的 pi-ai 路由的**显示名称**与 **API 协议**。Profile `headers` 仍是 `settings.yaml` 或 Cordis 配置中的部署配置，Models 页面不提供编辑器。Provider ID 保持固定：它是 settings 的键、其他每个 namespace 与每一条已记录会话引用的名字，也是页面读不回、因而搬不走的凭据引用词干。推理等级刻意不在可编辑字段之列：它是按模型的能力，提供方级的控件只可能被设成某些模型会拒绝的值。每个 DeepSeek 行编辑 `id`、可选显示 `name` 与可选 `contextWindow`/`maxTokens`；该精选集之外的现有字段在编辑后仍会保留。
+收起的「自定义设置」折叠区承载精选的额外字段：两个家族都有 `baseURL`（deepseek 的占位符显示公共端点）、各适配器自己的模型目录，以及适配器未提供的 pi-ai 路由的**显示名称**与 **API 协议**。Profile `headers` 仍是 `settings.yaml` 或 Cordis 配置中的部署配置，Models 页面不提供编辑器。Provider ID 保持固定：它是 settings 的键、其他每个 namespace 与每一条已记录会话引用的名字，也是页面读不回、因而搬不走的凭据引用词干。推理等级刻意不在可编辑字段之列：它是按模型的能力，提供方级的控件只可能被设成某些模型会拒绝的值。每个 DeepSeek 行编辑 `id`、可选显示 `name` 与可选 `contextWindow`/`maxTokens`；该精选集之外的现有字段在编辑后仍会保留。pi-ai 模型行在同一折叠区里还可以声明**输入模态**——`text` 或 `text` + `image`——这正是把路由上支持视觉的模型标记为可接收图片输入的地方。
 
 ### 新增与删除提供方
 
@@ -43,7 +43,7 @@ kind: "package-reference"
 
 ### 首次运行弹窗
 
-版本化声明步骤完成后，DeepSeek 步骤从同一份合并快照投影首次运行就绪状态。用户已经能够到达的**任何**提供方都会直接结束该步骤、不做渲染；只有没有任何提供方的用户才会被询问官方 DeepSeek 密钥。「稍后配置」只完成这次协调器遍历；适配器缺失、路由不活动、合并失败、只读部署或能力不可用时，该步骤不渲染即完成——Models 仍是诊断界面。
+版本化声明步骤完成后，DeepSeek 步骤从同一份合并快照投影首次运行就绪状态。用户已经能够到达的**任何**提供方都会直接结束该步骤、不做渲染；只有没有任何提供方的用户才会被询问官方 DeepSeek 密钥。「稍后配置」只完成这次协调器遍历；适配器缺失、路由不活动、合并失败、只读部署或能力不可用时，该步骤不渲染即完成——Models 仍是诊断界面。只有 Host 行的 `onboarding` 配置不为 `false` 时两个弹窗才注册；想要隐藏内测声明的部署应设置该字段，而不是禁用整个插件（那会连 Models 页面一起移除）。Host 半把该开关以 `globalThis.__DSH_SETTINGS_ONBOARDING__` 投影进所服务的 index。
 
 ### 扩展 slot
 
@@ -120,4 +120,4 @@ kind: "package-reference"
 
 </details>
 
-**运行时不变式：** 不发布伴生入口。这是只贡献 nav entry 的 section 插件，渲染固定空 content column，不发出 Cordis 事件，也不持有跨插件可变关系。
+**运行时不变式：** 不发布伴生入口。这是只贡献 nav entry 的 section 插件，渲染固定空 content column，不发出 Cordis 事件，也不持有跨插件可变关系；其 Host 半只贡献一条确定性的 index 注入行。

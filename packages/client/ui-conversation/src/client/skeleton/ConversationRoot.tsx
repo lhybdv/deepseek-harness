@@ -390,6 +390,11 @@ export function ConversationRoot({
           />
         ))}
       </div>
+      {/* The welcome page's own footer: below the centered hero content, so a
+          brand line lands at the column's bottom rather than under the card. */}
+      {phase === 'hero' ? (
+        <div className={css.heroFooter}>{renderSlot('conversation.hero.footer', {})}</div>
+      ) : null}
     </div>
   )
 }

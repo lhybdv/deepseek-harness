@@ -401,6 +401,25 @@ export interface Config {
 
 Source: [`packages/client/hmr/src/index.ts:31`](../packages/client/hmr/src/index.ts)
 
+<a id="deepseek-aidsh-client-ui-settings-models"></a>
+
+## `@deepseek-ai/dsh-client-ui-settings-models`
+
+```ts config-catalog
+/** Deployment configuration for the Models settings surface. */
+export interface Config {
+  /**
+   * Register the first-run onboarding dialogs (the welcome notice and the
+   * DeepSeek credential step). `false` removes both popups and leaves the
+   * Models settings page in place — the two live in one Client plugin, so
+   * disabling that plugin would take the page with them.
+   */
+  onboarding?: boolean
+}
+```
+
+Source: [`packages/client/ui-settings-models/src/index.ts:11`](../packages/client/ui-settings-models/src/index.ts)
+
 <a id="deepseek-aidsh-code-runtime-worker-thread"></a>
 
 ## `@deepseek-ai/dsh-code-runtime-worker-thread`
@@ -2607,7 +2626,7 @@ export interface Config {
 }
 ```
 
-Source: [`packages/core/system-prompt/src/index.ts:242`](../packages/core/system-prompt/src/index.ts)
+Source: [`packages/core/system-prompt/src/index.ts:244`](../packages/core/system-prompt/src/index.ts)
 
 <a id="deepseek-aidsh-terminal-bash"></a>
 
@@ -2744,6 +2763,32 @@ export interface Config {
 
 Source: [`packages/shell/tool-bash-persistent/src/index.ts:435`](../packages/shell/tool-bash-persistent/src/index.ts)
 
+<a id="deepseek-aidsh-tool-corpus"></a>
+
+## `@deepseek-ai/dsh-tool-corpus`
+
+Requires: `tools` · `corpus` · `systemPrompt`
+
+```ts config-catalog
+/** Plugin config: retrieval, citation, ingest, and timeout bounds. */
+export interface Config {
+  /** Chunks returned by one `corpus_search` call that omits `limit`. Defaults to 8. */
+  defaultLimit?: number
+  /** Largest `limit` `corpus_search` accepts; larger requests are rejected. Defaults to 20. */
+  maxLimit?: number
+  /** Citation snippet cap in code points. Defaults to 280. */
+  maxSnippetChars?: number
+  /** Documents accepted by one `corpus_ingest` call. Defaults to 10. */
+  maxIngestDocuments?: number
+  /** Characters accepted by one `corpus_ingest` call across all its documents. Defaults to 200000. */
+  maxIngestChars?: number
+  /** Cooperative tool-call budget (ms) for all three tools. Defaults to 30000. */
+  timeoutMs?: number
+}
+```
+
+Source: [`packages/meteo/tool-corpus/src/config.ts:28`](../packages/meteo/tool-corpus/src/config.ts)
+
 <a id="deepseek-aidsh-tool-fs"></a>
 
 ## `@deepseek-ai/dsh-tool-fs`
@@ -2870,6 +2915,34 @@ export interface Config {
 ```
 
 Source: [`packages/lsp/tool-lsp/src/index.ts:57`](../packages/lsp/tool-lsp/src/index.ts)
+
+<a id="deepseek-aidsh-tool-meteo"></a>
+
+## `@deepseek-ai/dsh-tool-meteo`
+
+Requires: `tools` · `meteoData` · `corpus` · `systemPrompt` · `sessionProjections`
+
+```ts config-catalog
+/** Plugin config: retrieval, horizon, clarification, rendering, and timeout bounds. */
+export interface Config {
+  /** Chunks retrieved by one `meteo_consult` call that omits `limit`. Defaults to 6. */
+  defaultLimit?: number
+  /** Largest `limit` `meteo_consult` accepts; larger requests are rejected. Defaults to 20. */
+  maxLimit?: number
+  /** Forecast horizon in whole hours the consultation reads. Defaults to 72. */
+  forecastHours?: number
+  /** Candidate stations a clarification lists at most. Defaults to 6. */
+  maxClarificationCandidates?: number
+  /** Citation excerpt cap in code points. Defaults to 280. */
+  maxSnippetChars?: number
+  /** Observation and forecast rows each listed in the model-facing text. Defaults to 24. */
+  maxSeriesRows?: number
+  /** Cooperative tool-call budget (ms) for all three tools. Defaults to 30000. */
+  timeoutMs?: number
+}
+```
+
+Source: [`packages/meteo/tool-meteo/src/config.ts:34`](../packages/meteo/tool-meteo/src/config.ts)
 
 <a id="deepseek-aidsh-tool-present"></a>
 
@@ -3444,6 +3517,7 @@ These load from a `cordis.yml` entry with no `config:` block; they declare no co
 
 - `@deepseek-ai/dsh-acp-app` — requires `cmdlineArgs` ([`packages/bundle/acp-app/src/index.ts`](../packages/bundle/acp-app/src/index.ts))
 - `@deepseek-ai/dsh-agent` ([`packages/core/agent/src/index.ts`](../packages/core/agent/src/index.ts))
+- `@deepseek-ai/dsh-api-meteo-controller` — requires `corpus` · `meteoData` · `sessionProjections` · `typert` ([`packages/api/meteo-controller/src/index.ts`](../packages/api/meteo-controller/src/index.ts))
 - `@deepseek-ai/dsh-api-remotes` — requires `typertGateway` ([`packages/api/remotes/src/index.ts`](../packages/api/remotes/src/index.ts))
 - `@deepseek-ai/dsh-api-workspace-controller` — requires `typert` · `workspaceRegistry` ([`packages/api/workspace-controller/src/index.ts`](../packages/api/workspace-controller/src/index.ts))
 - `@deepseek-ai/dsh-authorization` — requires `credentials` ([`packages/credentials/authorization/src/index.ts`](../packages/credentials/authorization/src/index.ts))
@@ -3455,6 +3529,7 @@ These load from a `cordis.yml` entry with no `config:` block; they declare no co
 - `@deepseek-ai/dsh-client-ui-approval` ([`packages/client/ui-approval/src/index.ts`](../packages/client/ui-approval/src/index.ts))
 - `@deepseek-ai/dsh-client-ui-attachment` ([`packages/client/ui-attachment/src/index.ts`](../packages/client/ui-attachment/src/index.ts))
 - `@deepseek-ai/dsh-client-ui-brand-official` ([`packages/client/ui-brand-official/src/index.ts`](../packages/client/ui-brand-official/src/index.ts))
+- `@deepseek-ai/dsh-client-ui-brand-windpilot` ([`packages/client/ui-brand-windpilot/src/index.ts`](../packages/client/ui-brand-windpilot/src/index.ts))
 - `@deepseek-ai/dsh-client-ui-chat` ([`packages/client/ui-chat/src/index.ts`](../packages/client/ui-chat/src/index.ts))
 - `@deepseek-ai/dsh-client-ui-commands` ([`packages/client/ui-commands/src/index.ts`](../packages/client/ui-commands/src/index.ts))
 - `@deepseek-ai/dsh-client-ui-conversation` ([`packages/client/ui-conversation/src/index.ts`](../packages/client/ui-conversation/src/index.ts))
@@ -3467,6 +3542,8 @@ These load from a `cordis.yml` entry with no `config:` block; they declare no co
 - `@deepseek-ai/dsh-client-ui-jobs` ([`packages/client/ui-jobs/src/index.ts`](../packages/client/ui-jobs/src/index.ts))
 - `@deepseek-ai/dsh-client-ui-layout` ([`packages/client/ui-layout/src/index.ts`](../packages/client/ui-layout/src/index.ts))
 - `@deepseek-ai/dsh-client-ui-message-feedback` ([`packages/client/ui-message-feedback/src/index.ts`](../packages/client/ui-message-feedback/src/index.ts))
+- `@deepseek-ai/dsh-client-ui-meteo` ([`packages/client/ui-meteo/src/index.ts`](../packages/client/ui-meteo/src/index.ts))
+- `@deepseek-ai/dsh-client-ui-meteo-chat` ([`packages/client/ui-meteo-chat/src/index.ts`](../packages/client/ui-meteo-chat/src/index.ts))
 - `@deepseek-ai/dsh-client-ui-model-selection` ([`packages/client/ui-model-selection/src/index.ts`](../packages/client/ui-model-selection/src/index.ts))
 - `@deepseek-ai/dsh-client-ui-open-in-app` ([`packages/client/ui-open-in-app/src/index.ts`](../packages/client/ui-open-in-app/src/index.ts))
 - `@deepseek-ai/dsh-client-ui-permission-presets` ([`packages/client/ui-permission-presets/src/index.ts`](../packages/client/ui-permission-presets/src/index.ts))
@@ -3477,7 +3554,6 @@ These load from a `cordis.yml` entry with no `config:` block; they declare no co
 - `@deepseek-ai/dsh-client-ui-session` ([`packages/client/ui-session/src/index.ts`](../packages/client/ui-session/src/index.ts))
 - `@deepseek-ai/dsh-client-ui-settings` ([`packages/client/ui-settings/src/index.ts`](../packages/client/ui-settings/src/index.ts))
 - `@deepseek-ai/dsh-client-ui-settings-general` ([`packages/client/ui-settings-general/src/index.ts`](../packages/client/ui-settings-general/src/index.ts))
-- `@deepseek-ai/dsh-client-ui-settings-models` ([`packages/client/ui-settings-models/src/index.ts`](../packages/client/ui-settings-models/src/index.ts))
 - `@deepseek-ai/dsh-client-ui-settings-plugin-inventory` ([`packages/client/ui-settings-plugin-inventory/src/index.ts`](../packages/client/ui-settings-plugin-inventory/src/index.ts))
 - `@deepseek-ai/dsh-client-ui-settings-plugins` ([`packages/client/ui-settings-plugins/src/index.ts`](../packages/client/ui-settings-plugins/src/index.ts))
 - `@deepseek-ai/dsh-client-ui-sidebar` ([`packages/client/ui-sidebar/src/index.ts`](../packages/client/ui-sidebar/src/index.ts))
@@ -3507,6 +3583,7 @@ These load from a `cordis.yml` entry with no `config:` block; they declare no co
 - `@deepseek-ai/dsh-host-plugin-inventory` — requires `loader` ([`packages/host/plugin-inventory/src/index.ts`](../packages/host/plugin-inventory/src/index.ts))
 - `@deepseek-ai/dsh-llm` ([`packages/llm/llm/src/index.ts`](../packages/llm/llm/src/index.ts))
 - `@deepseek-ai/dsh-lsp` ([`packages/lsp/lsp/src/index.ts`](../packages/lsp/lsp/src/index.ts))
+- `@deepseek-ai/dsh-meteo-app` ([`packages/bundle/meteo-app/src/index.ts`](../packages/bundle/meteo-app/src/index.ts))
 - `@deepseek-ai/dsh-schedule` — requires `agents` · `sessions` · `tools` · `sessionPersistence` ([`packages/schedule/schedule/src/index.ts`](../packages/schedule/schedule/src/index.ts))
 - `@deepseek-ai/dsh-session` ([`packages/core/session/src/index.ts`](../packages/core/session/src/index.ts))
 - `@deepseek-ai/dsh-session-checkpoint-policy` — requires `llm` · `sessionPersistence` · `sessions` · `tools` ([`packages/session/session-checkpoint-policy/src/index.ts`](../packages/session/session-checkpoint-policy/src/index.ts))
@@ -3576,6 +3653,8 @@ Imported as libraries by other packages; a `cordis.yml` cannot load them.
 - `@deepseek-ai/dsh-launch-environment` ([`packages/util/launch-environment/src/index.ts`](../packages/util/launch-environment/src/index.ts))
 - `@deepseek-ai/dsh-llm-mock-server` ([`packages/test-support/llm-mock-server/src/index.ts`](../packages/test-support/llm-mock-server/src/index.ts))
 - `@deepseek-ai/dsh-loader-smoke` ([`packages/test-support/loader-smoke/src/index.ts`](../packages/test-support/loader-smoke/src/index.ts))
+- `@deepseek-ai/dsh-meteo-corpus` ([`packages/meteo/meteo-corpus/src/index.ts`](../packages/meteo/meteo-corpus/src/index.ts))
+- `@deepseek-ai/dsh-meteo-data` ([`packages/meteo/meteo-data/src/index.ts`](../packages/meteo/meteo-data/src/index.ts))
 - `@deepseek-ai/dsh-native-command` ([`packages/util/native-command/src/index.ts`](../packages/util/native-command/src/index.ts))
 - `@deepseek-ai/dsh-output-retention` ([`packages/util/output-retention/src/index.ts`](../packages/util/output-retention/src/index.ts))
 - `@deepseek-ai/dsh-package-manifest` ([`packages/util/package-manifest/src/index.ts`](../packages/util/package-manifest/src/index.ts))

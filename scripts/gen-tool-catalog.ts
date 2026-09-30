@@ -58,6 +58,10 @@ import Lsp from '@deepseek-ai/dsh-lsp'
 import * as ToolLsp from '@deepseek-ai/dsh-tool-lsp'
 import * as ToolSkill from '@deepseek-ai/dsh-tool-skill'
 import * as ToolSessionQuery from '@deepseek-ai/dsh-tool-session-query'
+import SqliteCorpusStore from '@deepseek-ai/dsh-meteo-corpus'
+import * as ToolCorpus from '@deepseek-ai/dsh-tool-corpus'
+import LocalMeteoData from '@deepseek-ai/dsh-meteo-data'
+import * as ToolMeteo from '@deepseek-ai/dsh-tool-meteo'
 import * as ToolTasks from '@deepseek-ai/dsh-tool-jobs'
 import type TeamService from '@deepseek-ai/dsh-experimental-agent-team'
 import * as ToolTeam from '@deepseek-ai/dsh-experimental-tool-agent-team'
@@ -465,6 +469,55 @@ const TOOL_PACKAGES: ToolPackage[] = [
     },
     note:
       'The five read-only tools hide provider cursors and authorize every result from the immutable calling agent session. The package is opt-in; compositions that need enforced deadlines or bounded inline output also mount the generic timeout or spill policies.',
+  },
+  {
+    pkg: '@deepseek-ai/dsh-tool-corpus',
+    dir: 'tool-corpus',
+    source: 'packages/meteo/tool-corpus/src/index.ts',
+    requires: ['ctx.tools', 'ctx.systemPrompt', 'ctx.corpus'],
+    writes: ['tool/call', 'tool/result'],
+    async mount(ctx) {
+      // The harvester constructs the plugins directly rather than through the
+      // Loader, so it states every field instead of relying on schema defaults.
+      await ctx.plugin(SqliteCorpusStore, {
+        path: ':memory:',
+        journalMode: 'delete',
+        defaultLimit: 8,
+        maxLimit: 50,
+        maxMatchTokens: 64,
+        maxChunkChars: 800,
+        maxDocumentBytes: 4_000_000,
+      })
+      await ctx.plugin(ToolCorpus)
+    },
+    note:
+      'The three tools expose the corpus seam to the model. Ingest splits and indexes documents and reports each rejection separately; search is recall-oriented, so an empty result is a legitimate answer the tool reports as such rather than papering over; read returns one stored chunk verbatim with the offsets a citation needs. The search result carries its citation list in presentation metadata so a client renders sources without re-deriving them.',
+  },
+  {
+    pkg: '@deepseek-ai/dsh-tool-meteo',
+    dir: 'tool-meteo',
+    source: 'packages/meteo/tool-meteo/src/index.ts',
+    requires: ['ctx.tools', 'ctx.systemPrompt', 'ctx.meteoData', 'ctx.corpus'],
+    writes: ['tool/call', 'tool/result', 'meteo/focus'],
+    async mount(ctx) {
+      await ctx.plugin(LocalMeteoData, {
+        source: 'fixture',
+        fixtureDir: resolve(root, 'packages/meteo/meteo-data/fixtures'),
+        timeoutMs: 15_000,
+      })
+      await ctx.plugin(SqliteCorpusStore, {
+        path: ':memory:',
+        journalMode: 'delete',
+        defaultLimit: 8,
+        maxLimit: 50,
+        maxMatchTokens: 64,
+        maxChunkChars: 800,
+        maxDocumentBytes: 4_000_000,
+      })
+      await ctx.plugin(ToolMeteo)
+    },
+    note:
+      'One consultation runs a fixed pipeline — resolve the station, read observations and forecast, grade per-day suitability and one hazard level against the deployment thresholds, retrieve corpus chunks — and returns findings plus a step trace rather than an answer. A station the tool cannot resolve returns a clarification and runs no further step, so a wrong place can never produce a confident verdict.',
   },
   {
     pkg: '@deepseek-ai/dsh-tool-subagent',

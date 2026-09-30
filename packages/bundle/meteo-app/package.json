@@ -1,0 +1,52 @@
+{
+  "name": "@deepseek-ai/dsh-meteo-app",
+  "description": "The meteorology consultation bundle: the data and corpus seams, their model-facing tools, and the Remote surface the browser panels call",
+  "version": "0.1.5-rc.2",
+  "publishConfig": {
+    "access": "public"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/deepseek-ai/deepseek-harness.git",
+    "directory": "packages/bundle/meteo-app"
+  },
+  "type": "module",
+  "main": "lib/index.js",
+  "types": "lib/types/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./lib/types/index.d.ts",
+      "default": "./lib/index.js"
+    },
+    "./cordis.patch.yml": "./cordis.patch.yml",
+    "./src/*": "./src/*",
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "lib/index.js",
+    "cordis.patch.yml",
+    "lib/types/**/*.d.ts"
+  ],
+  "license": "MIT",
+  "dsh": {
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    }
+  },
+  "dependencies": {
+    "@deepseek-ai/dsh-api-meteo-controller": "workspace:^",
+    "@deepseek-ai/dsh-client-ui-brand-windpilot": "workspace:^",
+    "@deepseek-ai/dsh-client-ui-meteo": "workspace:^",
+    "@deepseek-ai/dsh-client-ui-meteo-chat": "workspace:^",
+    "@deepseek-ai/dsh-meteo-corpus": "workspace:^",
+    "@deepseek-ai/dsh-meteo-data": "workspace:^",
+    "@deepseek-ai/dsh-tool-corpus": "workspace:^",
+    "@deepseek-ai/dsh-tool-meteo": "workspace:^"
+  },
+  "peerDependencies": {
+    "@deepseek-ai/cordis": "workspace:^"
+  },
+  "devDependencies": {
+    "@deepseek-ai/cordis": "workspace:^"
+  }
+}

@@ -151,8 +151,15 @@ export function HeroShell({ t, renderSlot, children }: HeroShellProps) {
           </span>
           <span className={css.titleGroup}>
             {/* Own element: keeps the headline text addressable apart from the badge. */}
-            <span>{t('hero.headline')}</span>
-            <span className={css.previewBadge}>{t('hero.preview')}</span>
+            {renderSlot('conversation.hero.headline', {}, {
+              fallback: <span>{t('hero.headline')}</span>,
+            })}
+            {/* The badge is a claim about the build, not welcome copy: the shell
+                makes it for its own builds and a deployment that brands the
+                product drops it by not being that build. */}
+            {process.env.DSH_CLIENT_BUILD_PROFILE === 'official'
+              ? <span className={css.previewBadge}>{t('hero.preview')}</span>
+              : null}
           </span>
         </div>
         <div className={css.body}>

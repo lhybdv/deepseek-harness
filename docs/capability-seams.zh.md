@@ -125,6 +125,13 @@ flowchart LR
   svc_skills["ctx.skills<br/>Skill provider registry"]
   pkg_skill_badge["skill-badge"]
   pkg_skill_filesystem["skill-filesystem"]
+  pkg_meteo_corpus["meteo-corpus"]
+  svc_corpus["ctx.corpus<br/>Corpus retrieval seam"]
+  pkg_tool_corpus["tool-corpus"]
+  pkg_meteo_data["meteo-data"]
+  svc_meteoData["ctx.meteoData<br/>Meteorological data seam"]
+  pkg_meteo_controller["meteo-controller"]
+  svc_meteoController["ctx.meteoController<br/>Meteorology Remote namespace"]
   svc_agents["ctx.agents<br/>Agent service"]
   pkg_acp["acp"]
   pkg_agent_default_model["agent-default-model"]
@@ -283,6 +290,9 @@ flowchart LR
   pkg_lsp --> svc_lsp
   pkg_lsp_stdio --> svc_lsp
   pkg_message_feedback --> svc_messageFeedback
+  pkg_meteo_controller --> svc_meteoController
+  pkg_meteo_corpus --> svc_corpus
+  pkg_meteo_data --> svc_meteoData
   pkg_permission_presets --> svc_permissionPresets
   pkg_plan_mode --> svc_planMode
   pkg_plugin_package_inventory_deepseek --> svc_deepseekLlmApiExtensions
@@ -366,6 +376,7 @@ flowchart LR
   svc_codeRuntime --> pkg_tools
   svc_compaction --> pkg_compaction_basic
   svc_cordisInspect --> pkg_tool_cordis
+  svc_corpus --> pkg_tool_corpus
   svc_credentials --> pkg_api_settings_controller
   svc_credentials --> pkg_llm_deepseek
   svc_credentials --> pkg_llm_pi_ai
@@ -518,6 +529,9 @@ flowchart LR
 | `ctx.sessionProjections` | `core` | [`session-projection`](../packages/session/session-projection) | - | [`api-session-controller`](../packages/api/session-controller), [`tool-todo`](../packages/todo/tool-todo), [`session-title`](../packages/session/session-title) | - | 各领域注册由状态驱动的折叠单元；主动驱动过程维护每个会话的水位状态，Session controller 提供 baseline 并推送发生变化的值。 |
 | `ctx.sessionProjectionCache` | `core` | [`session-projection-cache`](../packages/session/session-projection-cache) | - | [`api-session-controller`](../packages/api/session-controller), [`session-query`](../packages/session-query/session-query), [`session-reference`](../packages/context/session-reference), [`subagent`](../packages/subagent/subagent) | - | 按会话持久保存投影单元状态的检查点（节流检查点，以及轮次／结束／分离时的必选检查点），并提供冷读取阶梯：缓存行加持久化尾部回放，因此列表读取永远不需要加载完整日志。 |
 | `ctx.skills` | `seam` | [`skill`](../packages/skill/skill) | [`skill-badge`](../packages/skill/skill-badge), [`skill-filesystem`](../packages/skill/skill-filesystem) | [`tool-skill`](../packages/skill/tool-skill) | - | 合并提供方的 skill（技能）目录；tool-skill 渲染会话前缀目录，并加载完整的 skill 正文。 |
+| `ctx.corpus` | `seam` | [`meteo-corpus`](../packages/meteo/meteo-corpus) | [`meteo-corpus`](../packages/meteo/meteo-corpus) | [`tool-corpus`](../packages/meteo/tool-corpus) | - | 摄取文档，在提供方自己的数据库文件里索引一种 CJK 二元（bigram）分词形式，并返回带有引用所需偏移量的分块。检索时把问题词元与调用方提供的扩展词取并集，因为用 AND 连接的口语化问题什么都召回不到。 |
+| `ctx.meteoData` | `seam` | [`meteo-data`](../packages/meteo/meteo-data) | [`meteo-data`](../packages/meteo/meteo-data) | - | - | 从一个已配置的来源（一份 JSON fixture 包或一个 HTTP 源站）提供站点、观测、预报、阈值和农时窗口，并把跨轮次的咨询主题作为 meteo/focus 会话事件来持有，而不是作为工具本地状态。 |
+| `ctx.meteoController` | `core` | `meteo-controller` | - | - | - | 拥有气象各接缝面向 Client 的表面：语料面板的读写、语料检索与引用读取，以及会话的咨询焦点。每个载荷都以其所属接缝声明的形状传输，因此引用某个片段的引用者命名的正是索引所存的偏移。 |
 | `ctx.agents` | `core` | [`agent`](../packages/core/agent) | - | [`agent-loop`](../packages/core/agent-loop), [`acp`](../packages/acp/acp), [`subagent-in-process-driver`](../packages/subagent/subagent-in-process-driver) | - | 拥有实时 Agent 句柄、创建／恢复工厂 seam，以及进程本地的发起方传播。 |
 | `ctx.agentDefaultModel` | `core` | [`agent-default-model`](../packages/core/agent-default-model) | - | [`api-session-controller`](../packages/api/session-controller), [`headless`](../packages/bundle/headless) | - | 通过 settings 分层默认 `ModelSelection`，让直接入口与 Host 支撑的 Agent 入口共享同一个状态所有者。 |
 | `ctx.agentLoop` | `bundle` | [`agent-loop`](../packages/core/agent-loop) | - | [`base`](../packages/bundle/base), [`sdk-minimal`](../packages/bundle/sdk-minimal) | - | 唯一的具体循环插件；扩展包依赖 dsh-agent 的事件和服务，而不依赖此包。 |

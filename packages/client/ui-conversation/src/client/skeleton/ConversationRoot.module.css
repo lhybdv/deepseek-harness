@@ -469,6 +469,20 @@
   overflow-y: auto;
 }
 
+/* The welcome page's footer row: the column's bottom edge, centered, below the
+   vertically-centered hero content. Empty when no occupant is registered, so
+   the shell keeps its own bottom padding either way. */
+.heroFooter {
+  flex: none;
+  display: flex;
+  justify-content: center;
+  padding: 0 var(--dsh-composer-side-clearance) 16px;
+}
+
+.heroFooter:empty {
+  display: none;
+}
+
 /* Settling (session replaying, hero/docked unknown): keep the composer seat
    mounted but invisible so no wrong layout flashes before the phase lands. */
 .root[data-phase='settling'] .composerSeat {

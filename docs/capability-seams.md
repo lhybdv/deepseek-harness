@@ -123,6 +123,13 @@ flowchart LR
   svc_skills["ctx.skills<br/>Skill provider registry"]
   pkg_skill_badge["skill-badge"]
   pkg_skill_filesystem["skill-filesystem"]
+  pkg_meteo_corpus["meteo-corpus"]
+  svc_corpus["ctx.corpus<br/>Corpus retrieval seam"]
+  pkg_tool_corpus["tool-corpus"]
+  pkg_meteo_data["meteo-data"]
+  svc_meteoData["ctx.meteoData<br/>Meteorological data seam"]
+  pkg_meteo_controller["meteo-controller"]
+  svc_meteoController["ctx.meteoController<br/>Meteorology Remote namespace"]
   svc_agents["ctx.agents<br/>Agent service"]
   pkg_acp["acp"]
   pkg_agent_default_model["agent-default-model"]
@@ -281,6 +288,9 @@ flowchart LR
   pkg_lsp --> svc_lsp
   pkg_lsp_stdio --> svc_lsp
   pkg_message_feedback --> svc_messageFeedback
+  pkg_meteo_controller --> svc_meteoController
+  pkg_meteo_corpus --> svc_corpus
+  pkg_meteo_data --> svc_meteoData
   pkg_permission_presets --> svc_permissionPresets
   pkg_plan_mode --> svc_planMode
   pkg_plugin_package_inventory_deepseek --> svc_deepseekLlmApiExtensions
@@ -364,6 +374,7 @@ flowchart LR
   svc_codeRuntime --> pkg_tools
   svc_compaction --> pkg_compaction_basic
   svc_cordisInspect --> pkg_tool_cordis
+  svc_corpus --> pkg_tool_corpus
   svc_credentials --> pkg_api_settings_controller
   svc_credentials --> pkg_llm_deepseek
   svc_credentials --> pkg_llm_pi_ai
@@ -516,6 +527,9 @@ flowchart LR
 | `ctx.sessionProjections` | `core` | [`session-projection`](../packages/session/session-projection) | - | [`api-session-controller`](../packages/api/session-controller), [`tool-todo`](../packages/todo/tool-todo), [`session-title`](../packages/session/session-title) | - | Domains register state-driven fold units; the eager drive keeps per-session watermark states and the Session controller serves baselines and pushes changed values. |
 | `ctx.sessionProjectionCache` | `core` | [`session-projection-cache`](../packages/session/session-projection-cache) | - | [`api-session-controller`](../packages/api/session-controller), [`session-query`](../packages/session-query/session-query), [`session-reference`](../packages/context/session-reference), [`subagent`](../packages/subagent/subagent) | - | Durably checkpoints projection unit states per session (throttled + turn/end/detach mandatory points) and serves the cold-read ladder: cache row + persistence tail replay, so listings never load full logs. |
 | `ctx.skills` | `seam` | [`skill`](../packages/skill/skill) | [`skill-badge`](../packages/skill/skill-badge), [`skill-filesystem`](../packages/skill/skill-filesystem) | [`tool-skill`](../packages/skill/tool-skill) | - | Merges provider skill catalogs; tool-skill renders the session-prefix catalog and loads complete skill bodies. |
+| `ctx.corpus` | `seam` | [`meteo-corpus`](../packages/meteo/meteo-corpus) | [`meteo-corpus`](../packages/meteo/meteo-corpus) | [`tool-corpus`](../packages/meteo/tool-corpus) | - | Ingests documents, indexes a CJK bigram token form in the provider's own database file, and returns chunks with the offsets a citation needs. Retrieval unions question tokens with caller expansion terms because an AND-joined colloquial question recalls nothing. |
+| `ctx.meteoData` | `seam` | [`meteo-data`](../packages/meteo/meteo-data) | [`meteo-data`](../packages/meteo/meteo-data) | - | - | Serves stations, observations, forecast, thresholds, and farming windows from a configured source (a JSON fixture bundle or an HTTP origin), and owns the cross-turn consultation subject as the meteo/focus session event rather than as tool-local state. |
+| `ctx.meteoController` | `core` | `meteo-controller` | - | - | - | Owns the Client-facing surface of the meteorology seams: the corpus panel reads and writes, corpus search and citation reads, and the session consultation focus. Every payload travels as the shape its own seam declares, so a panel that cites a chunk names the offsets the index stored. |
 | `ctx.agents` | `core` | [`agent`](../packages/core/agent) | - | [`agent-loop`](../packages/core/agent-loop), [`acp`](../packages/acp/acp), [`subagent-in-process-driver`](../packages/subagent/subagent-in-process-driver) | - | Owns live Agent handles, the create/resume factory seam, and process-local initiator propagation. |
 | `ctx.agentDefaultModel` | `core` | [`agent-default-model`](../packages/core/agent-default-model) | - | [`api-session-controller`](../packages/api/session-controller), [`headless`](../packages/bundle/headless) | - | Layers the default ModelSelection through settings so direct and Host-backed Agent entry points share one state owner. |
 | `ctx.agentLoop` | `bundle` | [`agent-loop`](../packages/core/agent-loop) | - | [`base`](../packages/bundle/base), [`sdk-minimal`](../packages/bundle/sdk-minimal) | - | The one concrete loop plugin; extension packages depend on dsh-agent events and services, not on this package. |

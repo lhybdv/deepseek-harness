@@ -1,0 +1,56 @@
+/**
+ * Citation tab layout: one passage, its heading trail, and its character range.
+ * Everything is expressed through `--dsw-*` tokens so the tab follows the
+ * active theme, and every rule is scoped to this module.
+ */
+
+.chunk {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 14px 16px 24px;
+  height: 100%;
+  overflow-y: auto;
+  color: var(--dsw-alias-label-primary);
+}
+
+.header {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.trail {
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.range {
+  font-size: 12px;
+  color: var(--dsw-alias-label-tertiary);
+}
+
+.text {
+  margin: 0;
+  padding: 12px;
+  font: inherit;
+  font-size: 13px;
+  line-height: 1.7;
+  white-space: pre-wrap;
+  word-break: break-word;
+  background: var(--dsw-alias-bg-base);
+  border: 0.5px solid var(--dsw-alias-border-l1);
+  border-radius: 8px;
+}
+
+.notice {
+  padding: 14px 16px;
+  font-size: 13px;
+  color: var(--dsw-alias-label-tertiary);
+}
+
+.error {
+  padding: 14px 16px;
+  font-size: 13px;
+  color: var(--dsw-alias-label-error);
+}
