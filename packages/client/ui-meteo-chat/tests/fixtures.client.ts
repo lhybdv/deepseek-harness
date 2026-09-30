@@ -4,7 +4,7 @@
  * meteoChat translate seat, and the row/section lookups the card specs read.
  */
 import { makeTranslate } from '@deepseek-ai/dsh-client-test-runtime'
-import type { RunningToolCall, ToolResultNode } from '@deepseek-ai/dsh-client-ui-chat/client'
+import type { StartedToolCall, ToolResultNode } from '@deepseek-ai/dsh-client-ui-chat/client'
 import { zh } from '../src/client/locales.ts'
 
 /** The meteoChat translate seat over the zh dictionary. */
@@ -13,9 +13,10 @@ export const t = makeTranslate(zh)
 /** The argsRaw the settled default call head carries. */
 export const ARGS_RAW = '{"question":"明天能打药吗"}'
 
-/** A running block whose call head carries `argsRaw`. */
-export function running(argsRaw: string, over: Partial<RunningToolCall> = {}): RunningToolCall {
+/** A dispatched block whose call head carries `argsRaw`. */
+export function running(argsRaw: string, over: Partial<StartedToolCall> = {}): StartedToolCall {
   return {
+    phase: 'start',
     callId: 'c1', name: 'meteo_consult', argsRaw, turn: 1, step: 1, time: 1_000, subCalls: [], ...over,
   }
 }

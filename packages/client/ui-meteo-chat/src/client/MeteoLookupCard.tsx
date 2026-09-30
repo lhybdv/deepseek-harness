@@ -4,7 +4,7 @@
  * answering the model. A result whose metadata is missing or foreign falls
  * back to the generic input/output body, so a replay never breaks.
  */
-import { IconGlobeOutline14 } from '@deepseek-ai/dsh-client-ui-primitives'
+import { IconGlobeOutlineRegular } from '@deepseek-ai/dsh-client-ui-primitives'
 import type { PropsLocale } from '@deepseek-ai/dsh-client-ui-slots'
 import type { ToolCallViewProps } from '@deepseek-ai/dsh-client-ui-tool/client'
 import { meteoCallArgsFormatted, meteoLookupModel } from './meteo-card-model.ts'
@@ -71,7 +71,7 @@ export function MeteoLookupCard({ block, inspect, t }: MeteoLookupCardProps) {
       : model.stations.length === 0
         ? t('lookup.none')
         : t('lookup.count', { n: String(model.stations.length) })
-  const leading = disclosureLeading(model.state, open, expandable, <IconGlobeOutline14 size={14} />)
+  const leading = disclosureLeading(model.state, open, expandable, <IconGlobeOutlineRegular size={14} />)
   return (
     <div className={css.card} data-tool="meteo_station_lookup" data-state={model.state}>
       <div

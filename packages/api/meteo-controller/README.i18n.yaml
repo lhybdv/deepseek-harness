@@ -1,6 +1,52 @@
-# Bilingual-pair consistency record (docs/i18n/README.md): the git blob hash of each
-# side as of the last confirmed-consistent state. Both languages carry equal authority;
-# after editing either side, bring the other along and re-record with:
+# Bilingual-pair consistency record for README.md (docs/i18n/README.md): per heading
+# section, a hash of its English and Chinese blocks outside code blocks and generated regions.
+# After editing either side, bring the other along and re-record with:
 #   pnpm run verify-translation-pairing --write packages/api/meteo-controller/README.md
-README.md: f88082ef46b516b4ad2faae7faf98f86130e87ad
-README.zh.md: 21b9ab3527ce7b6535c59aa43e82ba7b18e34e9d
+/:
+  en: 694de628d906e5a7
+  zh: 15d652c642f09da7
+/deepseek-ai-dsh-api-meteo-controller:
+  en: e1324610d60265de
+  zh: 260d93b0e73a4085
+/deepseek-ai-dsh-api-meteo-controller/summary:
+  en: cb092f78108da68b
+  zh: 854aa6dc47ed03cc
+/deepseek-ai-dsh-api-meteo-controller/table-of-contents:
+  en: d152484eb41ac6b4
+  zh: f610329a582f2686
+/deepseek-ai-dsh-api-meteo-controller/use-this-package:
+  en: d6f0ba5d1f8c6223
+  zh: ff63d75275e7e73f
+/deepseek-ai-dsh-api-meteo-controller/use-this-package/when-to-choose-it:
+  en: 3ef0f9c17307f228
+  zh: 36a91a529a7a61e2
+/deepseek-ai-dsh-api-meteo-controller/use-this-package/minimal-configuration:
+  en: 55c7ba0634b2ccbc
+  zh: 41ee472c2239af06
+/deepseek-ai-dsh-api-meteo-controller/understand-the-implementation:
+  en: e16ae0994ffe386a
+  zh: 82a08dc71e6fdfaf
+/deepseek-ai-dsh-api-meteo-controller/further-exploration:
+  en: 30d9f85def512e68
+  zh: c3164758cead37eb
+/deepseek-ai-dsh-api-meteo-controller/model-experience:
+  en: 215e7ba838619b7b
+  zh: a311da3843709f90
+/deepseek-ai-dsh-api-meteo-controller/model-experience/corpus-and-station-reads:
+  en: 07d698302489dee9
+  zh: f87030ce6a0b2f60
+/deepseek-ai-dsh-api-meteo-controller/model-experience/corpus-and-station-reads/what-the-model-sees:
+  en: f7a04b1d9e1653c2
+  zh: cc89bce4c5023574
+/deepseek-ai-dsh-api-meteo-controller/model-experience/corpus-and-station-reads/token-effect:
+  en: d0da3f21a3fac50a
+  zh: a554ff735aaa5c8e
+/deepseek-ai-dsh-api-meteo-controller/model-experience/corpus-and-station-reads/kv-cache-effect:
+  en: bf063c4b85fe866b
+  zh: 395063ea5abfe092
+/deepseek-ai-dsh-api-meteo-controller/known-limitations-and-deferred-work:
+  en: 50f173ce9f0be15f
+  zh: 77d29226b65f254f
+/deepseek-ai-dsh-api-meteo-controller/known-limitations-and-deferred-work/dev-note:
+  en: e67f633dc6fe7773
+  zh: 3bb0c20c93f16f98

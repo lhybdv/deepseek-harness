@@ -51,7 +51,7 @@ const listRequestSchema = z.object({
 })
 
 const ingestRequestSchema = z.object({
-  // Provenance is optional material: the panel's source field is blank by
+  // The source label is optional material: the panel's source field is blank by
   // default, and the `corpus_ingest` tool submits `''` when the caller gives
   // none, so an empty label is accepted and carried through rather than refused.
   sources: z.array(z.object({ title: nonEmptyText, text: z.string(), source: z.string() }))
@@ -140,7 +140,7 @@ export class MeteoController extends TypertRemoteService {
   /**
    * Index submitted documents.
    * @param sources - one to {@link MAX_INGEST_SOURCES} documents; a title must not be empty,
-   *   while a provenance label may be. Empty or oversized text is the store's per-document
+   *   while the source label may be. Empty or oversized text is the store's per-document
    *   failure, reported in the result rather than raised here, so one rejected document never
    *   aborts its siblings.
    * @returns the stored documents and the per-source refusals.

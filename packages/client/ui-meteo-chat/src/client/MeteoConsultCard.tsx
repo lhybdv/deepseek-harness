@@ -8,7 +8,7 @@
  * falls back to the generic input/output body, so a replay never breaks.
  */
 import {
-  IconDataOutline16, StateDot,
+  IconDataOutlineRegular, StateDot,
 } from '@deepseek-ai/dsh-client-ui-primitives'
 import type { PropsLocale } from '@deepseek-ai/dsh-client-ui-slots'
 import type { ToolCallViewProps } from '@deepseek-ai/dsh-client-ui-tool/client'
@@ -396,7 +396,7 @@ export function MeteoConsultCard({ block, inspect, t }: MeteoConsultCardProps) {
   const summary = model.state === 'error'
     ? model.errorSummary ?? ''
     : model.question ?? ''
-  const leading = disclosureLeading(model.state, open, expandable, <IconDataOutline16 size={14} />)
+  const leading = disclosureLeading(model.state, open, expandable, <IconDataOutlineRegular size={14} />)
   return (
     <div className={css.card} data-tool="meteo_consult" data-state={model.state}>
       <div

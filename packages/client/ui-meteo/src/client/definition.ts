@@ -40,6 +40,7 @@ export function citationDefinition(t: TranslateNS<'meteo'>): SidebarRightTabDefi
       return target === null ? t('citation.label') : t('citation.chunk', { ordinal: target.ordinal })
     },
     guide: [{
+      id: 'citation',
       order: 30,
       title: () => t('citation.label'),
       description: () => t('citation.guide'),

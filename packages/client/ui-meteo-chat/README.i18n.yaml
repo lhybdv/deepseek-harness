@@ -1,6 +1,37 @@
-# Bilingual-pair consistency record (docs/i18n/README.md): the git blob hash of each
-# side as of the last confirmed-consistent state. Both languages carry equal authority;
-# after editing either side, bring the other along and re-record with:
+# Bilingual-pair consistency record for README.md (docs/i18n/README.md): per heading
+# section, a hash of its English and Chinese blocks outside code blocks and generated regions.
+# After editing either side, bring the other along and re-record with:
 #   pnpm run verify-translation-pairing --write packages/client/ui-meteo-chat/README.md
-README.md: 3f273f8bc7f89aefb30d8dce7ff237134a80df72
-README.zh.md: 63fdd9bbfd213c4b3e7bf123aff631bb60d285a4
+/:
+  en: 65802cef38b725e6
+  zh: 8417419bc6647968
+/deepseek-ai-dsh-client-ui-meteo-chat:
+  en: f195a09a1558a816
+  zh: 96bc3ae7c4ea9b00
+/deepseek-ai-dsh-client-ui-meteo-chat/summary:
+  en: c2e380c101228ac0
+  zh: 855021b24531a852
+/deepseek-ai-dsh-client-ui-meteo-chat/table-of-contents:
+  en: 590b50ba36b5f613
+  zh: 786d4462f2484eec
+/deepseek-ai-dsh-client-ui-meteo-chat/what-it-registers:
+  en: 8ca9ae24ade56211
+  zh: a536514d880c3381
+/deepseek-ai-dsh-client-ui-meteo-chat/the-three-cards:
+  en: d68483dbc46317b7
+  zh: d19c4af0e0781966
+/deepseek-ai-dsh-client-ui-meteo-chat/where-the-metadata-comes-from:
+  en: ebdf5124d3d39e3e
+  zh: 6b257aef66969c10
+/deepseek-ai-dsh-client-ui-meteo-chat/model-experience:
+  en: dca9f41f225997f2
+  zh: 9f7226f7dd296bf1
+/deepseek-ai-dsh-client-ui-meteo-chat/model-experience/kv-cache-effect:
+  en: b47225dba7c28dd0
+  zh: d76857fd52f096cb
+/deepseek-ai-dsh-client-ui-meteo-chat/known-limitations-and-deferred-work:
+  en: 2aab2b77115674e1
+  zh: 74ddf1ed61b1a210
+/deepseek-ai-dsh-client-ui-meteo-chat/known-limitations-and-deferred-work/dev-note:
+  en: 0614fbc6f05ec818
+  zh: 78cdba84d177a80d

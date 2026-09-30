@@ -151,7 +151,7 @@ describe('CorpusPage upload', () => {
     expect(screen.queryByText('manual.md')).toBeNull()
   })
 
-  it('indexes a batch with no source typed, sending an empty provenance label', async () => {
+  it('indexes a batch with no source typed, sending an empty source label', async () => {
     const ingest = vi.fn(async () => ok({ documents: [DOC], failures: [] }))
     await mount(faceOf({ ingest }))
     await pick(fileOf('manual.md', '正文'))

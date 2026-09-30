@@ -1,6 +1,16 @@
-# Bilingual-pair consistency record (docs/i18n/README.md): the git blob hash of each
-# side as of the last confirmed-consistent state. Both languages carry equal authority;
-# after editing either side, bring the other along and re-record with:
+# Bilingual-pair consistency record for meteo.md (docs/i18n/README.md): per heading
+# section, a hash of its English and Chinese blocks outside code blocks and generated regions.
+# After editing either side, bring the other along and re-record with:
 #   pnpm run verify-translation-pairing --write docs/subsystems/meteo.md
-meteo.md: 907c2bc7985c1bda66398f81985f52e24f8c8b6a
-meteo.zh.md: eb2e08e602b434e72ab16c1ae6c0a2160f2b0e79
+/meteorology-consultation:
+  en: c9530f3402947bfb
+  zh: a774e81a60d693e5
+/meteorology-consultation/meteorological-data:
+  en: 8aa79765a668d69c
+  zh: 7498a2b921eb62a9
+/meteorology-consultation/cross-turn-consultation-subject:
+  en: 9016cfada0e76485
+  zh: a67375f33bde396c
+/meteorology-consultation/corpus-retrieval:
+  en: ffe104fead8d7f27
+  zh: 74fe8dc6f5c4ba1e

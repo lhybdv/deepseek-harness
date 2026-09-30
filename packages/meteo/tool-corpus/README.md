@@ -64,7 +64,7 @@ Matched 1 chunks (most relevant first).
 
 ### Using corpus_ingest
 
-`corpus_ingest` indexes the documents in the call, at most `maxIngestDocuments` of them and `maxIngestChars` characters in total. Each document needs a `title` and non-empty `text`; `source` records provenance. The provider decides what it can accept, so a refused document comes back as a titled failure code beside the accepted ones instead of failing the call.
+`corpus_ingest` indexes the documents in the call, at most `maxIngestDocuments` of them and `maxIngestChars` characters in total. Each document needs a `title` and non-empty `text`; `source` records where the document came from. The provider decides what it can accept, so a refused document comes back as a titled failure code beside the accepted ones instead of failing the call.
 
 ### Using corpus_read
 

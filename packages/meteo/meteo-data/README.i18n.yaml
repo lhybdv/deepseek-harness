@@ -1,6 +1,58 @@
-# Bilingual-pair consistency record (docs/i18n/README.md): the git blob hash of each
-# side as of the last confirmed-consistent state. Both languages carry equal authority;
-# after editing either side, bring the other along and re-record with:
+# Bilingual-pair consistency record for README.md (docs/i18n/README.md): per heading
+# section, a hash of its English and Chinese blocks outside code blocks and generated regions.
+# After editing either side, bring the other along and re-record with:
 #   pnpm run verify-translation-pairing --write packages/meteo/meteo-data/README.md
-README.md: 02bf162dff068ffe724c2275927ac0a15a3f4904
-README.zh.md: 5184dd7757e66c9e9d629f8210a3c3bcafb39dba
+/:
+  en: bc57c85baf19ff7a
+  zh: 97030855fdb319ae
+/deepseek-ai-dsh-meteo-data:
+  en: 14ec88daa4d9172e
+  zh: 4a247befdfa020fd
+/deepseek-ai-dsh-meteo-data/summary:
+  en: 616f7ec20968b51e
+  zh: 1a31e08e16c236c7
+/deepseek-ai-dsh-meteo-data/table-of-contents:
+  en: d152484eb41ac6b4
+  zh: 82bbd1ae631975a1
+/deepseek-ai-dsh-meteo-data/use-this-package:
+  en: f6183824ddba2bc3
+  zh: e39f1831224b7c05
+/deepseek-ai-dsh-meteo-data/use-this-package/when-to-choose-it:
+  en: 2054c0bb42479a00
+  zh: 4363f1524c528313
+/deepseek-ai-dsh-meteo-data/use-this-package/minimal-configuration:
+  en: ab767fa3a3df54fc
+  zh: 60ad094550116834
+/deepseek-ai-dsh-meteo-data/use-this-package/the-bundle:
+  en: 7aba9bc9f2a8cc5d
+  zh: 3340f1f189e635fc
+/deepseek-ai-dsh-meteo-data/use-this-package/carrying-the-focus-across-turns:
+  en: d367ff89054b987c
+  zh: bc09da991c3269f4
+/deepseek-ai-dsh-meteo-data/understand-the-implementation:
+  en: fad8d1994b640e27
+  zh: 7bf266162f9b7e88
+/deepseek-ai-dsh-meteo-data/further-exploration:
+  en: af72ce6f347bafb1
+  zh: e6a952a795f4b4f0
+/deepseek-ai-dsh-meteo-data/model-experience:
+  en: 215e7ba838619b7b
+  zh: a311da3843709f90
+/deepseek-ai-dsh-meteo-data/model-experience/the-session-focus:
+  en: d05b1ba729a19a58
+  zh: 994e9e592c8f6e3c
+/deepseek-ai-dsh-meteo-data/model-experience/the-session-focus/what-the-model-sees:
+  en: 8d75ce7a668a09f0
+  zh: e5240b1bbba09fc4
+/deepseek-ai-dsh-meteo-data/model-experience/the-session-focus/token-effect:
+  en: 4101758893657bc7
+  zh: 376e9d487be98848
+/deepseek-ai-dsh-meteo-data/model-experience/the-session-focus/kv-cache-effect:
+  en: a78a14e90254c5eb
+  zh: 4976bdf4cb018f21
+/deepseek-ai-dsh-meteo-data/known-limitations-and-deferred-work:
+  en: 6b3f7327a4b02a45
+  zh: 6a74fa1f04a5d82a
+/deepseek-ai-dsh-meteo-data/known-limitations-and-deferred-work/dev-note:
+  en: e67f633dc6fe7773
+  zh: 3bb0c20c93f16f98

@@ -278,7 +278,7 @@ describe('corpusIngest', () => {
     })
   })
 
-  it('carries an empty provenance label to the index, which the panel and the tool both submit', async () => {
+  it('carries an empty source label to the index, which the panel and the tool both submit', async () => {
     const { controller, corpus } = await harness()
     await controller.corpusIngest([{ title: DOCUMENT.title, text: 'text', source: '' }])
     expect(corpus.ingestRequests[0]?.sources[0]).toEqual({

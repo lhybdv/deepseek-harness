@@ -10,7 +10,7 @@
 import type { ReactNode } from 'react'
 import type { PropsRuntime } from '@deepseek-ai/dsh-client-ui-slots'
 import type {} from '@deepseek-ai/dsh-client-ui-sidebar/client'
-import { IconGaugeOutline16 } from '@deepseek-ai/dsh-client-ui-primitives'
+import { IconGaugeOutlineRegular } from '@deepseek-ai/dsh-client-ui-primitives'
 
 /**
  * Draw the corpus panel's glyph at the size the panel row asks for.
@@ -20,7 +20,7 @@ import { IconGaugeOutline16 } from '@deepseek-ai/dsh-client-ui-primitives'
 export function MeteoPanelIcon({ size, active }: PropsRuntime<'sidebar.panellist'>): ReactNode {
   return (
     <span data-active={active}>
-      <IconGaugeOutline16 size={size} />
+      <IconGaugeOutlineRegular size={size} />
     </span>
   )
 }

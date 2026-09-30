@@ -10,15 +10,17 @@ it('ships install metadata with the built web application', async () => {
   expect(index).toContain('<link rel="manifest" href="./manifest.webmanifest" />')
 
   const manifest: unknown = JSON.parse(await readFile(join(DIST_ROOT, 'manifest.webmanifest'), 'utf8'))
+  // No `id`: a browser resolves an explicit `id` against the start URL's origin,
+  // so only an absent `id`, which defaults to the resolved `start_url`, gives
+  // each mount its own identity. `public-mount.e2e.ts` reads the resolved form.
   expect(manifest).toEqual({
-    id: '/',
     name: 'DeepSeek Harness',
     short_name: 'DSH',
-    start_url: '/',
-    scope: '/',
+    start_url: './',
+    scope: './',
     display: 'fullscreen',
     icons: [{
-      src: '/favicon.svg',
+      src: 'favicon.svg',
       sizes: 'any',
       type: 'image/svg+xml',
       purpose: 'any',
@@ -26,11 +28,16 @@ it('ships install metadata with the built web application', async () => {
   })
 })
 
-it('ships a favicon that switches to a light mark under dark color scheme', async () => {
-  const favicon = await readFile(join(DIST_ROOT, 'favicon.svg'), 'utf8')
-  // The light fill must live inside the dark-scheme media query, so the icon
-  // stays dark in light mode and only lightens under a dark scheme. Both inks
-  // are the theme's: the dark one is the Mocha base, the light one Mocha text.
-  expect(favicon).toMatch(/@media \(prefers-color-scheme: dark\)\s*{\s*path\s*{[^}]*fill:\s*#cdd6f4/i)
-  expect(favicon).toContain('fill: #1e1e2e')
+it('ships fixed-color favicons selected by document media queries', async () => {
+  const index = await readFile(join(DIST_ROOT, 'index.html'), 'utf8')
+  // Both inks are the theme's: the light document gets the Mocha base, the dark
+  // one Mocha text, so the mark stays legible in either color scheme.
+  expect(index).toContain('<link rel="icon" type="image/svg+xml" href="./favicon-dark.svg" media="(prefers-color-scheme: dark)" />')
+  expect(index).toContain('<link rel="icon" type="image/svg+xml" href="./favicon.svg" media="(prefers-color-scheme: light)" />')
+  const light = await readFile(join(DIST_ROOT, 'favicon.svg'), 'utf8')
+  const dark = await readFile(join(DIST_ROOT, 'favicon-dark.svg'), 'utf8')
+  expect(light).not.toContain('<style>')
+  expect(light).toContain('fill="#1e1e2e"')
+  expect(dark).toContain('fill="#cdd6f4"')
+  expect(dark.replace('fill="#cdd6f4"', 'fill="#1e1e2e"')).toBe(light)
 })

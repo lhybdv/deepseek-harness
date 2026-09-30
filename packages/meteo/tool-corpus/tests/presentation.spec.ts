@@ -153,7 +153,7 @@ describe('formatIngestOutput', () => {
     expect(text).toContain('- 空文档 | CORPUS_EMPTY_DOCUMENT: document text is empty')
   })
 
-  it('omits the provenance trail and the refusal block when there is nothing to show', () => {
+  it('omits the source trail and the refusal block when there is nothing to show', () => {
     expect(formatIngestOutput({ documents: [ACCEPTED_WITHOUT_SOURCE], failures: [] }))
       .toBe('Indexed 1 documents: 1 chunks, 90 bytes.\n- doc-2 | 霜冻指标 | chunks 1 | bytes 90')
   })

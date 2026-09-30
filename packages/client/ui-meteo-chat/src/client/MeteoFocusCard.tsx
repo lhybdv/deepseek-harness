@@ -8,7 +8,7 @@
  * rather than shown as an empty focus: "the session named nothing" and "this
  * frame cannot say" are different facts.
  */
-import { IconGoalOutline16 } from '@deepseek-ai/dsh-client-ui-primitives'
+import { IconGoalOutlineRegular } from '@deepseek-ai/dsh-client-ui-primitives'
 import type { PropsLocale } from '@deepseek-ai/dsh-client-ui-slots'
 import type { ToolCallViewProps } from '@deepseek-ai/dsh-client-ui-tool/client'
 import { meteoCallArgsFormatted, meteoFocusModel } from './meteo-card-model.ts'
@@ -59,7 +59,7 @@ export function MeteoFocusCard({ block, inspect, t }: MeteoFocusCardProps) {
     : model.headReadable
       ? focusSummary(model, t)
       : ''
-  const leading = disclosureLeading(model.state, open, expandable, <IconGoalOutline16 size={14} />)
+  const leading = disclosureLeading(model.state, open, expandable, <IconGoalOutlineRegular size={14} />)
   return (
     <div className={css.card} data-tool="meteo_set_focus" data-state={model.state}>
       <div

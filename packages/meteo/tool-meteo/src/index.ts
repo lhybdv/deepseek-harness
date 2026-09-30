@@ -8,7 +8,7 @@
  * This package is the Consumer of the M1 demonstration: it owns no data and
  * derives no verdict of its own beyond the published criteria it evaluates. The
  * answer a farmer hears is composed by the model from these findings, which is why
- * every tool here returns evidence with its provenance instead of a conclusion.
+ * every tool here returns evidence that names its source instead of a conclusion.
  *
  * @module @deepseek-ai/dsh-tool-meteo
  */

@@ -1,6 +1,58 @@
-# Bilingual-pair consistency record (docs/i18n/README.md): the git blob hash of each
-# side as of the last confirmed-consistent state. Both languages carry equal authority;
-# after editing either side, bring the other along and re-record with:
+# Bilingual-pair consistency record for README.md (docs/i18n/README.md): per heading
+# section, a hash of its English and Chinese blocks outside code blocks and generated regions.
+# After editing either side, bring the other along and re-record with:
 #   pnpm run verify-translation-pairing --write packages/meteo/meteo-corpus/README.md
-README.md: ea1ded7b0359f7958fb7d8a08ef4cf371316d84b
-README.zh.md: 3776ef048a41a550ba808b13fb21f5eefc421016
+/:
+  en: 29e9301b38bf6808
+  zh: 44be68fab73c79ef
+/deepseek-ai-dsh-meteo-corpus:
+  en: 543c577c82451db2
+  zh: 861f231d1aafb810
+/deepseek-ai-dsh-meteo-corpus/summary:
+  en: 599f8ff1ba5dd82e
+  zh: cf60ed8c76552e73
+/deepseek-ai-dsh-meteo-corpus/table-of-contents:
+  en: d152484eb41ac6b4
+  zh: 82bbd1ae631975a1
+/deepseek-ai-dsh-meteo-corpus/use-this-package:
+  en: 90c51cf4344e624c
+  zh: 6548076dd4e3c35a
+/deepseek-ai-dsh-meteo-corpus/use-this-package/when-to-choose-it:
+  en: 12543ab7efdebfe0
+  zh: 8acdaa082d1d15e0
+/deepseek-ai-dsh-meteo-corpus/use-this-package/minimal-configuration:
+  en: 964ce33e862cdf6a
+  zh: 9a9e04a03c8a00b5
+/deepseek-ai-dsh-meteo-corpus/use-this-package/choosing-the-index-file:
+  en: d7414c15f0506a76
+  zh: 1ecac2ee3a15a86a
+/deepseek-ai-dsh-meteo-corpus/use-this-package/supplying-expansion-terms:
+  en: a530333a2ee8c670
+  zh: dc50b11cdf73b953
+/deepseek-ai-dsh-meteo-corpus/understand-the-implementation:
+  en: 3c2c3bf7789bbe5f
+  zh: 88fce18573d70f26
+/deepseek-ai-dsh-meteo-corpus/further-exploration:
+  en: c6053de55f023192
+  zh: a564b890932ca42e
+/deepseek-ai-dsh-meteo-corpus/model-experience:
+  en: 215e7ba838619b7b
+  zh: a311da3843709f90
+/deepseek-ai-dsh-meteo-corpus/model-experience/retrieved-chunks:
+  en: 8aedebe6eac3e194
+  zh: de87fc20782b148e
+/deepseek-ai-dsh-meteo-corpus/model-experience/retrieved-chunks/what-the-model-sees:
+  en: 11ac922bb4766853
+  zh: 2315e9af556e451d
+/deepseek-ai-dsh-meteo-corpus/model-experience/retrieved-chunks/token-effect:
+  en: f342e846d3acc8f4
+  zh: 53b7d7aea22a7e27
+/deepseek-ai-dsh-meteo-corpus/model-experience/retrieved-chunks/kv-cache-effect:
+  en: f3c1212ed97aef7d
+  zh: f13df568861f1cc5
+/deepseek-ai-dsh-meteo-corpus/known-limitations-and-deferred-work:
+  en: ec7dea5e359bee85
+  zh: 53cbd41bd8c4b736
+/deepseek-ai-dsh-meteo-corpus/known-limitations-and-deferred-work/dev-note:
+  en: e67f633dc6fe7773
+  zh: 3bb0c20c93f16f98

@@ -138,7 +138,7 @@ describe('corpus_ingest', () => {
     expect(out.meta).toEqual({ indexed: 1, rejected: 1, titles: ['病虫害防治气象指标'] })
   })
 
-  it('submits an empty provenance string for a document the caller gave no source for', async () => {
+  it('submits an empty source string for a document the caller gave no source for', async () => {
     const { store, call } = await mountTools()
     const out = await call('corpus_ingest', { documents: [{ title: '霜冻指标', text: '霜冻' }] })
     expect(store.ingestRequests[0]?.sources).toEqual([{ title: '霜冻指标', text: '霜冻', source: '' }])

@@ -74,7 +74,9 @@ function isSettled(block: MeteoToolBlock): block is ToolResultNode {
  *   object is unavailable (window truncation left the call outside).
  */
 export function meteoCallArgs(block: MeteoToolBlock): Record<string, unknown> | null {
-  const argsRaw = 'kind' in block ? block.call?.argsRaw : block.argsRaw
+  const argsRaw = 'kind' in block
+    ? block.call?.argsRaw
+    : block.phase === 'start' ? block.argsRaw : undefined
   if (argsRaw === undefined) return null
   try {
     const value: unknown = JSON.parse(argsRaw)
@@ -96,7 +98,9 @@ export function meteoCallArgs(block: MeteoToolBlock): Record<string, unknown> | 
 export function meteoCallArgsFormatted(block: MeteoToolBlock): string | null {
   const args = meteoCallArgs(block)
   if (args !== null) return JSON.stringify(args, null, 2)
-  const raw = 'kind' in block ? block.call?.argsRaw : block.argsRaw
+  const raw = 'kind' in block
+    ? block.call?.argsRaw
+    : block.phase === 'start' ? block.argsRaw : undefined
   return raw === undefined || raw.trim() === '' ? null : raw
 }
 

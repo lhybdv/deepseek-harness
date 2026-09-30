@@ -7,7 +7,7 @@
  */
 import { useState, type KeyboardEvent, type ReactNode } from 'react'
 import {
-  IconChevronDownOutline14, IconInspectOutline12, StateDot,
+  IconChevronDownOutlineRegular, IconInspectOutlineRegular, StateDot,
 } from '@deepseek-ai/dsh-client-ui-primitives'
 import type { PropsLocale } from '@deepseek-ai/dsh-client-ui-slots'
 import type { MeteoCardState } from './meteo-card-model.ts'
@@ -65,13 +65,13 @@ export function leadingFor(state: MeteoCardState, icon: ReactNode): ReactNode {
  * @returns the leading node.
  */
 export function disclosureLeading(state: MeteoCardState, open: boolean, expandable: boolean, icon: ReactNode): ReactNode {
-  if (open) return <IconChevronDownOutline14 className={css.chevron} />
+  if (open) return <IconChevronDownOutlineRegular className={css.chevron} />
   const iconNode = leadingFor(state, icon)
   if (!expandable) return iconNode
   return (
     <>
       <span className={css.iconIdle}>{iconNode}</span>
-      <IconChevronDownOutline14 className={`${css.chevron} ${css.chevronHover}`} />
+      <IconChevronDownOutlineRegular className={`${css.chevron} ${css.chevronHover}`} />
     </>
   )
 }
@@ -166,7 +166,7 @@ export function MeteoInspectButton({ inspect, t }: {
   if (inspect === undefined) return null
   return (
     <button type="button" className={css.inspectButton} onClick={inspect}>
-      <IconInspectOutline12 />
+      <IconInspectOutlineRegular />
       {t('card.inspect')}
     </button>
   )

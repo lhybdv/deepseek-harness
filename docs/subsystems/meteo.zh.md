@@ -107,7 +107,7 @@ Host service backing the generated `ctx.remote.meteo` namespace. Every method de
 /**
  * Index submitted documents.
  * @param sources - one to {@link MAX_INGEST_SOURCES} documents; a title must not be empty,
- *   while a provenance label may be. Empty or oversized text is the store's per-document
+ *   while the source label may be. Empty or oversized text is the store's per-document
  *   failure, reported in the result rather than raised here, so one rejected document never
  *   aborts its siblings.
  * @returns the stored documents and the per-source refusals.

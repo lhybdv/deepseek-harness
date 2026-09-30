@@ -19,7 +19,7 @@ export interface CorpusIngestedDocument {
   docId: string
   /** Title as submitted. */
   title: string
-  /** Provenance as submitted; empty when the caller gave none. */
+  /** The source label as submitted; empty when the caller gave none. */
   source: string
   /** UTF-8 byte length of the accepted text. */
   bytes: number
@@ -127,7 +127,7 @@ export function presentIngestResult(result: ToolResult): GenericResultView | und
  * document comes back in `failures` instead of aborting the call.
  * @param limits - the deployment's ingest bounds.
  * @param documents - schema-validated documents.
- * @returns the sources as the seam receives them, with provenance filled in.
+ * @returns the sources as the seam receives them, with the source label filled in.
  */
 function toIngestSources(limits: CorpusLimits, documents: CorpusIngestArgs['documents']): { title: string; text: string; source: string }[] {
   if (documents.length === 0) throw new Error('documents must contain at least one document')
