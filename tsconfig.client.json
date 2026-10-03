@@ -111,6 +111,8 @@
     { "path": "./packages/client/ui-sidebar-files" },
     { "path": "./packages/client/ui-meteo" },
     { "path": "./packages/client/ui-meteo-chat" },
+    { "path": "./packages/meteo/client-ui-document-products" },
+    { "path": "./packages/meteo/client-ui-zone-image" },
     { "path": "./packages/client/ui-brand-windpilot" },
     { "path": "./packages/client/ui-jobs" },
     { "path": "./packages/client/ui-schedule" },
