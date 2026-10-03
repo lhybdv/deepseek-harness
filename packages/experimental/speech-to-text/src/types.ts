@@ -19,6 +19,8 @@ export interface SpeechProviderInfo {
   readonly location: 'host-local' | 'cloud'
   /** Accepted language hints, including automatic detection when supported. */
   readonly languages: readonly string[]
+  /** Whether this recognizer reports text while the recording is still being produced. */
+  readonly streaming: boolean
   readonly setupEstimate?: SpeechSetupEstimate
   /** Origins offered for an explicit preparation download; omitted or empty when no choice applies. */
   readonly downloadSources?: readonly string[]
@@ -111,6 +113,21 @@ export interface Transcript {
   readonly inferenceSeconds: number
 }
 
+/** Live recognition input: 16 kHz mono PCM16 frames and an explicit language hint. */
+export interface SpeechStreamInput {
+  /** Frames the caller produces while speaking, borrowed one at a time until iteration ends. */
+  readonly chunks: AsyncIterable<Uint8Array>
+  readonly language: string
+}
+
+/** One report from a recognizer working on a recording still being produced. */
+export interface SpeechSegment {
+  /** Whether this report ends the recording's transcript: true only on the last report, after which the stream ends. */
+  readonly final: boolean
+  /** Complete transcript recognized so far, replacing every earlier report. */
+  readonly text: string
+}
+
 /** One replaceable recognizer. It owns preparation, execution, and cancellation. */
 export interface SpeechProvider {
   readonly info: SpeechProviderInfo
@@ -122,6 +139,13 @@ export interface SpeechProvider {
    * @returns final text and measured audio/inference durations.
    */
   transcribe(input: SpeechInput, signal: AbortSignal): Promise<Transcript>
+  /**
+   * Recognize frames the caller is still producing, reporting text as the service reports it.
+   * @param input - live frames and language; iteration of `chunks` ends when the caller stops speaking.
+   * @param signal - caller or registration cancellation; rejection follows resource cleanup.
+   * @returns the transcript so far after each report; the last item is final.
+   */
+  transcribeStream?(input: SpeechStreamInput, signal: AbortSignal): AsyncIterable<SpeechSegment>
 }
 
 /** Caller selection before composition defaults are resolved. */
@@ -131,7 +155,19 @@ export interface SpeechRequest {
   readonly language?: string
 }
 
+/** Live caller selection before composition defaults are resolved. */
+export interface SpeechStreamRequest {
+  readonly chunks: AsyncIterable<Uint8Array>
+  readonly providerId?: SpeechProviderId
+  readonly language?: string
+}
+
 /** Resolved selection pins the exact registered provider, including its lifetime. */
 export interface SpeechSpec extends SpeechInput {
+  readonly provider: SpeechProvider
+}
+
+/** Resolved live selection pins the exact registered provider, including its lifetime. */
+export interface SpeechStreamSpec extends SpeechStreamInput {
   readonly provider: SpeechProvider
 }

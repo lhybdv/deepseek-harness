@@ -1,0 +1,22 @@
+# Bilingual-pair consistency record for 2026-10-01-cloud-speech-recognition-provider.md (docs/i18n/README.md): per heading
+# section, a hash of its English and Chinese blocks outside code blocks and generated regions.
+# After editing either side, bring the other along and re-record with:
+#   pnpm run verify-translation-pairing --write .agents/notes/implemented/architecture/2026-10-01-cloud-speech-recognition-provider.md
+/agent-note-cloud-speech-recognition-as-a-switched-off-provider:
+  en: a71f410142f8fcba
+  zh: 2f6f72c69f14aa56
+/agent-note-cloud-speech-recognition-as-a-switched-off-provider/problem:
+  en: 394dd6e9cbcbd20c
+  zh: cf30dad6155d3425
+/agent-note-cloud-speech-recognition-as-a-switched-off-provider/decision:
+  en: 603ab018712afdda
+  zh: bd87460d0688c7cc
+/agent-note-cloud-speech-recognition-as-a-switched-off-provider/alternatives-considered:
+  en: a2a8f114693fd21b
+  zh: f38b69edcf7d0e6e
+/agent-note-cloud-speech-recognition-as-a-switched-off-provider/consequences:
+  en: f516ff010bb7f4cf
+  zh: aa32a8c11d7df4fb
+/agent-note-cloud-speech-recognition-as-a-switched-off-provider/testing:
+  en: 1bc249b122a0553a
+  zh: cf67ace53935384d

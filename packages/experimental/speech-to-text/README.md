@@ -29,6 +29,8 @@ Load through the [voice input bundle](../voice-input-bundle/README.md), or compo
 
 Providers advertise preparation origins through `downloadSources`. `prepare(id, options)` forwards an optional `downloadSource` for one task; the provider validates the choice and refuses source changes during active preparation. Omission retains provider policy. Source choices are not persisted recognition preferences.
 
+A provider that advertises `streaming` also recognizes frames the caller is still producing: `resolveStream()` captures the provider for `chunks` and `stream()` reports the transcript as the recognizer produces it. Providers without it leave `stream()` failing explicitly, so a caller chooses the complete-recording path from `SpeechProviderInfo.streaming` before it starts capturing.
+
 -----
 
 <a id="understand-the-implementation"></a>
@@ -38,6 +40,8 @@ Providers advertise preparation origins through `downloadSources`. `prepare(id, 
 <summary>Maintainer details — click to expand</summary>
 
 `resolve()` captures the provider instance, recording and language. `transcribe()` rejects a withdrawn or replaced registration. A registration disposer closes admission, aborts accepted requests and joins provider settlement; providers must honor cancellation. No fallback selects a different recognizer or uploads audio. No runtime invariant companion is published because the registry is the sole source of provider and preparation observations.
+
+Live recognition shares that ownership: `stream()` pulls `chunks` through the provider as the caller produces them, so a report can arrive after every batch the recognizer has seen, and the last report carries the settled text. A report restates the whole transcript rather than a delta, so a caller replaces what it displays instead of appending, and a batch the provider rejected fails the stream instead of shortening the transcript. Withdrawing the registration aborts the same signal the provider received and joins it, while caller cancellation ends the consumption of frames.
 
 `defaultProvider` and `language` are volatile Config fields: `configure()` writes the supplied fields into this plugin's profile entry through the `settings` service, and the running instance reads the updated values without remounting; composition defaults apply until an override is saved. Settings addresses the entry by its configured id (`entry.options.id`), without the Loader's Include path. `configure()` fails without `settings` or a profile entry, and rejects a language unsupported by the selected provider before saving. Providers advertise accepted language hints through `languages`; `resolve()` validates the selected hint before transcription. Provider-owned preparation is observed through complete `SpeechSnapshot` values; closing an observer never cancels preparation.
 
@@ -67,7 +71,7 @@ No direct effect; ordinary submission owns the message content.
 
 <a id="known-limitations-and-deferred-work"></a>
 
-- Only complete-recording transcription is supported. Streaming recognition and speech synthesis have no service methods.
+- Speech synthesis has no service method. Live recognition exists only where a provider advertises `streaming`; the local SenseVoice provider recognizes complete recordings only.
 
 -----
 

@@ -6,8 +6,12 @@ import { bindSnapshotSelector, makeTranslate, RemoteError } from '@deepseek-ai/d
 import { createSnapshotStore } from '@deepseek-ai/dsh-client-store'
 import { zh as commonZh } from '@deepseek-ai/dsh-client-locale/src/locales/zh.ts'
 import type { SessionId } from '@deepseek-ai/dsh-session/types'
-import type { SpeechPreparationState, SpeechProviderId, Transcript } from '@deepseek-ai/dsh-experimental-speech-to-text/types'
-import type { RemoteResult } from '@deepseek-ai/dsh-typert-protocol'
+import type { SpeechPreparationState, SpeechProviderId, SpeechSegment, Transcript } from '@deepseek-ai/dsh-experimental-speech-to-text/types'
+import type { SpeechAudioChunk } from '@deepseek-ai/dsh-experimental-api-speech-to-text/types'
+import type { ChatSnapshot } from '@deepseek-ai/dsh-client-ui-chat/client'
+import { EMPTY_CHAT_SNAPSHOT } from '@deepseek-ai/dsh-client-ui-chat/client'
+import type { RemoteResult, RemoteStreamHandle } from '@deepseek-ai/dsh-typert-protocol'
+import type { SynthesisRequest, SynthesisResult } from '@deepseek-ai/dsh-api-text-to-speech/types'
 import { VoiceInput, type VoiceInputProps } from '../src/client/VoiceInput.tsx'
 import { RecordingError, Recording } from '../src/client/audio.ts'
 import type { SpeechReadiness } from '../src/client/readiness.ts'
@@ -18,24 +22,116 @@ beforeEach(() => { vi.stubGlobal('requestAnimationFrame', vi.fn(() => 1)); vi.st
 afterEach(() => { cleanup(); vi.useRealTimers(); vi.unstubAllGlobals() })
 const id = 'sensevoice-local' as SpeechProviderId
 const transcript: Transcript = { text: '检查 TypeScript 类型', audioSeconds: 2, inferenceSeconds: 0.4 }
-function fixture(recording?: Recording) {
-  const capture = Object.assign(new Recording(() => {}), { start: vi.fn<Recording['start']>(async () => {}), stop: vi.fn(async () => new Uint8Array(48)),
+
+/** One scripted live stream: the test pushes reports, and ending it lets the consumption finish. */
+function scriptedStream() {
+  const sent: SpeechAudioChunk[] = []
+  const queue: SpeechSegment[] = []
+  const state = { ended: false, disposed: false, failure: undefined as Error | undefined }
+  let wake = Promise.withResolvers<undefined>()
+  const handle: RemoteStreamHandle<SpeechSegment, SpeechAudioChunk> = {
+    send: (item) => { sent.push(item) },
+    end: () => { state.ended = true; wake.resolve(undefined) },
+    dispose: () => { state.disposed = true; wake.resolve(undefined) },
+    [Symbol.asyncIterator]: () => ({
+      next: async (): Promise<IteratorResult<SpeechSegment>> => {
+        while (queue.length === 0 && !state.ended && state.failure === undefined) {
+          await wake.promise
+          wake = Promise.withResolvers<undefined>()
+        }
+        if (state.failure !== undefined) throw state.failure
+        const value = queue.shift()
+        return value === undefined ? { done: true, value: undefined } : { done: false, value }
+      },
+    }),
+  }
+  return { handle, sent, state,
+    report: (segment: SpeechSegment) => { queue.push(segment); wake.resolve(undefined) },
+    /** Fail the stream the way a lost carrier or a refused batch does. */
+    fail: (message: string) => { state.failure = new Error(message); wake.resolve(undefined) } }
+}
+
+function fixture(recording?: Recording, options: { streaming?: boolean; answer?: string } = {}) {
+  const stream = scriptedStream()
+  let emit: ((frames: Uint8Array<ArrayBuffer>) => void) | undefined
+  const capture = Object.assign(new Recording(() => {}), {
+    start: vi.fn<Recording['start']>(async () => {}),
+    startLive: vi.fn<Recording['startLive']>(async (onFrames: (frames: Uint8Array<ArrayBuffer>) => void) => { emit = onFrames }),
+    stop: vi.fn(async () => new Uint8Array(48)), stopLive: vi.fn(async () => {}),
     amplitude: () => 0, dispose: vi.fn(async () => {}) })
   const inputActions = { notify: vi.fn(), captureInsertion: vi.fn(() => ({ start: 3, end: 3, draftRev: 1 })), insertText: vi.fn(() => true),
     setDraft: vi.fn(), addAttachments: vi.fn(() => true), removeAttachment: vi.fn(), pruneAttachments: vi.fn(), submit: vi.fn() }
   const readiness = createSnapshotStore<SpeechReadiness>({ connected: true, error: null, catalog: {
-    providers: [{ id, name: 'SenseVoiceSmall', location: 'host-local', languages: ['auto', 'zh', 'en', 'ja'], preparation: { phase: 'ready' } }],
+    providers: [{ id, name: 'SenseVoiceSmall', location: 'host-local', languages: ['auto', 'zh', 'en', 'ja'],
+      streaming: options.streaming === true, preparation: { phase: 'ready' } }],
     selection: { providerId: id, language: 'auto' }, maxAudioBytes: 100, maxDurationSeconds: 120,
   } })
   const transcribe = vi.fn<(request: unknown, signal: AbortSignal) => Promise<RemoteResult<Transcript>>>(
     async () => ({ ok: true, value: transcript }))
-  const props: VoiceInputProps = { sessionId: 'one' as SessionId, inputActions, transcribe, locked: false, onActiveChange: vi.fn(),
-    openSettings: vi.fn(), prepare: vi.fn(async () => {}), cancelPreparation: vi.fn(async () => {}), configure: vi.fn(async () => {}),
-    useSpeechReadiness: bindSnapshotSelector(readiness), createRecording: () => recording ?? capture,
+  const transcribeStream = vi.fn<(request: unknown, signal: AbortSignal) => RemoteStreamHandle<SpeechSegment, SpeechAudioChunk>>(
+    () => stream.handle)
+  const synthesize = vi.fn<(request: SynthesisRequest, signal: AbortSignal) => Promise<RemoteResult<SynthesisResult>>>(
+    async () => ({ ok: true, value: { audioBase64: '//uQ', mimeType: 'audio/mpeg' } }))
+  const useChat: VoiceInputProps['useChat'] = selector => {
+    const node = { key: 'answer', kind: 'assistant-step', id: 'answer', target: 'chat', anchorSeq: 1,
+      location: { kind: 'session' as const }, visibility: 'visible' as const,
+      data: { status: 'settled' as const, turn: 1, step: 0, blocks: [{ kind: 'text' as const, text: options.answer ?? '' }], time: 1 } }
+    const snapshot = options.answer === undefined ? EMPTY_CHAT_SNAPSHOT : {
+      ...EMPTY_CHAT_SNAPSHOT, order: [node.key],
+      nodes: { ...EMPTY_CHAT_SNAPSHOT.nodes, get: () => node },
+    } satisfies ChatSnapshot
+    return selector(snapshot)
+  }
+  const props: VoiceInputProps = { sessionId: 'one' as SessionId, inputActions, transcribe, transcribeStream, synthesize, useChat,
+    locked: false, onActiveChange: vi.fn(), openSettings: vi.fn(), prepare: vi.fn(async () => {}), cancelPreparation: vi.fn(async () => {}),
+    configure: vi.fn(async () => {}), useSpeechReadiness: bindSnapshotSelector(readiness), createRecording: () => recording ?? capture,
     t: makeTranslate(zh, commonZh) }
   const view = render(<VoiceInput {...props} />)
-  return { props, capture, inputActions, readiness, transcribe, view }
+  return { props, capture, stream, inputActions, readiness, transcribe, transcribeStream, synthesize, view,
+    /** Deliver one captured batch exactly as the recording hands it to the uplink. */
+    emit: (bytes: number) => { emit?.(new Uint8Array(bytes)) } }
 }
+it('reads the latest settled assistant answer and supports pause and stop', async () => {
+  const b = fixture(undefined, { answer: '你好' })
+  const play = vi.fn(async () => {})
+  const pause = vi.fn()
+  class AudioMock {
+    play = play
+    pause = pause
+    addEventListener = vi.fn()
+    constructor(_url: string) {}
+  }
+  class URLMock extends URL {
+    static createObjectURL = vi.fn(() => 'blob:test')
+    static revokeObjectURL = vi.fn()
+  }
+  vi.stubGlobal('Audio', AudioMock)
+  vi.stubGlobal('URL', URLMock)
+  const playButton = screen.getByRole('button', { name: zh.playAnswer })
+  expect(playButton.hasAttribute('disabled')).toBe(false)
+  fireEvent.click(playButton)
+  await waitFor(() => { expect(b.synthesize).toHaveBeenCalledWith({ text: '你好' }, expect.any(AbortSignal)) })
+  await screen.findByRole('button', { name: zh.pauseAnswer })
+  fireEvent.click(screen.getByRole('button', { name: zh.pauseAnswer }))
+  await screen.findByRole('button', { name: zh.playAnswer })
+  expect(pause).toHaveBeenCalledOnce()
+  fireEvent.click(screen.getByRole('button', { name: zh.playAnswer }))
+  await screen.findByRole('button', { name: zh.pauseAnswer })
+  fireEvent.click(screen.getByRole('button', { name: zh.stopAnswer }))
+  expect(URLMock.revokeObjectURL).toHaveBeenCalledWith('blob:test')
+})
+it('keeps playback controls unavailable without an answer and contains synthesis failure', async () => {
+  const empty = fixture()
+  expect(screen.getByRole('button', { name: zh.playAnswer }).hasAttribute('disabled')).toBe(true)
+  empty.view.unmount()
+  cleanup()
+  const b = fixture(undefined, { answer: '你好' })
+  b.synthesize.mockResolvedValueOnce({ ok: false, error: new RemoteError('speech-synthesis/failed', 'Coze credential is unavailable: coze-api-token', {}) })
+  fireEvent.click(screen.getByRole('button', { name: zh.playAnswer }))
+  expect(await screen.findByText(zh.playbackFailed)).toBeTruthy()
+  expect(screen.getByRole('button', { name: zh.start })).toBeTruthy()
+})
+
 async function start(): Promise<void> {
   fireEvent.click(screen.getByRole('button', { name: zh.start }))
   await screen.findByRole('button', { name: zh.stop })
@@ -379,4 +475,114 @@ it.each(['later', 'escape', 'ready', 'session'])('dismisses unavailable recognit
     open()
     expect(screen.getByRole('dialog')).toBeTruthy()
   }
+})
+
+it('shows each live report and inserts the settled transcript', async () => {
+  const b = fixture(undefined, { streaming: true })
+  fireEvent.click(screen.getByRole('button', { name: zh.start }))
+  await waitFor(() => { expect(b.transcribeStream).toHaveBeenCalled() })
+  expect(screen.getByRole('status').textContent).toBe(zh.listening)
+  b.stream.report({ final: false, text: '检查' })
+  expect(await screen.findByText('检查')).toBeTruthy()
+  b.emit(6400)
+  expect(b.stream.sent).toHaveLength(1)
+  expect(Buffer.from(b.stream.sent[0]?.audioBase64 ?? '', 'base64')).toHaveLength(6400)
+  b.stream.report({ final: false, text: '检查 TypeScript' })
+  expect(await screen.findByText('检查 TypeScript')).toBeTruthy()
+  fireEvent.click(screen.getByRole('button', { name: zh.stop }))
+  await waitFor(() => { expect(b.inputActions.insertText).toHaveBeenCalledWith('检查 TypeScript', { start: 3, end: 3, draftRev: 1 }) })
+  expect(b.stream.state.ended).toBe(true)
+  expect(b.capture.stopLive).toHaveBeenCalled()
+  expect(b.capture.stop).not.toHaveBeenCalled()
+  expect(b.transcribe).not.toHaveBeenCalled()
+})
+
+it('discards a live recording and its stream on cancel', async () => {
+  const b = fixture(undefined, { streaming: true })
+  fireEvent.click(screen.getByRole('button', { name: zh.start }))
+  await waitFor(() => { expect(b.transcribeStream).toHaveBeenCalled() })
+  b.stream.report({ final: false, text: '检查' })
+  expect(await screen.findByText('检查')).toBeTruthy()
+  fireEvent.click(screen.getByRole('button', { name: zh.cancel }))
+  expect(b.stream.state.disposed).toBe(true)
+  expect(b.capture.dispose).toHaveBeenCalled()
+  expect(b.inputActions.insertText).not.toHaveBeenCalled()
+})
+
+it('reports a live stream that fails while recording and releases capture', async () => {
+  const b = fixture(undefined, { streaming: true })
+  fireEvent.click(screen.getByRole('button', { name: zh.start }))
+  await waitFor(() => { expect(b.transcribeStream).toHaveBeenCalled() })
+  b.stream.fail('stream failed')
+  expect(await screen.findByText(/stream failed/)).toBeTruthy()
+  expect(b.stream.state.disposed).toBe(true)
+  expect(b.capture.dispose).toHaveBeenCalled()
+  expect(b.inputActions.insertText).not.toHaveBeenCalled()
+})
+
+it('ignores live reports and failures that arrive after the recording was discarded', async () => {
+  const b = fixture(undefined, { streaming: true })
+  fireEvent.click(screen.getByRole('button', { name: zh.start }))
+  await waitFor(() => { expect(b.transcribeStream).toHaveBeenCalled() })
+  fireEvent.click(screen.getByRole('button', { name: zh.cancel }))
+  expect(b.stream.state.disposed).toBe(true)
+  b.stream.report({ final: false, text: '迟到' })
+  b.stream.fail('late failure')
+  await act(async () => { await Promise.resolve() })
+  expect(screen.queryByText(/late failure/)).toBeNull()
+  expect(screen.queryByText('迟到')).toBeNull()
+  expect(b.inputActions.insertText).not.toHaveBeenCalled()
+})
+
+it('ignores frames captured after the recording stopped', async () => {
+  const b = fixture(undefined, { streaming: true })
+  fireEvent.click(screen.getByRole('button', { name: zh.start }))
+  await waitFor(() => { expect(b.transcribeStream).toHaveBeenCalled() })
+  b.emit(6400)
+  expect(b.stream.sent).toHaveLength(1)
+  b.stream.report({ final: false, text: '检查' })
+  fireEvent.click(screen.getByRole('button', { name: zh.stop }))
+  await waitFor(() => { expect(b.inputActions.insertText).toHaveBeenCalled() })
+  b.emit(6400)
+  expect(b.stream.sent).toHaveLength(1)
+})
+
+it('drops a live stop the user cancelled while capture was still releasing', async () => {
+  const b = fixture(undefined, { streaming: true })
+  const releasing = Promise.withResolvers<undefined>()
+  b.capture.stopLive.mockImplementationOnce(async () => { await releasing.promise })
+  fireEvent.click(screen.getByRole('button', { name: zh.start }))
+  await waitFor(() => { expect(b.transcribeStream).toHaveBeenCalled() })
+  b.stream.report({ final: false, text: '检查' })
+  fireEvent.click(screen.getByRole('button', { name: zh.stop }))
+  fireEvent.click(screen.getByRole('button', { name: zh.cancel }))
+  releasing.resolve(undefined)
+  await act(async () => { await Promise.resolve() })
+  expect(b.inputActions.insertText).not.toHaveBeenCalled()
+})
+
+it('drops a live stop the user cancelled while the stream was still settling', async () => {
+  const b = fixture(undefined, { streaming: true })
+  fireEvent.click(screen.getByRole('button', { name: zh.start }))
+  await waitFor(() => { expect(b.transcribeStream).toHaveBeenCalled() })
+  b.stream.report({ final: false, text: '检查' })
+  const end = b.stream.handle.end.bind(b.stream.handle)
+  b.stream.handle.end = () => {
+    fireEvent.click(screen.getByRole('button', { name: zh.cancel }))
+    end()
+  }
+  fireEvent.click(screen.getByRole('button', { name: zh.stop }))
+  await act(async () => { await Promise.resolve() })
+  expect(b.inputActions.insertText).not.toHaveBeenCalled()
+})
+
+it('keeps complete-recording transcription for a provider without streaming', async () => {
+  const b = fixture()
+  fireEvent.click(screen.getByRole('button', { name: zh.start }))
+  await waitFor(() => { expect(b.capture.start).toHaveBeenCalled() })
+  expect(b.transcribeStream).not.toHaveBeenCalled()
+  expect(b.capture.startLive).not.toHaveBeenCalled()
+  fireEvent.click(screen.getByRole('button', { name: zh.stop }))
+  await waitFor(() => { expect(b.inputActions.insertText).toHaveBeenCalledWith(transcript.text, { start: 3, end: 3, draftRev: 1 }) })
+  expect(b.transcribe).toHaveBeenCalled()
 })

@@ -5,7 +5,7 @@ import z from '@deepseek-ai/schemastery'
 // entry and `loader/volatile-update` merges.
 import type {} from '@deepseek-ai/dsh-settings'
 import type {} from '@deepseek-ai/cordis-plugin-loader'
-import type { SpeechPreparationOptions, SpeechProvider, SpeechProviderId, SpeechProviderInfo, SpeechSnapshot, SpeechSelectionPatch, SpeechRequest, SpeechSpec, Transcript } from './types.ts'
+import type { SpeechPreparationOptions, SpeechProvider, SpeechProviderId, SpeechProviderInfo, SpeechSegment, SpeechSnapshot, SpeechSelectionPatch, SpeechRequest, SpeechSpec, SpeechStreamRequest, SpeechStreamSpec, Transcript } from './types.ts'
 
 export type * from './types.ts'
 
@@ -27,7 +27,7 @@ export interface Config {
 interface Registration {
   readonly provider: SpeechProvider
   readonly lifetime: AbortController
-  readonly pending: Set<Promise<Transcript>>
+  readonly pending: Set<Promise<unknown>>
   readonly unsubscribe: () => void
 }
 
@@ -205,6 +205,42 @@ export default class SpeechToText extends Service {
       return result
     } finally {
       registration.pending.delete(pending)
+    }
+  }
+
+  /**
+   * Apply composition defaults and capture the selected provider for live recognition.
+   * @param request - live frames and optional selection.
+   * @returns provider-pinned input for stream().
+   */
+  resolveStream(request: SpeechStreamRequest): SpeechStreamSpec {
+    const id = request.providerId ?? this.config.defaultProvider.get() as SpeechProviderId
+    const language = request.language ?? this.config.language.get()
+    return { provider: this.selectedProvider(id, language), chunks: request.chunks, language }
+  }
+
+  /**
+   * Execute exactly the resolved provider's live recognizer; no fallback sends audio elsewhere.
+   * @param spec - resolved live input; a withdrawn or replaced registration is rejected.
+   * @param signal - caller cancellation; it also ends the provider's own consumption of frames.
+   * @returns the transcript so far after each recognizer report, ending with its final text.
+   */
+  async *stream(spec: SpeechStreamSpec, signal: AbortSignal): AsyncIterable<SpeechSegment> {
+    signal.throwIfAborted()
+    const registration = this.providers.get(spec.provider.info.id)
+    if (registration?.provider !== spec.provider) throw new Error('Resolved speech provider is no longer registered')
+    const provider = spec.provider
+    if (provider.transcribeStream === undefined) throw new Error(`Speech provider does not recognize live audio: ${provider.info.id}`)
+    const combined = AbortSignal.any([signal, registration.lifetime.signal])
+    const settled = Promise.withResolvers<undefined>()
+    registration.pending.add(settled.promise)
+    try {
+      combined.throwIfAborted()
+      const segments = provider.transcribeStream({ chunks: spec.chunks, language: spec.language }, combined)
+      for await (const segment of segments) yield segment
+    } finally {
+      registration.pending.delete(settled.promise)
+      settled.resolve(undefined)
     }
   }
 }

@@ -3,14 +3,25 @@ import { Context } from '@deepseek-ai/cordis'
 import z from '@deepseek-ai/schemastery'
 import { describe, expect, it, vi } from 'vitest'
 import SpeechToText from '../src/index.ts'
-import type { SpeechPreparationState, SpeechProvider, SpeechProviderId, Transcript } from '../src/types.ts'
+import type { SpeechPreparationState, SpeechProvider, SpeechProviderId, SpeechSegment, Transcript } from '../src/types.ts'
 import { liveConfig } from '../../../settings/settings/tests/live-config.ts'
 
 const result: Transcript = { text: 'hello', audioSeconds: 1, inferenceSeconds: 0.1 }
 const audio = new Uint8Array([1, 2])
 const input = new AbortController().signal
-function provider(id: string, transcribe: SpeechProvider['transcribe'] = async () => result): SpeechProvider {
-  return { info: { id: id as SpeechProviderId, name: id, location: 'host-local', languages: ['auto', 'zh', 'en', 'ja'] }, transcribe }
+function provider(id: string, transcribe: SpeechProvider['transcribe'] = async () => result, stream?: SpeechProvider['transcribeStream']): SpeechProvider {
+  return {
+    info: { id: id as SpeechProviderId, name: id, location: 'host-local', languages: ['auto', 'zh', 'en', 'ja'], streaming: stream !== undefined },
+    transcribe,
+    ...stream === undefined ? {} : { transcribeStream: stream },
+  }
+}
+
+/** Every report one live stream produced, in delivery order. */
+async function collected(iterable: AsyncIterable<SpeechSegment>): Promise<SpeechSegment[]> {
+  const reports: SpeechSegment[] = []
+  for await (const report of iterable) reports.push(report)
+  return reports
 }
 
 /** Mount the service behind Loader with a settings stub that writes patches back into its live entry config. */
@@ -115,6 +126,67 @@ describe('speech providers', () => {
     await removeA(); await removeA()
     await expect(service.transcribe(spec, input)).rejects.toThrow('no longer registered')
     await removeB(); await base.dispose()
+  })
+
+  it('streams every report the resolved provider produces', async () => {
+    const ctx = new Context()
+    const base = ctx.plugin(SpeechToText, { defaultProvider: 'local', language: 'zh' })
+    await base
+    const service = ctx.get('speechToText')!
+    const frames: Uint8Array[] = []
+    const remove = service.register(provider('local', undefined, async function * (value, signal) {
+      expect(value.language).toBe('zh')
+      for await (const chunk of value.chunks) frames.push(chunk)
+      expect(signal.aborted).toBe(false)
+      yield { final: false, text: '今天' }
+      yield { final: true, text: '今天有雨' }
+    }))
+    expect(service.snapshot().providers).toMatchObject([{ id: 'local', streaming: true }])
+    const chunks = (async function * () { yield audio })()
+    await expect(collected(service.stream(service.resolveStream({ chunks }), input)))
+      .resolves.toEqual([{ final: false, text: '今天' }, { final: true, text: '今天有雨' }])
+    expect(frames).toEqual([audio])
+    await remove(); await base.dispose()
+  })
+
+  it('refuses live recognition a provider cannot produce or no longer owns', async () => {
+    const ctx = new Context()
+    const base = ctx.plugin(SpeechToText, { defaultProvider: 'local', language: 'auto' })
+    await base
+    const service = ctx.get('speechToText')!
+    const remove = service.register(provider('local'))
+    expect(service.snapshot().providers).toMatchObject([{ id: 'local', streaming: false }])
+    const chunks = (async function * () {})()
+    expect(() => service.resolveStream({ chunks, providerId: 'missing' as SpeechProviderId })).toThrow('unavailable')
+    const spec = service.resolveStream({ chunks })
+    await expect(collected(service.stream(spec, input))).rejects.toThrow('does not recognize live audio')
+    await remove()
+    await expect(collected(service.stream(spec, input))).rejects.toThrow('no longer registered')
+    await base.dispose()
+  })
+
+  it('signals a live recognizer and joins it when its registration is withdrawn', async () => {
+    const ctx = new Context()
+    const base = ctx.plugin(SpeechToText, { defaultProvider: 'local', language: 'auto' })
+    await base
+    const service = ctx.get('speechToText')!
+    let observed: AbortSignal | undefined
+    const stalled = Promise.withResolvers<undefined>()
+    const remove = service.register(provider('local', undefined, async function * (_value, signal) {
+      observed = signal
+      yield { final: false, text: '一' }
+      await stalled.promise
+    }))
+    const chunks = (async function * () {})()
+    const live = service.stream(service.resolveStream({ chunks }), input)[Symbol.asyncIterator]()
+    expect((await live.next()).value).toEqual({ final: false, text: '一' })
+    const removing = remove()
+    expect(observed?.aborted).toBe(true)
+    expect(service.listProviders()).toEqual([])
+    stalled.resolve(undefined)
+    await live.return?.(undefined)
+    await removing
+    await base.dispose()
   })
 
   it('withdraws a provider before joining accepted work and keeps a replacement registration', async () => {

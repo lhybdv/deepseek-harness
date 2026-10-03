@@ -1,0 +1,22 @@
+# Bilingual-pair consistency record for 2026-10-02-live-speech-recognition.md (docs/i18n/README.md): per heading
+# section, a hash of its English and Chinese blocks outside code blocks and generated regions.
+# After editing either side, bring the other along and re-record with:
+#   pnpm run verify-translation-pairing --write .agents/notes/implemented/architecture/2026-10-02-live-speech-recognition.md
+/agent-note-live-speech-recognition-while-the-user-is-still-speaking:
+  en: a8e936d53e89f361
+  zh: e24de046a3db878e
+/agent-note-live-speech-recognition-while-the-user-is-still-speaking/problem:
+  en: 282d49b86be07b96
+  zh: 4ff5870a8c4af894
+/agent-note-live-speech-recognition-while-the-user-is-still-speaking/decision:
+  en: 1d53434d25aeec84
+  zh: 9820b5cdadaad0f4
+/agent-note-live-speech-recognition-while-the-user-is-still-speaking/alternatives-considered:
+  en: dbd2fb7718390fd1
+  zh: 6ae59d44592ed415
+/agent-note-live-speech-recognition-while-the-user-is-still-speaking/consequences:
+  en: e0c33ce2adddd1f3
+  zh: 2d057a154b37a35c
+/agent-note-live-speech-recognition-while-the-user-is-still-speaking/testing:
+  en: ee07a292d0dc5142
+  zh: ae522796b89df8d9

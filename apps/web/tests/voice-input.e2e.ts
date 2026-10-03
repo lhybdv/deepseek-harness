@@ -44,7 +44,7 @@ it.skipIf(webSnapshotMode() === 'record')('guides voice setup, records from stan
   const readinessListeners = new Set<() => void>()
   await scaffold.ctx.plugin({ inject: ['speechToText'], apply(ctx) {
     ctx.effect(() => ctx.speechToText.register({
-      info: { id: 'sensevoice-local' as SpeechProviderId, name: 'Recorded recognizer', location: 'host-local', languages: ['auto'] },
+      info: { id: 'sensevoice-local' as SpeechProviderId, name: 'Recorded recognizer', location: 'host-local', languages: ['auto'], streaming: false },
       preparation: {
         snapshot: () => preparation,
         subscribe: (listener) => { readinessListeners.add(listener); return () => { readinessListeners.delete(listener) } },

@@ -9,7 +9,7 @@ English | [中文](README.zh.md)
 
 ## Summary
 
-The `speech` Remote connects browser recordings to `ctx.speechToText`. It exposes provider discovery and one complete-recording transcription call.
+The `speech` Remote connects browser recordings to `ctx.speechToText`. It exposes provider discovery, one complete-recording transcription call, and one live stream for providers that report text while the user is still speaking.
 
 ## Table of Contents
 
@@ -39,6 +39,8 @@ Compose with the speech Service Definition and Typert. `maxAudioBytes` and `maxD
 
 `catalog()` exposes provider identities, the default selection and recording limits. `transcribe()` validates canonical base64 and 16 kHz mono PCM16 WAV before resolving the selected provider. The existing gateway owns authentication and cancellation transport. Audio is transient, never a Session event or attachment; only the user’s later ordinary submission records recognized text. No runtime invariant companion is published because validation is stateless and preparation belongs to the provider.
 
+`transcribeStream()` carries the live recording on one logical stream: the Client sends base64 PCM16 batches as its uplink, and the Host yields the recognizer’s reports down the same stream. Each decoded batch must be canonical base64 and a whole number of PCM16 samples, and the accumulated total is held to the same `maxAudioBytes` and `maxDurationSeconds` limits as a stored recording; a refused batch fails the stream with `speech/invalid-audio` rather than reaching the recognizer. Recognition failures arrive as `speech/transcription-failed`, while Client cancellation propagates unchanged.
+
 `follow()` streams complete catalogs, including preparation states and current preferences. `prepare()` starts or joins a Host task; `cancelPreparation()` explicitly cancels it. `configure()` persists the supplied preference fields. A disconnected observer does not cancel preparation.
 
 </details>
@@ -65,7 +67,7 @@ No direct effect; ordinary submission owns the message content.
 
 <a id="known-limitations-and-deferred-work"></a>
 
-- No file upload, persistent transcript history or streaming protocol is exposed. Base64 adds transport overhead; recordings remain bounded by the advertised limits.
+- No file upload or persistent transcript history is exposed. Base64 adds transport overhead to both calls; recordings remain bounded by the advertised limits. Live recognition depends on the selected provider advertising `streaming`.
 
 -----
 

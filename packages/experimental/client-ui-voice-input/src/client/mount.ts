@@ -7,6 +7,8 @@ import type {} from '@deepseek-ai/dsh-client-ui-renderer/client'
 import type {} from '@deepseek-ai/dsh-client-ui-conversation/client'
 import type { TypertRemoteContribution } from '@deepseek-ai/dsh-typert-protocol'
 import { VoiceInput, type VoiceInputInjected } from './VoiceInput.tsx'
+import type {} from '@deepseek-ai/dsh-api-text-to-speech/remote'
+import textToSpeechRemote from '@deepseek-ai/dsh-api-text-to-speech/remote'
 import { Recording } from './audio.ts'
 import { en, NS, zh } from './locales.ts'
 import type {} from '@deepseek-ai/dsh-client-ui-plugin-manager/client'
@@ -31,6 +33,8 @@ function registerUi(ctx: Context): void {
       return recording
     },
     transcribe: async (request, signal) => await ctx.remote.speech.transcribe(request, signal),
+    synthesize: async (request, signal) => await ctx.remote.speechSynthesis.synthesize(request, signal),
+    transcribeStream: (request, signal) => ctx.remote.speech.transcribeStream(request, signal),
     configure: async (patch) => { const result = await ctx.remote.speech.configure(patch); if (!result.ok) throw result.error },
     prepare: async (providerId, options) => {
       const result = await ctx.remote.speech.prepare(providerId, options); if (!result.ok) throw result.error
@@ -59,7 +63,15 @@ function registerUi(ctx: Context): void {
  */
 export async function mountVoiceInput(ctx: Context, contribution: TypertRemoteContribution): Promise<() => Promise<void>> {
   const disposeRemote = await ctx.remote.$mount(contribution)
-  const ui = ctx.inject(['remote.speech', 'slots', 'locale', 'pluginNavigation'], registerUi)
-  try { await ui } catch (error) { await ui.dispose(); await disposeRemote(); throw error }
-  return async () => { await ui.dispose(); await disposeRemote() }
+  let disposeSynthesisRemote: (() => Promise<void>) | undefined
+  try {
+    disposeSynthesisRemote = await ctx.remote.$mount(textToSpeechRemote)
+    const ui = ctx.inject(['remote.speech', 'remote.speechSynthesis', 'slots', 'locale', 'pluginNavigation'], registerUi)
+    try { await ui } catch (error) { await ui.dispose(); throw error }
+    return async () => { await ui.dispose(); await disposeSynthesisRemote?.(); await disposeRemote() }
+  } catch (error) {
+    await disposeSynthesisRemote?.()
+    await disposeRemote()
+    throw error
+  }
 }

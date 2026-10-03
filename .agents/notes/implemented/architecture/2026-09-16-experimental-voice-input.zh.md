@@ -10,9 +10,9 @@ Status: implemented
 
 ## 决策
 
-`packages/experimental/` 下的五个公开包组合成一个默认禁用的可选语音输入 Bundle。服务定义、SenseVoice Provider 和 Remote 消费者分开，因为 Provider 部署与浏览器传输独立演化。浏览器 UI 动态挂载其生成的 Remote 贡献。稳定 API Remotes 不引入实验性依赖。
+`packages/experimental/` 下的六个公开包组合成一个默认禁用的可选语音输入 Bundle。服务定义、两个识别器 Provider 和 Remote 消费者分开，因为 Provider 部署与浏览器传输独立演化。浏览器 UI 动态挂载其生成的 Remote 贡献。稳定 API Remotes 不引入实验性依赖。
 
-Provider id 选择确切的注册。解析捕获实例，注销先拒绝新任务，再取消并等待已接收的任务。不存在 Provider 回退：本地失败不能授权将语音上传至云端服务。新增云端 Provider 通过同一注册表提供自己的凭据配置与显式处理位置。
+Provider id 选择确切的注册。解析捕获实例，注销先拒绝新任务，再取消并等待已接收的任务。不存在 Provider 回退：本地失败不能授权将语音上传至云端服务。新增云端 Provider 通过同一注册表提供自己的凭据配置与显式处理位置；随本仓库发布的即[讯飞 RTASR Provider](2026-10-01-cloud-speech-recognition-provider.zh.md)。
 
 录音与转写在用户提交普通文字前都是临时数据。识别不启动智能体轮次，也不创建音频 Session 事件。输入门面按照捕获的草稿版本接收异步纯文本，保留引用芯片与撤销历史。草稿变化时保留识别文字，等待显式插入，而非替换之后的编辑。切换 Session 和释放插件会使迟到结果失效并释放录音资源。采集失败立即通知当前录音活动，不受资源关闭耗时影响。取消、失败和插件撤销共同等待同一个释放 Promise，所有权持续到 AudioContext 关闭。
 

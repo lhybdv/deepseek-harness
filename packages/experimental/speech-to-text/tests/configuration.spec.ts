@@ -33,7 +33,7 @@ it('saves language and provider preferences without remounting and restores them
     const speech = ctx.get('speechToText')!
     const languages = ['auto', 'zh', 'en', 'yue', 'ja', 'ko']
     for (const id of ['sensevoice-local', 'another-provider']) speech.register({
-      info: { id: id as SpeechProviderId, name: id, location: 'host-local', languages },
+      info: { id: id as SpeechProviderId, name: id, location: 'host-local', languages, streaming: false },
       transcribe: async () => { throw new Error('Changing preferences must not transcribe audio') },
     })
     const entry = ctx.configEditor.entries().find(row => row.options.id === 'speech-to-text')!

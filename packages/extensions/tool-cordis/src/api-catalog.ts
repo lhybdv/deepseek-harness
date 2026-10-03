@@ -2842,6 +2842,12 @@ export const SERVICE_API: readonly ServiceApiEntry[] = [
         parameters: [{ name: 'request', description: 'canonical WAV encoded as base64, provider id and language hint.' }, { name: 'signal', description: 'Client cancellation or Remote contribution disposal.' }],
         returns: 'final transcript without adding a Session event.',
       },
+      {
+        signature: '@Remote({ mode: \'stream\' }) async *transcribeStream(request: TranscriptionStreamRequest, signal: AbortSignal): RemoteStream<SpeechSegment, SpeechAudioChunk>',
+        description: 'Recognize live frames the Client is still capturing, reporting text as the recognizer produces it.',
+        parameters: [{ name: 'request', description: 'provider id and language hint; the audio arrives on this call\'s uplink.' }, { name: 'signal', description: 'Client cancellation or Remote contribution disposal.' }],
+        returns: 'the transcript so far after each recognizer report, ending with its settled text.',
+      },
     ],
   },
   {
@@ -2901,6 +2907,18 @@ export const SERVICE_API: readonly ServiceApiEntry[] = [
         description: 'Execute exactly the resolved provider; no fallback sends audio elsewhere.',
         parameters: [{ name: 'spec', description: 'resolved input; a withdrawn or replaced registration is rejected.' }, { name: 'signal', description: 'caller cancellation.' }],
         returns: 'final transcript after provider settlement.',
+      },
+      {
+        signature: 'resolveStream(request: SpeechStreamRequest): SpeechStreamSpec',
+        description: 'Apply composition defaults and capture the selected provider for live recognition.',
+        parameters: [{ name: 'request', description: 'live frames and optional selection.' }],
+        returns: 'provider-pinned input for stream().',
+      },
+      {
+        signature: 'async *stream(spec: SpeechStreamSpec, signal: AbortSignal): AsyncIterable<SpeechSegment>',
+        description: 'Execute exactly the resolved provider\'s live recognizer; no fallback sends audio elsewhere.',
+        parameters: [{ name: 'spec', description: 'resolved live input; a withdrawn or replaced registration is rejected.' }, { name: 'signal', description: 'caller cancellation; it also ends the provider\'s own consumption of frames.' }],
+        returns: 'the transcript so far after each recognizer report, ending with its final text.',
       },
     ],
   },
@@ -6423,6 +6441,10 @@ export const TYPE_API: readonly TypeApiEntry[] = [
     declaration: 'export interface RemoteEventHostInfo {\n    readonly home: string;\n}',
   },
   {
+    name: 'RemoteStream',
+    declaration: 'export type RemoteStream<Out, In = never> = AsyncIterable<Out> & {\n    readonly [STREAM_UPLINK]?: In;\n};',
+  },
+  {
     name: 'RemoveResult',
     declaration: 'export interface RemoveResult {\n    readonly docId: CorpusDocumentId;\n    readonly removed: boolean;\n}',
   },
@@ -7355,6 +7377,10 @@ export const TYPE_API: readonly TypeApiEntry[] = [
     declaration: 'export interface SpawnTeammateResult {\n    readonly member: TeamMemberView;\n}',
   },
   {
+    name: 'SpeechAudioChunk',
+    declaration: 'export interface SpeechAudioChunk {\n    readonly audioBase64: string;\n}',
+  },
+  {
     name: 'SpeechCatalog',
     declaration: 'export interface SpeechCatalog extends SpeechSnapshot {\n    readonly maxAudioBytes: number;\n    readonly maxDurationSeconds: number;\n}',
   },
@@ -7388,7 +7414,7 @@ export const TYPE_API: readonly TypeApiEntry[] = [
   },
   {
     name: 'SpeechProvider',
-    declaration: 'export interface SpeechProvider {\n    readonly info: SpeechProviderInfo;\n    readonly preparation?: SpeechPreparation;\n    transcribe(input: SpeechInput, signal: AbortSignal): Promise<Transcript>;\n}',
+    declaration: 'export interface SpeechProvider {\n    readonly info: SpeechProviderInfo;\n    readonly preparation?: SpeechPreparation;\n    transcribe(input: SpeechInput, signal: AbortSignal): Promise<Transcript>;\n    transcribeStream?(input: SpeechStreamInput, signal: AbortSignal): AsyncIterable<SpeechSegment>;\n}',
   },
   {
     name: 'SpeechProviderId',
@@ -7396,7 +7422,7 @@ export const TYPE_API: readonly TypeApiEntry[] = [
   },
   {
     name: 'SpeechProviderInfo',
-    declaration: 'export interface SpeechProviderInfo {\n    readonly id: SpeechProviderId;\n    readonly name: string;\n    readonly location: \'host-local\' | \'cloud\';\n    readonly languages: readonly string[];\n    readonly setupEstimate?: SpeechSetupEstimate;\n    readonly downloadSources?: readonly string[];\n}',
+    declaration: 'export interface SpeechProviderInfo {\n    readonly id: SpeechProviderId;\n    readonly name: string;\n    readonly location: \'host-local\' | \'cloud\';\n    readonly languages: readonly string[];\n    readonly streaming: boolean;\n    readonly setupEstimate?: SpeechSetupEstimate;\n    readonly downloadSources?: readonly string[];\n}',
   },
   {
     name: 'SpeechProviderView',
@@ -7405,6 +7431,10 @@ export const TYPE_API: readonly TypeApiEntry[] = [
   {
     name: 'SpeechRequest',
     declaration: 'export interface SpeechRequest {\n    readonly audio: Uint8Array;\n    readonly providerId?: SpeechProviderId;\n    readonly language?: string;\n}',
+  },
+  {
+    name: 'SpeechSegment',
+    declaration: 'export interface SpeechSegment {\n    readonly final: boolean;\n    readonly text: string;\n}',
   },
   {
     name: 'SpeechSelection',
@@ -7425,6 +7455,18 @@ export const TYPE_API: readonly TypeApiEntry[] = [
   {
     name: 'SpeechSpec',
     declaration: 'export interface SpeechSpec extends SpeechInput {\n    readonly provider: SpeechProvider;\n}',
+  },
+  {
+    name: 'SpeechStreamInput',
+    declaration: 'export interface SpeechStreamInput {\n    readonly chunks: AsyncIterable<Uint8Array>;\n    readonly language: string;\n}',
+  },
+  {
+    name: 'SpeechStreamRequest',
+    declaration: 'export interface SpeechStreamRequest {\n    readonly chunks: AsyncIterable<Uint8Array>;\n    readonly providerId?: SpeechProviderId;\n    readonly language?: string;\n}',
+  },
+  {
+    name: 'SpeechStreamSpec',
+    declaration: 'export interface SpeechStreamSpec extends SpeechStreamInput {\n    readonly provider: SpeechProvider;\n}',
   },
   {
     name: 'SpillLocator',
@@ -7965,6 +8007,10 @@ export const TYPE_API: readonly TypeApiEntry[] = [
   {
     name: 'TranscriptionRequest',
     declaration: 'export interface TranscriptionRequest {\n    readonly audioBase64: string;\n    readonly providerId?: SpeechProviderId;\n    readonly language?: string;\n}',
+  },
+  {
+    name: 'TranscriptionStreamRequest',
+    declaration: 'export interface TranscriptionStreamRequest {\n    readonly providerId?: SpeechProviderId;\n    readonly language?: string;\n}',
   },
   {
     name: 'TurnEndCancelCause',

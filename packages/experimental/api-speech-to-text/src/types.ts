@@ -18,6 +18,17 @@ export interface TranscriptionRequest {
   readonly language?: string
 }
 
+/** Live recognition request; the audio arrives on the same logical stream's uplink. */
+export interface TranscriptionStreamRequest {
+  readonly providerId?: SpeechProviderId
+  readonly language?: string
+}
+
+/** One uplink item: 16 kHz mono PCM16 frames, base64-encoded for the JSON carrier. */
+export interface SpeechAudioChunk {
+  readonly audioBase64: string
+}
+
 /** Current provider choices and audio intake limits. */
 export interface SpeechCatalog extends SpeechSnapshot {
   readonly maxAudioBytes: number

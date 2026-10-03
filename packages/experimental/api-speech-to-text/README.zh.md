@@ -9,7 +9,7 @@ kind: "package-reference"
 
 ## 概述
 
-`speech` Remote 将浏览器录音连接至 `ctx.speechToText`，提供 Provider 发现和完整录音转写调用。
+`speech` Remote 将浏览器录音连接至 `ctx.speechToText`，提供 Provider 发现、完整录音转写调用，以及面向「说话时即报文字」的 Provider 的一条实时流。
 
 ## 目录
 
@@ -39,6 +39,8 @@ kind: "package-reference"
 
 `catalog()` 暴露 Provider 标识、默认选择与录音限制。`transcribe()` 在解析指定 Provider 前校验规范 base64 与 16 kHz 单声道 PCM16 WAV。现有网关负责认证和取消传输。音频是临时数据，不成为 Session 事件或附件；只有用户之后的普通提交才记录识别文字。不发布运行时不变量伴随模块，因为校验无状态，准备属于 Provider。
 
+`transcribeStream()` 把实时录音承载在同一条逻辑流上：Client 以其上行发送 base64 PCM16 音频批次，Host 沿同一条流向下产出识别器的报告。每个解码后的批次必须是规范 base64，且为整数个 PCM16 采样；累计音频受与完整录音相同的 `maxAudioBytes` 与 `maxDurationSeconds` 限制约束。被拒绝的批次以 `speech/invalid-audio` 结束该流，而不会到达识别器。识别失败以 `speech/transcription-failed` 返回，Client 取消则原样传播。
+
 `follow()` 推送包含准备状态和当前偏好的完整目录。`prepare()` 启动或加入 Host 任务；`cancelPreparation()` 显式取消任务。`configure()` 持久化传入的偏好字段。观察连接断开不会取消准备。
 
 </details>
@@ -65,7 +67,7 @@ kind: "package-reference"
 
 <a id="known-limitations-and-deferred-work"></a>
 
-- 不提供文件上传、持久化转写历史或流式协议。Base64 会增加传输开销；录音受公布的限制约束。
+- 不提供文件上传或持久化转写历史。Base64 会给两次调用都带来传输开销；录音受公布的限制约束。实时识别取决于所选 Provider 是否公布 `streaming`。
 
 -----
 

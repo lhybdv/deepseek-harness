@@ -24,6 +24,9 @@
       "path": "../../client/ui-conversation/tsconfig.client.json"
     },
     {
+      "path": "../../client/ui-chat/tsconfig.client.json"
+    },
+    {
       "path": "../../client/ui-primitives"
     },
     {
@@ -43,6 +46,9 @@
     },
     {
       "path": "../api-speech-to-text"
+    },
+    {
+      "path": "../api-text-to-speech"
     },
     {
       "path": "../speech-to-text"

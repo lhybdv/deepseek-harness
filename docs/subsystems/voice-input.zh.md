@@ -2,17 +2,21 @@
 
 [English](voice-input.md) | 中文
 
-实验性语音识别包含三个角色：[服务定义](../../packages/experimental/speech-to-text/README.zh.md)路由具名 Provider，[SenseVoice Provider](../../packages/experimental/speech-to-text-sensevoice/README.zh.md)拥有本地推理，[Remote 消费者](../../packages/experimental/api-speech-to-text/README.zh.md)服务浏览器。[可选 Bundle](../../packages/experimental/voice-input-bundle/README.zh.md)将它们与麦克风 UI 组合。
+实验性语音识别包含三个角色：[服务定义](../../packages/experimental/speech-to-text/README.zh.md)路由具名 Provider，Provider 拥有识别能力——[SenseVoice](../../packages/experimental/speech-to-text-sensevoice/README.zh.md)在 Host CPU 上本地推理，[讯飞 RTASR](../../packages/experimental/speech-to-text-rtasr/README.zh.md)在云端识别——[Remote 消费者](../../packages/experimental/api-speech-to-text/README.zh.md)服务浏览器。[可选 Bundle](../../packages/experimental/voice-input-bundle/README.zh.md)将它们与麦克风 UI 组合。
 
 ## Provider 选择
 
-`SpeechProviderId` 为注册标识添加类型品牌。`SpeechProviderInfo` 携带显示名称、支持的 `languages` 语言提示及 `host-local` 或 `cloud` 处理位置。`SpeechRequest` 包含 WAV 字节和可选的 Provider、语言选择；`resolve()` 生成捕获一个 Provider 实例的 `SpeechSpec`。缺失的 Provider 或不支持的语言会报错；替换或撤销会使已解析的任务失效。音频不会回退到其他 Provider。
+`SpeechProviderId` 为注册标识添加类型品牌。`SpeechProviderInfo` 携带显示名称、支持的 `languages` 语言提示、`host-local` 或 `cloud` 处理位置，以及 `streaming`——它说明该识别器是否在音频仍在产生时就报出文字。`SpeechRequest` 包含 WAV 字节和可选的 Provider、语言选择；`resolve()` 生成捕获一个 Provider 实例的 `SpeechSpec`。缺失的 Provider 或不支持的语言会报错；替换或撤销会使已解析的任务失效。音频不会回退到其他 Provider。
 
-`SpeechProvider.transcribe()` 接收完整的 `SpeechInput` 与 `AbortSignal`。`Transcript` 返回纯文本 `text`、`audioSeconds` 和 `inferenceSeconds`。Provider 响应取消，并在注销完成前结束其任务。本地 Provider 串行执行调用、限制队列，并独立于 Session 管理工作进程生命周期。
+`SpeechProvider.transcribe()` 接收完整的 `SpeechInput` 与 `AbortSignal`。`Transcript` 返回纯文本 `text`、`audioSeconds` 和 `inferenceSeconds`。Provider 响应取消，并在注销完成前结束其任务。本地 Provider 串行执行调用、限制队列，并独立于 Session 管理工作进程生命周期；云端 Provider 不占用本地资源，每次录音开启一条签名会话，无需准备即报告就绪。
+
+支持流式的 Provider 还实现 `transcribeStream()`：它在调用方仍在说话时消费 `SpeechStreamInput.chunks`，并上报 `SpeechSegment`，而不是等待一段完整录音。`resolveStream()` 以同样的方式捕获 Provider，`stream()` 通过它拉取音频帧，因此每份报告都反映识别器已经看过的全部音频。每份报告重述完整转写，最后一份为最终结果；不支持流式的 Provider 会让 `stream()` 明确失败，而不会回退到完整录音路径。
 
 ## 浏览器与 Host 所有权
 
 浏览器拥有麦克风轨道与未发送的草稿。`TranscriptionRequest` 通过带认证的 Remote 发送规范 base64 PCM16 WAV。`SpeechCatalog` 公布可用 Provider、默认选择及录音字节和时长限制。API 在识别前校验这些进程输入。
+
+流式录音改为打开 `transcribeStream()`：同一条逻辑 Remote 流向上承载 16 kHz 单声道 PCM16 音频批次，向下传递 `SpeechSegment` 报告。API 解码并用同一套已配置的字节与时长限制约束累计音频，并在任何识别器看到之前拒绝不是规范 base64 或不是完整 PCM16 采样的批次。
 
 输入门面在录音前捕获带版本的选区。`InputActions.insertText()` 仅在选区版本仍有效且提交状态允许编辑时，插入一次可撤销的纯文本编辑。插入被拒绝时，转写文字保留以供显式插入。切换 Session 或释放插件使迟到结果失效。识别本身不写入 Session 事件；普通用户提交拥有最终的模型可见文字。
 
@@ -24,11 +28,11 @@ Host Provider 在页面和 Session 变化期间拥有同一个准备任务。Cli
 
 准备失败时可包含 `SpeechDownloadFailure`，提供文件、下载源、原因分类以及可选错误码或 HTTP 状态。Client 将恢复建议本地化；原始下载错误留在 Host。
 
-麦克风占用模型选择器与发送按钮之间的 `conversation.input.activity`。点击开始录音并展开工具栏；停止后转写并插入草稿。活动栏保留编辑器与提交按钮，拥有局部反馈，并在卸载时释放展开状态。取消、Escape 或隐藏页面会丢弃录音。波形历史展示实测麦克风音量。Bundle 详情包含识别偏好、准备状态和进度。显式启用时通过 `plugins.bundle.activation` 引导缺少模型的用户前往安装；列表只显示 Bundle 描述和开关。
+麦克风占用模型选择器与发送按钮之间的 `conversation.input.activity`。点击开始录音并展开工具栏；停止后转写并插入草稿。选中 `streaming` Provider 时，采集同时打开流式会话：活动栏随识别器的修正显示报告文本，停止时补齐剩余音频帧、结束该流，并通过同一选区插入最终文本。未公布 `streaming` 的 Provider 仍走「录完再转」路径。活动栏保留编辑器与提交按钮，拥有局部反馈，并在卸载时释放展开状态。取消、Escape 或隐藏页面会丢弃录音。波形历史展示实测麦克风音量。Bundle 详情包含识别偏好、准备状态和进度。显式启用时通过 `plugins.bundle.activation` 引导缺少模型的用户前往安装；列表只显示 Bundle 描述和开关。
 
 ## 设计依据
 
-[语音输入决策](../../.agents/notes/implemented/architecture/2026-09-16-experimental-voice-input.zh.md)解释临时音频、显式 Provider 选择和延迟准备本地运行时。
+[语音输入决策](../../.agents/notes/implemented/architecture/2026-09-16-experimental-voice-input.zh.md)解释临时音频、显式 Provider 选择和延迟准备本地运行时；[云端识别决策](../../.agents/notes/implemented/architecture/2026-10-01-cloud-speech-recognition-provider.zh.md)解释默认关闭发布的云端 Provider。
 
 <!-- BEGIN GENERATED cordis-surface (gen-cordis-catalog.ts) — do not edit between markers -->
 
@@ -86,7 +90,17 @@ Speech calls never activate or submit to an Agent.
  * @returns final transcript without adding a Session event.
  */
 @Remote async transcribe(request: TranscriptionRequest, signal: AbortSignal): Promise<Transcript>
+
+/**
+ * Recognize live frames the Client is still capturing, reporting text as the recognizer produces it.
+ * @param request - provider id and language hint; the audio arrives on this call's uplink.
+ * @param signal - Client cancellation or Remote contribution disposal.
+ * @returns the transcript so far after each recognizer report, ending with its settled text.
+ */
+@Remote({ mode: 'stream' }) async *transcribeStream(request: TranscriptionStreamRequest, signal: AbortSignal): RemoteStream<SpeechSegment, SpeechAudioChunk>
 ```
+
+Types: [RemoteStream](typert.zh.md)
 
 Source: [`packages/experimental/api-speech-to-text/src/index.ts`](../../packages/experimental/api-speech-to-text/src/index.ts)
 
@@ -158,6 +172,21 @@ resolve(request: SpeechRequest): SpeechSpec
  * @returns final transcript after provider settlement.
  */
 async transcribe(spec: SpeechSpec, signal: AbortSignal): Promise<Transcript>
+
+/**
+ * Apply composition defaults and capture the selected provider for live recognition.
+ * @param request - live frames and optional selection.
+ * @returns provider-pinned input for stream().
+ */
+resolveStream(request: SpeechStreamRequest): SpeechStreamSpec
+
+/**
+ * Execute exactly the resolved provider's live recognizer; no fallback sends audio elsewhere.
+ * @param spec - resolved live input; a withdrawn or replaced registration is rejected.
+ * @param signal - caller cancellation; it also ends the provider's own consumption of frames.
+ * @returns the transcript so far after each recognizer report, ending with its final text.
+ */
+async *stream(spec: SpeechStreamSpec, signal: AbortSignal): AsyncIterable<SpeechSegment>
 ```
 
 Source: [`packages/experimental/speech-to-text/src/index.ts`](../../packages/experimental/speech-to-text/src/index.ts)

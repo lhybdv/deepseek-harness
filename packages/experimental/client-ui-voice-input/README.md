@@ -9,7 +9,7 @@ English | [中文](README.zh.md)
 
 ## Summary
 
-This optional browser plugin adds an outline microphone icon between the model selector and Send. When recognition is ready, clicking it opens a recording toolbar with measured audio levels, Cancel and Stop. The waveform stays shorter than the recording buttons. Stopping transcribes into the draft. Recognition preferences and model preparation live in plugin settings; language choices come from the selected provider.
+This optional browser plugin adds an outline microphone icon between the model selector and Send. It also reads the latest settled assistant answer aloud with play/pause and stop controls; controls remain disabled when no answer is available or synthesis is pending. When recognition is ready, clicking the microphone opens a recording toolbar with measured audio levels, Cancel and Stop. The waveform stays shorter than the recording buttons. Stopping transcribes into the draft. With a provider that reports text while the audio is still being produced, the toolbar shows that text as it forms and corrects itself, and stopping inserts the settled transcript. Recognition preferences and model preparation live in plugin settings; language choices come from the selected provider.
 
 ## Table of Contents
 
@@ -37,7 +37,7 @@ Before downloading or retrying, **Model download source** offers Automatic and t
 <details>
 <summary>Maintainer details — click to expand</summary>
 
-Native MediaRecorder captures audio and Web Audio converts it to the Host PCM format after flushing the final recorder chunks. Window blur during the microphone permission request does not cancel capture; blur during recording does. Capture failures immediately end the recording UI and offer retry inside the toolbar. Cancellation, failure and plugin disposal share one resource-release promise; the plugin retains ownership until AudioContext closure settles. The original editor selection carries a draft revision: changed drafts retain the transcript for explicit insertion or discard beside the microphone. Session changes, hiding the page during capture and plugin disposal invalidate late results and release tracks. One plugin-owned readiness subscription serves the composer, installation prompt and details. These views use the existing Slot lifecycle and own no preparation tasks. No runtime invariant companion is published because readiness comes from one Host subscription and recording state belongs to one capture operation.
+Native MediaRecorder captures audio and Web Audio converts it to the Host PCM format after flushing the final recorder chunks. A provider advertising `streaming` captures differently: an AudioWorklet on a 16 kHz context delivers blocks that are batched into 200 ms PCM16 frames, sent up the live Remote's uplink as they fill, and the reports returning on the same stream replace the text shown in the toolbar. Stopping flushes the audio no batch boundary reached, ends the uplink and inserts the last report through the same revision-bearing selection; a provider without the capability keeps the stored path. Both modes share microphone acquisition, the analyser behind the waveform, and one release promise. Window blur during the microphone permission request does not cancel capture; blur during recording does. Capture failures immediately end the recording UI and offer retry inside the toolbar. Cancellation, failure and plugin disposal share one resource-release promise; the plugin retains ownership until AudioContext closure settles. The original editor selection carries a draft revision: changed drafts retain the transcript for explicit insertion or discard beside the microphone. Session changes, hiding the page during capture and plugin disposal invalidate late results and release tracks. One plugin-owned readiness subscription serves the composer, installation prompt and details. These views use the existing Slot lifecycle and own no preparation tasks. No runtime invariant companion is published because readiness comes from one Host subscription and recording state belongs to one capture operation.
 
 </details>
 
@@ -63,7 +63,7 @@ No direct effect; ordinary submission owns the message content.
 
 <a id="known-limitations-and-deferred-work"></a>
 
-- No automatic send, always-on microphone, wake word, streaming captions or speech synthesis. “Local” means the Host machine, which can differ from the browser’s machine.
+- Speech playback requires a configured Host synthesis provider and credential; audio bytes remain in the Host-to-Client Remote response until playback.
 
 -----
 

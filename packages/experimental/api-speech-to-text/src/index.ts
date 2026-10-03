@@ -1,11 +1,14 @@
 /** Authenticated, cancellation-aware Client access to the speech capability. */
 import { Context } from '@deepseek-ai/cordis'
 import z from '@deepseek-ai/schemastery'
-import { Remote, RemoteError, TypertRemoteService } from '@deepseek-ai/dsh-typert-protocol'
+import { Remote, RemoteError, TypertRemoteService, type RemoteStream } from '@deepseek-ai/dsh-typert-protocol'
 import type {} from '@deepseek-ai/dsh-experimental-speech-to-text'
-import type { SpeechPreparationOptions, SpeechProviderId, SpeechSelectionPatch, Transcript } from '@deepseek-ai/dsh-experimental-speech-to-text/types'
-import type { SpeechCatalog, TranscriptionRequest } from './types.ts'
+import type { SpeechPreparationOptions, SpeechProviderId, SpeechSegment, SpeechSelectionPatch, Transcript } from '@deepseek-ai/dsh-experimental-speech-to-text/types'
+import type { SpeechAudioChunk, SpeechCatalog, TranscriptionRequest, TranscriptionStreamRequest } from './types.ts'
 import { validateWave } from '@deepseek-ai/dsh-experimental-speech-to-text/wave'
+
+/** Bytes of one second of the live carrier's 16 kHz mono PCM16 audio. */
+const BYTES_PER_SECOND = 32_000
 
 export type * from './types.ts'
 
@@ -107,5 +110,62 @@ export default class SpeechController extends TypertRemoteService {
       const reason = error instanceof Error ? error.message : String(error)
       throw new RemoteError('speech/transcription-failed', reason, { reason })
     }
+  }
+
+  /**
+   * Recognize live frames the Client is still capturing, reporting text as the recognizer produces it.
+   * @param request - provider id and language hint; the audio arrives on this call's uplink.
+   * @param signal - Client cancellation or Remote contribution disposal.
+   * @returns the transcript so far after each recognizer report, ending with its settled text.
+   */
+  @Remote({ mode: 'stream' })
+  async *transcribeStream(request: TranscriptionStreamRequest, signal: AbortSignal): RemoteStream<SpeechSegment, SpeechAudioChunk> {
+    const invocation = this.ctx.invocation
+    if (invocation === undefined) throw new Error('Live transcription ran outside a Remote call')
+    signal.throwIfAborted()
+    try {
+      const spec = this.ctx.speechToText.resolveStream({
+        chunks: this.decodeAudio(invocation.uplink<SpeechAudioChunk>(), signal),
+        ...request.providerId === undefined ? {} : { providerId: request.providerId },
+        ...request.language === undefined ? {} : { language: request.language },
+      })
+      yield * this.ctx.speechToText.stream(spec, signal)
+    } catch (error) {
+      signal.throwIfAborted()
+      if (error instanceof RemoteError) throw error
+      const reason = error instanceof Error ? error.message : String(error)
+      throw new RemoteError('speech/transcription-failed', reason, { reason })
+    }
+  }
+
+  /**
+   * Decode uplink audio while enforcing the configured intake limits.
+   * @param items - live audio items the Client sent for this call.
+   * @param signal - call cancellation.
+   * @returns each decoded batch of frames in arrival order.
+   */
+  private async *decodeAudio(items: AsyncIterable<SpeechAudioChunk>, signal: AbortSignal): AsyncIterable<Uint8Array<ArrayBuffer>> {
+    let delivered = 0
+    for await (const item of items) {
+      signal.throwIfAborted()
+      const audio = Buffer.from(item.audioBase64, 'base64')
+      if (audio.toString('base64') !== item.audioBase64) throw this.refused('Live audio must use canonical base64 encoding', 'encoding')
+      if (audio.length === 0 || audio.length % 2 !== 0) throw this.refused('Live audio must carry whole PCM16 samples', 'alignment')
+      delivered += audio.length
+      if (delivered > this.config.maxAudioBytes) throw this.refused('Live audio exceeds the configured byte limit', 'encoding-or-size')
+      if (delivered > this.config.maxDurationSeconds * BYTES_PER_SECOND) {
+        throw this.refused('Live transcription exceeded the configured duration', 'duration')
+      }
+      yield audio
+    }
+  }
+
+  /**
+   * @param message - Client-facing explanation.
+   * @param reason - machine-readable cause carried in the error details.
+   * @returns the refusal every rejected live audio batch reports.
+   */
+  private refused(message: string, reason: string): RemoteError {
+    return new RemoteError('speech/invalid-audio', message, { reason })
   }
 }

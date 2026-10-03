@@ -854,7 +854,7 @@ export interface Config {
 ## `@deepseek-ai/dsh-experimental-api-speech-to-text`
 
 - `inject`: `speechToText` · `typert`
-- `source`: [`packages/experimental/api-speech-to-text/src/index.ts:20`](../packages/experimental/api-speech-to-text/src/index.ts)
+- `source`: [`packages/experimental/api-speech-to-text/src/index.ts:23`](../packages/experimental/api-speech-to-text/src/index.ts)
 
 ```ts config-catalog
 /** Limits applied before decoding or calling a provider. */
@@ -1118,6 +1118,44 @@ export interface Config {
 }
 ```
 <!-- END GENERATED config-catalog:@deepseek-ai/dsh-experimental-speech-to-text -->
+
+<!-- BEGIN GENERATED config-catalog:@deepseek-ai/dsh-experimental-speech-to-text-rtasr -->
+<a id="deepseek-aidsh-experimental-speech-to-text-rtasr"></a>
+
+## `@deepseek-ai/dsh-experimental-speech-to-text-rtasr`
+
+- `inject`: `speechToText`
+- `source`: [`packages/experimental/speech-to-text-rtasr/src/config.ts:7`](../packages/experimental/speech-to-text-rtasr/src/config.ts)
+
+```ts config-catalog
+/** iFlytek account, endpoint, and session limits. */
+export interface Config {
+  /** Unique registration id; consumers select this exact id. */
+  providerId: string
+  /** iFlytek application id; omission reads {@link APP_ID_ENV}. */
+  appId?: string | undefined
+  /** iFlytek access key id; omission reads {@link ACCESS_KEY_ID_ENV}. */
+  accessKeyId?: string | undefined
+  /**
+   * Credential reference naming the access key secret. The value is resolved
+   * once per recording through `ctx.credentials`, falling back to the ambient
+   * environment, so a stored secret needs no plugin restart and never enters
+   * this configuration.
+   */
+  accessKeySecretRef: string
+  /** RTASR WebSocket endpoint. */
+  baseWsUrl: string
+  /** Maximum decoded WAV bytes accepted before connecting. */
+  maxAudioBytes: number
+  /** Maximum length of one decoded service message. */
+  maxResponseBytes: number
+  /** Deadline for establishing a transcription connection. */
+  connectTimeoutMs: number
+  /** Deadline for the final result after the last audio frame is delivered. */
+  drainTimeoutMs: number
+}
+```
+<!-- END GENERATED config-catalog:@deepseek-ai/dsh-experimental-speech-to-text-rtasr -->
 
 <!-- BEGIN GENERATED config-catalog:@deepseek-ai/dsh-experimental-speech-to-text-sensevoice -->
 <a id="deepseek-aidsh-experimental-speech-to-text-sensevoice"></a>

@@ -7,6 +7,11 @@
       name: '@deepseek-ai/dsh-experimental-speech-to-text-sensevoice'
       config:
         dataRoot: !!js dshHomePath('speech-to-text', 'sensevoice')
+    # Cloud recognition ships switched off: it needs the account's own
+    # credentials, and a deployment enables this row by id once it has them.
+    - id: speech-to-text-rtasr
+      name: '@deepseek-ai/dsh-experimental-speech-to-text-rtasr'
+      disabled: true
     - id: api-speech-to-text
       name: '@deepseek-ai/dsh-experimental-api-speech-to-text'
     - id: ui-voice-input

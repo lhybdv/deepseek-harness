@@ -29,6 +29,8 @@ kind: "package-reference"
 
 提供方通过 `downloadSources` 公布准备阶段可用的源。`prepare(id, options)` 为单次任务转发可选的 `downloadSource`；提供方校验选择，并拒绝在准备期间改源。省略时沿用提供方策略。下载源选择不属于持久化的识别偏好。
 
+公布 `streaming` 的提供方还能识别调用方仍在产生的音频帧：`resolveStream()` 为 `chunks` 与 `language` 捕获 Provider，`stream()` 随识别器的产出报告转写文本。未公布 `streaming` 的提供方会让 `stream()` 明确失败，因此调用方在开始采集前依据 `SpeechProviderInfo.streaming` 选择完整录音路径。
+
 -----
 
 <a id="understand-the-implementation"></a>
@@ -38,6 +40,8 @@ kind: "package-reference"
 <summary>维护者信息 — 点击展开</summary>
 
 `resolve()` 捕获 Provider 实例、录音和语言。`transcribe()` 拒绝已撤销或替换的注册。注册的清理函数先拒绝新请求，再取消已接收的请求并等待 Provider 完成；Provider 必须响应取消。服务不会回退到其他识别器或上传音频。不发布运行时不变量伴随模块，因为注册表是 Provider 与准备状态观测的唯一来源。
+
+流式识别沿用同一套归属：`stream()` 随调用方产生音频而通过 Provider 拉取 `chunks`，因此识别器每看过一批音频就可能报告一次，最后一次报告携带最终文本。每份报告重述完整转写而非增量，调用方据此替换显示内容而不是追加；Provider 拒绝的音频批次会使整条流失败，而不是缩短转写文本。撤销注册会中止 Provider 收到的同一个 signal 并等待其结束，调用方取消则结束对音频帧的消费。
 
 `defaultProvider` 与 `language` 是 volatile Config 字段：`configure()` 通过 `settings` 服务把传入的字段写入本插件的 profile 条目，运行中的实例无需重挂载即可读到更新值；保存覆盖值之前使用组合配置默认值。Settings 使用条目配置中的 id（`entry.options.id`）定位条目，不包含 Loader 的 Include 路径。没有 `settings` 或 profile 条目时 `configure()` 失败，并在保存前拒绝所选 Provider 不支持的语言。Provider 通过 `languages` 公布支持的语言提示；`resolve()` 在转写前校验所选提示。观察者通过完整 `SpeechSnapshot` 接收 Provider 拥有的准备状态；关闭观察者不会取消准备。
 
@@ -67,7 +71,7 @@ kind: "package-reference"
 
 <a id="known-limitations-and-deferred-work"></a>
 
-- 仅支持完整录音转写。服务没有流式识别或语音合成方法。
+- 服务没有语音合成方法。流式识别仅在 Provider 公布 `streaming` 时存在；本机 SenseVoice 提供方只识别完整录音。
 
 -----
 

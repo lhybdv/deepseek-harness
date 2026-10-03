@@ -30,6 +30,7 @@ function assertVoiceActions(value: Record<string, unknown>): asserts value is Re
   assert(typeof value.prepare === 'function')
   assert(typeof value.cancelPreparation === 'function')
   assert(typeof value.transcribe === 'function')
+  assert(typeof value.transcribeStream === 'function')
   assert(typeof value.hooks === 'object' && value.hooks !== null)
 }
 
@@ -49,7 +50,8 @@ async function fixture(fail = false) {
   const prepare = vi.fn(async () => ({ ok: true, value: {} }))
   const cancelPreparation = vi.fn(async () => ({ ok: true, value: {} }))
   const transcribe = vi.fn(async () => ({ ok: true, value: {} }))
-  ctx.provide('remote.speech', { configure, prepare, cancelPreparation, transcribe })
+  const transcribeStream = vi.fn(() => ({ send: vi.fn(), end: vi.fn(), dispose: vi.fn() }))
+  ctx.provide('remote.speech', { configure, prepare, cancelPreparation, transcribe, transcribeStream })
   ctx.provide('locale', new LocaleRuntime(ctx))
   await ctx.plugin(SlotRegistry)
   ctx.slots.register({ name: 'root', children: {
@@ -59,7 +61,7 @@ async function fixture(fail = false) {
   } } as never,
   () => null)
   if (fail) vi.spyOn(ctx.slots, 'inject').mockImplementationOnce(() => { throw new Error('slot failed') })
-  return { ctx, unmount, openBundle, configure, prepare, cancelPreparation, transcribe }
+  return { ctx, unmount, openBundle, configure, prepare, cancelPreparation, transcribe, transcribeStream }
 }
 
 it('withdraws its Remote, localized slot and microphone captures on disposal', async () => {
@@ -102,6 +104,8 @@ it('withdraws its Remote, localized slot and microphone captures on disposal', a
     await actions.transcribe(request, signal)
     expect(b.configure).toHaveBeenCalledTimes(2)
     expect(b.transcribe).toHaveBeenCalledWith(request, signal)
+    actions.transcribeStream({ language: 'zh' }, signal)
+    expect(b.transcribeStream).toHaveBeenCalledWith({ language: 'zh' }, signal)
     await fiber.dispose()
     expect(dispose).toHaveBeenCalledOnce()
     expect(b.ctx.slots.entries('conversation.input.activity')).toHaveLength(0)
