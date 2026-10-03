@@ -25,7 +25,7 @@ afterEach(() => { vi.unstubAllGlobals() })
 
 // These specs assert the shipped Chinese copy. The lane has no jsdom `window`,
 // so browser-language detection never runs and a fresh LocaleRuntime opens on
-// FALLBACK_LOCALE (en); bench stages zh explicitly on the locale instead.
+// DEFAULT_LOCALE (zh); bench stages zh explicitly on the locale instead.
 
 async function bench(isLoopback = true, mock = RemoteMock.create().load(remoteDefaultResponses), services: object = {}) {
   onTestFinished(() => { mock.assertNoUnmatched() })

@@ -29,7 +29,11 @@ Use it wherever the web GUI needs a language switch or translated copy: the ship
 
 ### Choosing a language
 
-Open Settings → General and select a registered language. The active locale is applied immediately: the UI copy switches, `<html lang>` points at the external id or built-in document tag, and the choice is written to the durable settings section. A browser without an explicit Host preference selects the first registered language that matches `navigator` by full tag and then primary subtag, falling back to English. A stored external locale waits for its definition to register instead of becoming active while unavailable.
+Open Settings → General and select a registered language. The active locale is applied immediately: the UI copy switches, `<html lang>` points at the external id or built-in document tag, and the choice is written to the durable settings section. A browser without an explicit Host preference selects the first registered language that matches `navigator` by full tag and then primary subtag, falling back to Chinese. A stored external locale waits for its definition to register instead of becoming active while unavailable.
+
+### Choosing an answer language
+
+Open Settings → General → Answer language to choose Chinese (the default) or English. The choice is stored with the locale user settings and contributes an explicit language instruction to each model request; the assembled runtime-context snapshot is recorded in the session log.
 
 Native shells may provide `__DSH_LOCALE__` with an asynchronous `read()` and an `onChange(locale)` callback. Initialization supplies the current Host preference and ordered OS languages before the Client mounts. Automatic selection stays provisional; only Settings selections write `locale.preference`. A fresh read on each page load prevents a stale preload preference after reload. Ordinary browsers keep navigator-based detection and their existing settings-scope policy.
 
@@ -85,7 +89,7 @@ One `LocaleRuntime` owns the preference and the dictionary registry, and is itse
 
 ### Preference resolution
 
-The provisional locale comes from the browser (`navigator.languages` matched by full tag and then primary subtag, English as the fallback), standing in until the allowed Host-backed settings scope delivers its stored preference. The Host read runs after plugin activation so an unavailable or withheld settings scope cannot block the page, and the result replaces the provisional value live. A stored external locale waits for its definition to register. `setLocale` is the only write entry; it persists even when the id already matches the active locale, because the active value may be provisional and must survive a different browser sharing the same home.
+The provisional locale comes from the browser (`navigator.languages` matched by full tag and then primary subtag, Chinese as the fallback), standing in until the allowed Host-backed settings scope delivers its stored preference. The Host read runs after plugin activation so an unavailable or withheld settings scope cannot block the page, and the result replaces the provisional value live. A stored external locale waits for its definition to register. `setLocale` is the only write entry; it persists even when the id already matches the active locale, because the active value may be provisional and must survive a different browser sharing the same home.
 
 ### Dictionary lookup
 

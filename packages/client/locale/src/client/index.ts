@@ -17,21 +17,25 @@ import { parseLocaleBootstrap, type LocaleBootstrap, type LocaleBridge } from '.
 // Type-only: pulls the SlotRegistry service merge (ctx.slots).
 import type {} from '@deepseek-ai/dsh-client-ui-renderer/client'
 import {
-  LOCALE_ID_PATTERN, LOCALE_IDS, LOCALE_PREFERENCE_FIELD, LOCALE_SETTINGS_NAMESPACE,
-  type BuiltInLocaleId, type LocaleId, type LocaleSettings,
+  ANSWER_LANGUAGE_FIELD, LOCALE_ID_PATTERN, LOCALE_IDS, LOCALE_PREFERENCE_FIELD, LOCALE_SETTINGS_NAMESPACE,
+  type AnswerLanguage, type BuiltInLocaleId, type LocaleId, type LocaleSettings,
 } from '../locale-settings.ts'
 import { en, zh, type CommonKey } from '../locales/index.ts'
 import {
   en as settingsEn, zh as settingsZh, type SettingsLocaleKey,
 } from '../locales/settings.ts'
+import type { AnswerLanguageRowInjected } from './AnswerLanguageRow.tsx'
+import { AnswerLanguageRow } from './AnswerLanguageRow.tsx'
+import { createAnswerLanguageStore } from './answer-language-store.ts'
 import type { LanguageRowInjected } from './LanguageRow.tsx'
 import { LanguageRow } from './LanguageRow.tsx'
 import { createLanguageRowStore } from './settings-store.ts'
-
+export type { AnswerLanguageRowComponentProps, AnswerLanguageRowInjected } from './AnswerLanguageRow.tsx'
+export type { AnswerLanguageState, AnswerLanguageStore } from './answer-language-store.ts'
 export type { LanguageRowComponentProps, LanguageRowInjected } from './LanguageRow.tsx'
 export type { LanguageOptionRow, LanguageRowState } from './settings-store.ts'
 export type { CommonKey } from '../locales/index.ts'
-export type { BuiltInLocaleId, LocaleId, LocaleSettings } from '../locale-settings.ts'
+export type { AnswerLanguage, BuiltInLocaleId, LocaleId, LocaleSettings } from '../locale-settings.ts'
 
 // The translate currency lives in ui-slots (the render machinery synthesizes
 // the seat); re-exported here so dictionary owners import one package.
@@ -98,13 +102,20 @@ declare module '@deepseek-ai/cordis' {
 }
 
 /**
- * English is both the locale the UI opens in when the browser names no registered
- * language (and for non-browser runs), and the dictionary consulted after the
- * active locale misses a key. One constant serves both because the shipped
- * `zh`/`en` dictionaries carry identical key sets, so neither direction can
- * leave a key unresolved; the residual case points at English rather than
- * zh because a browser naming no registered language is the reader least
- * likely to read Chinese.
+ * The locale the UI opens in when neither a stored preference nor the browser
+ * names a registered language (including non-browser runs). Chinese is the
+ * product default; a browser that asks for English still opens English.
+ */
+export const DEFAULT_LOCALE: BuiltInLocaleId = 'zh'
+
+/**
+ * The terminal of every dictionary fallback chain: the language consulted
+ * after the active locale misses a key, and the target every `addLanguage`
+ * definition must reach. English anchors the chain because the shipped `zh`/
+ * `en` dictionaries carry identical key sets, so a zh reader resolves an
+ * unshipped key here rather than seeing the key itself. The opening default is
+ * {@link DEFAULT_LOCALE}, deliberately separate so a language pack keeps
+ * falling back to English whichever locale the page opens at.
  */
 export const FALLBACK_LOCALE: BuiltInLocaleId = 'en'
 
@@ -513,11 +524,11 @@ export class LocaleRuntime {
 }
 
 /**
- * The browser's own language wins over {@link FALLBACK_LOCALE}; an explicit
+ * The browser's own language wins over {@link DEFAULT_LOCALE}; an explicit
  * Host preference may replace this provisional value after plugin activation.
  */
 function resolveInitialLocale(locales: readonly LocaleDefinition[], languages?: readonly string[]): LocaleId {
-  return detectBrowserLocale(locales, languages) ?? FALLBACK_LOCALE
+  return detectBrowserLocale(locales, languages) ?? DEFAULT_LOCALE
 }
 
 /**
@@ -620,4 +631,28 @@ export async function apply(ctx: ClientContext): Promise<void> {
     locale: SETTINGS_NS,
     inject: injected,
   }, LanguageRow))
+
+  const answerStore = createAnswerLanguageStore()
+  let answerActions: { sync: (language: AnswerLanguage, revision: number) => void } | undefined
+  const syncAnswerLanguage = (): void => {
+    const snapshot = host.getSnapshot()
+    answerActions?.sync(snapshot.value?.answerLanguage ?? 'zh', snapshot.revision ?? 0)
+  }
+  ctx.effect(() => host.subscribe(syncAnswerLanguage), 'locale: answer-language settings synchronization')
+  syncAnswerLanguage()
+  const answerInjected = (actions: BoundActions<typeof answerStore>): AnswerLanguageRowInjected => {
+    answerActions = actions
+    syncAnswerLanguage()
+    return {
+      setAnswerLanguage: (language) => { void host.set(ANSWER_LANGUAGE_FIELD, language) },
+    }
+  }
+  ctx.slots.inject('settings.general.item', () => ctx.slots.register({
+    name: 'settings.general.item',
+    id: 'answer-language',
+    order: 1,
+    store: answerStore,
+    locale: SETTINGS_NS,
+    inject: answerInjected,
+  }, AnswerLanguageRow))
 }

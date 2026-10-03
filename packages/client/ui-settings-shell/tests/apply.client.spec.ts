@@ -13,7 +13,7 @@ import { apply as hostApply } from '../src/index.ts'
 
 // These specs assert the shipped Chinese copy. The lane has no jsdom `window`,
 // so browser-language detection never runs and a fresh LocaleRuntime opens on
-// FALLBACK_LOCALE (en); bench stages zh explicitly on the locale instead.
+// DEFAULT_LOCALE (zh); bench stages zh explicitly on the locale instead.
 
 /** One Host view of a served namespace. */
 function view(ns: string, revision = 0) {

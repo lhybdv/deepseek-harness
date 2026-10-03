@@ -26,7 +26,7 @@ import { apply as hostApply } from '../src/index.ts'
 
 // These specs assert the shipped Chinese copy. The lane has no jsdom `window`,
 // so browser-language detection never runs and a fresh LocaleRuntime opens on
-// FALLBACK_LOCALE (en); each bench stages zh explicitly on the locale instead.
+// DEFAULT_LOCALE (zh); each bench stages zh explicitly on the locale instead.
 
 /** The Developer tools half of `ctx.configForms`, which gates all selection. */
 function developerTools(enabled = true): { configForms: { developerTools: { enabled: ObservableSnapshot<boolean> } } } {
