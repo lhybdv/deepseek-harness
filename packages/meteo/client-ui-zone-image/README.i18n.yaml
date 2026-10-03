@@ -1,0 +1,7 @@
+# Bilingual-pair consistency record for README.md (docs/i18n/README.md): per heading
+# section, a hash of its English and Chinese blocks outside code blocks and generated regions.
+# After editing either side, bring the other along and re-record with:
+#   pnpm run verify-translation-pairing --write packages/meteo/client-ui-zone-image/README.md
+/zoning-image-comparison-panel:
+  en: 4d297c03b147230a
+  zh: d3f95538ad85a155

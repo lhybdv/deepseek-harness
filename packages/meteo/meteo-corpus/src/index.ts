@@ -27,6 +27,8 @@ export type {
   SearchRequest,
   SearchResult,
 } from './types.ts'
+export { fuseRanks, cosineSimilarity } from './fusion.ts'
+export type { RankedChunk } from './fusion.ts'
 export { DEFAULT_CHUNK_CHARS, bigrams, chunkText, indexTokens } from './text.ts'
 export { buildMatchExpression } from './match.ts'
 export {
@@ -37,6 +39,8 @@ export {
   resolveCorpusPath,
 } from './schema.ts'
 export type { CorpusJournalMode } from './schema.ts'
+/** Capability registry required for document and query vectors. */
+export const inject = ['textEmbeddings']
 export { SqliteCorpusStore } from './sqlite.ts'
 export type { Config } from './sqlite.ts'
 export { SqliteCorpusStore as default } from './sqlite.ts'

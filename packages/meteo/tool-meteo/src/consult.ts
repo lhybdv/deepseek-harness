@@ -30,6 +30,8 @@ import type { MeteoLimits } from './config.ts'
 import { capSnippet, consultViewFromResult } from './presentation.ts'
 import { evaluateHazard, evaluateSuitability } from './rules.ts'
 import type { DaySuitability, FiredCriterion, HazardLevel } from './rules.ts'
+import type {} from '@deepseek-ai/dsh-document-products'
+import type { ResolvedHazard } from '@deepseek-ai/dsh-document-products'
 import { nonEmpty, stationRef } from './slots.ts'
 
 /** Which slots the model filled, resolved to one consultation shape. */
@@ -137,6 +139,8 @@ export interface ConsultHazard {
   basis: FiredCriterion[]
   /** Revision of the criteria dataset consulted; absent when it was never read. */
   ruleVersion?: string
+  /** Inclusive sample-time endpoints actually evaluated; absent when no usable samples exist. */
+  evaluated?: { from: string; to: string }
 }
 
 /** Canonical `meteo_consult` output value. */
@@ -423,6 +427,7 @@ export function consultMetaFromValue(value: ConsultOutput, maxSnippetChars: numb
           firstTime: criterion.firstTime,
         })),
         ...(value.hazard.ruleVersion === undefined ? {} : { ruleVersion: value.hazard.ruleVersion }),
+        ...(value.hazard.evaluated === undefined ? {} : { evaluated: value.hazard.evaluated }),
       },
     },
     ...(value.ruleVersion === undefined ? {} : { ruleVersion: value.ruleVersion }),
@@ -645,6 +650,14 @@ export function applyMeteoConsultTool(ctx: Context, limits: MeteoLimits): void {
                 },
               },
               ruleVersion: { type: 'string' },
+              evaluated: {
+                type: 'object',
+                additionalProperties: false,
+                properties: {
+                  from: { type: 'string', required: true },
+                  to: { type: 'string', required: true },
+                },
+              },
             },
           },
           citations: {
@@ -723,9 +736,33 @@ export function applyMeteoConsultTool(ctx: Context, limits: MeteoLimits): void {
           detail: `no station consulted: ${REASON_TEXT[reason]}${candidates.length === 0 ? '' : `; ${String(candidates.length)} candidates offered`}`,
           count: candidates.length,
         })
-        for (const step of SKIPPED_STEPS) {
+        for (const step of SKIPPED_STEPS.filter(name => name !== 'corpus')) {
           stepTrace.push({ step, status: 'skipped', detail: 'not run: the consultation is not anchored to a station', count: 0 })
         }
+        const terms = new Set<string>()
+        for (const term of [disaster, crop, activity]) {
+          if (term === undefined) continue
+          terms.add(term)
+          for (const synonym of await ctx.meteoData.expandTerm(term)) terms.add(synonym)
+        }
+        const retrieval = await ctx.corpus.search({ query: question, terms: [...terms], limit })
+        const citations = retrieval.hits.map((hit: CorpusHit) => ({
+          docId: hit.docId,
+          ordinal: hit.ordinal,
+          docTitle: hit.docTitle,
+          headingPath: hit.headingPath,
+          charStart: hit.charStart,
+          charEnd: hit.charEnd,
+          text: hit.text,
+        }))
+        stepTrace.push({
+          step: 'corpus',
+          status: citations.length === 0 ? 'unknown' : 'done',
+          detail: citations.length === 0
+            ? `no indexed chunk matched (${String(terms.size)} terms)`
+            : `${String(citations.length)} chunks for ${String(terms.size)} terms (window ${String(limit)})`,
+          count: citations.length,
+        })
         const unresolved: ConsultOutput = {
           intent,
           slots,
@@ -734,9 +771,9 @@ export function applyMeteoConsultTool(ctx: Context, limits: MeteoLimits): void {
           forecast: [],
           suitability: [],
           hazard: { level: 'unknown', basis: [] },
-          citations: [],
+          citations,
           stepTrace,
-          truncated: false,
+          truncated: citations.length === limit,
         }
         return unresolved
       }
@@ -787,11 +824,38 @@ export function applyMeteoConsultTool(ctx: Context, limits: MeteoLimits): void {
       const hazardQuery = disaster === undefined ? {} : { disaster }
       const hazardCriteria = await ctx.meteoData.thresholds(hazardQuery)
       const ruleVersion = (await ctx.meteoData.versions()).datasets.thresholds
-      const hazard = evaluateHazard({
+      const evaluatedSamples = [...observations, ...forecast]
+      const hazardFinding = evaluateHazard({
         thresholds: hazardCriteria,
-        samples: [...observations, ...forecast],
+        samples: evaluatedSamples,
         ruleVersion,
       })
+      const sampleTimes = evaluatedSamples.map(sample => sample.time).filter(time => time.length > 0).sort()
+      const evaluated = sampleTimes.length === 0
+        ? undefined
+        : { from: sampleTimes[0]!, to: sampleTimes[sampleTimes.length - 1]! }
+      const hazard = {
+        ...hazardFinding,
+        ...(evaluated === undefined ? {} : { evaluated }),
+      }
+      const generatedHazard = hazard.basis[0]?.disaster
+      if (hazard.level !== 'unknown' && evaluated !== undefined && generatedHazard !== undefined
+        && ctx.get('documentProducts') !== undefined && exec.agent !== undefined) {
+        const grading: ResolvedHazard = {
+          stationId: station.id,
+          from: evaluated.from,
+          to: evaluated.to,
+          hazard: generatedHazard,
+          grade: hazard.level,
+          forecastHours: limits.forecastHours,
+        }
+        try {
+          await ctx.documentProducts.hazardResolved(exec.agent.session, grading)
+        } catch (error: unknown) {
+          // Product generation is supplementary: log its cause and preserve the consultation findings.
+          ctx.logger.warn(`meteo_consult: automatic warning product generation failed: ${String(error)}`)
+        }
+      }
       stepTrace.push({
         step: 'hazard',
         status: hazard.level === 'unknown' ? 'unknown' : 'done',

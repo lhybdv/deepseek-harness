@@ -10,7 +10,8 @@
  * across the 24 h between them, which is the longer span the series-wide grade reports.
  */
 
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it, vi } from 'vitest'
+import type { DocumentProduct, ResolvedHazard } from '@deepseek-ai/dsh-document-products'
 import { appendFocus } from '@deepseek-ai/dsh-meteo-data'
 import { presentConsultCall, presentConsultResult } from '@deepseek-ai/dsh-tool-meteo'
 import { CHUNK, HIT, modelText, mountTools, resultFor, viewMeta } from './harness.ts'
@@ -18,6 +19,74 @@ import { CHUNK, HIT, modelText, mountTools, resultFor, viewMeta } from './harnes
 const QUESTION = '这个风能播地吗'
 
 describe('meteo_consult station slot', () => {
+  it('exposes the sample-time window actually evaluated by the hazard grading', async () => {
+    const { call } = await mountTools()
+    const meta = viewMeta(await call('meteo_consult', { question: QUESTION, station: 'ha-xx-01', disaster: '大风' }))
+    expect(meta.results.hazard?.evaluated).toEqual({
+      from: '2026-10-08T04:00:00Z',
+      to: '2026-10-09T18:00:00Z',
+    })
+  })
+
+  it('leaves the evaluated window absent when the grading reads no samples', async () => {
+    const { data, call } = await mountTools()
+    data.observationRows = []
+    data.forecastPoints = []
+    const meta = viewMeta(await call('meteo_consult', { question: QUESTION, station: 'ha-xx-01', disaster: '大风' }))
+    expect(meta.results.hazard).not.toHaveProperty('evaluated')
+  })
+
+  it('generates a warning from the supported grade and exact sample window', async () => {
+    const { ctx, agent, call } = await mountTools()
+    const hazardResolved = vi.fn(async (_session: unknown, _grading: ResolvedHazard) => ({} as DocumentProduct))
+    ctx.provide('documentProducts', { hazardResolved } as never)
+    const result = await call('meteo_consult', { question: QUESTION, station: 'ha-xx-01', disaster: '大风' })
+    expect(hazardResolved).toHaveBeenCalledTimes(1)
+    expect(hazardResolved).toHaveBeenCalledWith(agent.session, {
+      stationId: 'ha-xx-01',
+      from: '2026-10-08T04:00:00Z',
+      to: '2026-10-09T18:00:00Z',
+      hazard: '大风',
+      grade: 'medium',
+      forecastHours: 72,
+    })
+    expect(viewMeta(result).results.hazard?.evaluated).toEqual({
+      from: '2026-10-08T04:00:00Z',
+      to: '2026-10-09T18:00:00Z',
+    })
+  })
+
+  it('does not generate a warning when the grade is unknown', async () => {
+    const { ctx, data, call } = await mountTools()
+    data.thresholdRows = []
+    const hazardResolved = vi.fn(async (_session: unknown, _grading: ResolvedHazard) => ({} as DocumentProduct))
+    ctx.provide('documentProducts', { hazardResolved } as never)
+    await call('meteo_consult', { question: QUESTION, station: 'ha-xx-01' })
+    expect(hazardResolved).not.toHaveBeenCalled()
+  })
+
+  it('does not generate a warning without usable sample times', async () => {
+    const { ctx, data, call } = await mountTools()
+    data.observationRows = []
+    data.forecastPoints = []
+    const hazardResolved = vi.fn(async (_session: unknown, _grading: ResolvedHazard) => ({} as DocumentProduct))
+    ctx.provide('documentProducts', { hazardResolved } as never)
+    await call('meteo_consult', { question: QUESTION, station: 'ha-xx-01' })
+    expect(hazardResolved).not.toHaveBeenCalled()
+  })
+
+  it('logs generation failure while preserving the consultation finding', async () => {
+    const { ctx, call } = await mountTools()
+    const cause = new Error('generation rejected')
+    const hazardResolved = vi.fn(async () => { throw cause })
+    const warning = vi.spyOn(ctx.logger, 'warn')
+    ctx.provide('documentProducts', { hazardResolved } as never)
+    const result = await call('meteo_consult', { question: QUESTION, station: 'ha-xx-01' })
+    expect(result.isError).toBe(false)
+    expect(viewMeta(result).results.hazard?.level).toBe('medium')
+    expect(warning).toHaveBeenCalledWith(expect.stringContaining('generation rejected'))
+  })
+
   it('reads the station named by id without searching the network for it', async () => {
     const { data, call } = await mountTools()
     const meta = viewMeta(await call('meteo_consult', { question: QUESTION, station: 'ha-xx-01' }))
@@ -74,7 +143,7 @@ describe('meteo_consult station slot', () => {
       'forecast:skipped',
       'suitability:skipped',
       'hazard:skipped',
-      'corpus:skipped',
+      'corpus:done',
     ])
     expect(meta.steps[0]?.detail).toBe('no station consulted: the place that was named matches more than one station; 2 candidates offered')
     expect(meta.steps[1]?.detail).toBe('not run: the consultation is not anchored to a station')
@@ -121,14 +190,37 @@ describe('meteo_consult station slot', () => {
     expect(clarification?.candidates.length).toBeGreaterThan(0)
   })
 
-  it('asks for a place when neither the question nor the session names one', async () => {
-    const { data, callWithoutAgent } = await mountTools()
-    const meta = viewMeta(await callWithoutAgent('meteo_consult', { question: QUESTION }))
+  it('asks for a place while still retrieving professional corpus evidence', async () => {
+    const { data, corpus, callWithoutAgent } = await mountTools()
+    const result = await callWithoutAgent('meteo_consult', { question: QUESTION })
+    const meta = viewMeta(result)
     expect(meta.needsClarification?.reason).toBe('station-missing')
-    expect(meta.needsClarification?.candidates).toHaveLength(3)
-    expect(modelText(await callWithoutAgent('meteo_consult', { question: QUESTION })))
-      .toContain('neither the question nor the session names a place')
-    expect(data.calls).toEqual(['stations::', 'stations::'])
+    expect(meta.citations).toHaveLength(1)
+    expect(meta.steps.find(step => step.step === 'corpus')).toMatchObject({ status: 'done', count: 1 })
+    expect(corpus.searchRequests).toHaveLength(1)
+    expect(data.calls).toEqual(['stations::'])
+  })
+
+  it('retrieves and labels corpus evidence while station clarification is pending', async () => {
+    const { data, corpus, callWithoutAgent } = await mountTools()
+    const result = await callWithoutAgent('meteo_consult', { question: QUESTION, disaster: '大风' })
+    expect(viewMeta(result).needsClarification?.reason).toBe('station-missing')
+    expect(data.expansions).toEqual(['大风'])
+    expect(viewMeta(result).steps.find(step => step.step === 'corpus')).toMatchObject({
+      status: 'done',
+      detail: '1 chunks for 2 terms (window 6)',
+    })
+    expect(corpus.searchRequests[0]?.terms).toEqual(['大风', '狂风'])
+  })
+
+  it('reports an empty corpus result while station clarification is pending', async () => {
+    const { corpus, callWithoutAgent } = await mountTools()
+    corpus.searchHits = []
+    const result = await callWithoutAgent('meteo_consult', { question: QUESTION, disaster: '大风' })
+    expect(viewMeta(result).steps.find(step => step.step === 'corpus')).toMatchObject({
+      status: 'unknown',
+      detail: 'no indexed chunk matched (2 terms)',
+    })
   })
 
   it('offers only the configured number of candidates when asking', async () => {
@@ -261,7 +353,12 @@ describe('meteo_consult findings', () => {
     expect(data.thresholdQueries).toEqual([{}, { disaster: '干旱' }])
     expect(corpus.searchRequests[0]?.terms).toEqual(['干旱', '旱灾'])
     expect(data.expansions).toEqual(['干旱'])
-    expect(meta.results.hazard).toEqual({ level: 'unknown', basis: [], ruleVersion: 'th-7' })
+    expect(meta.results.hazard).toEqual({
+      level: 'unknown',
+      basis: [],
+      ruleVersion: 'th-7',
+      evaluated: { from: '2026-10-08T04:00:00Z', to: '2026-10-09T18:00:00Z' },
+    })
     expect(meta.steps[4]).toEqual({
       step: 'hazard',
       status: 'unknown',

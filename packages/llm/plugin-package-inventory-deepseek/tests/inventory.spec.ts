@@ -1,4 +1,4 @@
-import { afterEach, describe, expect, it } from 'vitest'
+import { afterEach, describe, expect, it, vi } from 'vitest'
 import { mkdtemp, mkdir, rm, writeFile } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
@@ -162,27 +162,44 @@ describe('DeepSeek plugin package inventory', () => {
     ])
   })
 
-  it('fails when a Loader-resolved bare entry has no package manifest', async () => {
+  it('omits a Loader-resolved bare entry whose package manifest does not resolve', async () => {
     const { ctx } = await harness()
+    const warn = vi.spyOn(ctx.logger, 'warn').mockImplementation(() => undefined)
     ctx.loader.internal = {
       version: 'v2',
       import: async () => ({ default: () => {} }),
     } as unknown as NonNullable<typeof ctx.loader.internal>
     await ctx.loader.create({ name: 'missing-package' })
-    await expect(ctx.deepseekLlmApiExtensions.prepare({ body: { messages: [] }, signal: SIGNAL }))
-      .rejects.toThrow(/cannot resolve active package/)
+
+    const prepared = await ctx.deepseekLlmApiExtensions.prepare({ body: { messages: [] }, signal: SIGNAL })
+    expect(prepared.fields.dsh_plugin_packages).toEqual({ version: 1, packages: [] })
+    expect(warn.mock.calls.map(call => call[0]).join('\n')).toContain('missing-package')
+    expect(warn).toHaveBeenCalledTimes(1)
+
+    const repeated = await ctx.deepseekLlmApiExtensions.prepare({ body: { messages: [] }, signal: SIGNAL })
+    expect(repeated.fields.dsh_plugin_packages).toEqual({ version: 1, packages: [] })
+    expect(warn).toHaveBeenCalledTimes(1)
   })
 
   it('does not bypass the profile package service for a missing bare package', async () => {
-    const { ctx } = await harness(undefined, true)
+    const { ctx, root } = await harness(undefined, true)
+    const warn = vi.spyOn(ctx.logger, 'warn').mockImplementation(() => undefined)
+    const packageOf = vi.spyOn(ctx.pluginPackages, 'packageOf').mockReturnValue(undefined)
+    // Native Node lookup would find this package in the tree, so only the
+    // authoritative service's miss can keep it out of the prepared field.
+    await packagePlugin(root, 'node_modules/missing-profile-package', {
+      name: 'missing-profile-package', version: '9.9.9',
+    })
     ctx.loader.internal = {
       version: 'v2',
       import: async () => ({ default: () => {} }),
     } as unknown as NonNullable<typeof ctx.loader.internal>
     await ctx.loader.create({ name: 'missing-profile-package' })
 
-    await expect(ctx.deepseekLlmApiExtensions.prepare({ body: { messages: [] }, signal: SIGNAL }))
-      .rejects.toThrow(/cannot resolve active package/)
+    const prepared = await ctx.deepseekLlmApiExtensions.prepare({ body: { messages: [] }, signal: SIGNAL })
+    expect(prepared.fields.dsh_plugin_packages).toEqual({ version: 1, packages: [] })
+    expect(packageOf).toHaveBeenCalled()
+    expect(warn.mock.calls.map(call => call[0]).join('\n')).toContain('missing-profile-package')
   })
 
   it('supports a direct embedding whose context has no base URL', async () => {

@@ -170,6 +170,15 @@ describe('corpus_ingest', () => {
 })
 
 describe('corpus_search', () => {
+  it('executes a repeated question again in the same session', async () => {
+    const { store, call } = await mountTools()
+    await call('corpus_search', { query: '打药' })
+    await call('corpus_search', { query: '打药' })
+    expect(store.searchRequests).toEqual([
+      { query: '打药', terms: [], limit: 8 },
+      { query: '打药', terms: [], limit: 8 },
+    ])
+  })
   it('unions the question with the derived terms and cites every hit', async () => {
     const { store, call } = await mountTools()
     store.searchHits = [HIT, { ...HIT, ordinal: 1, charStart: 240, charEnd: 480, text: '气温宜在 15 至 28 摄氏度' }]

@@ -9,7 +9,7 @@ kind: "package-reference"
 
 ## 概述
 
-`dsh-meteo-corpus` 把上传的文档摄取为按标题分块的片段，并检索出最能回答某个提问的片段，每段都带文档 id、序号与引用所需的字符偏移。给它一个独立的 SQLite 文件，并以 `ctx.corpus` 挂载即可。中文召回决定了它的形态：SQLite 的 `unicode61` 分词器会把一整段连续汉字当成一个 token，因此用原文检索 `对流` 一无所获，而 `明天下午在临河镇打药行不行` 这类口语问句在任何 AND 连接的查询下都返回空结果。索引存储 bigram 词形，检索时把提问 token 与调用方给出的词做 OR 并集。
+`dsh-meteo-corpus` 把上传文档摄取为带标题路径的片段，并检索最能回答问题的内容；每段都带文档 ID、序号和引用所需的字符偏移。请提供独立 SQLite 文件并挂载为 `ctx.corpus`。检索结合配置的 `ctx.textEmbeddings` 提供方生成的稠密语义召回与中文双字 bigram FTS5 索引；BM25 词法排序本身不被视为语义搜索。
 
 ## 目录
 
@@ -49,10 +49,15 @@ kind: "package-reference"
 | `maxMatchTokens` | `64` | MATCH 表达式的去重 token 数上限，用于限界表达式规模。 |
 | `maxChunkChars` | `800` | 单块字符数的软上限。 |
 | `maxDocumentBytes` | `4000000` | 单文档可接受的 UTF-8 字节上限。 |
+| `embeddingBatchSize` | `32` | 一次发送给 embedding 提供方的最大分块数。 |
+| `candidateLimit` | `100` | 每次查询参与融合的词法和语义候选上限。 |
 
 ### 选择索引文件
 
-请给语料一个独立的数据库文件。同类的派生索引会拒绝 `application_id` 属于他人的文件，并在 `user_version` 变化时清空所有表；本 store 反向施加同样的规则：被其他应用持有的文件，或声明无主的非空文件，都是硬错误，而不是静默接管。
+请给语料一个独立的数据库文件。同类的派生索引会拒绝 `application_id` 属于他人的文件，并在 `user_version` 变化时清空所有表；本 store 反向施加同样规则。其 schema 将每个 chunk 的向量与正文、FTS 行一起保存。schema 版本变化会重建派生数据库，因此需在版本或 embedding 模型变化后重新摄取来源文档。
+### Embedding 提供方
+
+在本包之前挂载 `@deepseek-ai/dsh-text-embeddings` 与一个提供方。建索引和查询必须使用同一模型；模型变化后需重新摄取。模型文件随 Host 部署时选本地 ONNX 提供方；已有 embeddings API 时选 OpenAI 兼容提供方。
 
 ### 提供扩展词
 
@@ -72,7 +77,7 @@ kind: "package-reference"
 
 `ingest` 先写文档的 chunk 行与 FTS 行，最后写 `docs` 行。该行是可见性闸门：检索经由它连接，因此被中断的摄取只留下任何查询都取不到的 chunk 行，而不会留下一个报告了它并不拥有的块数的文档。失败按源隔离——一个被拒的文档绝不中断同批其他文档。
 
-`search` 在 `chunks_fts`、`chunks`、`docs` 上发出一条连接查询，按 FTS5 自带的 `bm25()` 排序。这里直接使用 BM25——而会话检索索引不用——因为单一语料使分数在一次运行内可比，而这正是会话索引无法在其持久表与活动表之间依赖的性质。
+`search` 收集至多 `candidateLimit` 个 BM25 候选和至多 `candidateLimit` 个向量余弦候选，再以 reciprocal-rank fusion 融合排序：每份列表贡献 `1 / (60 + rank)`（rank 从 1 开始）。融合分数为贡献之和；候选按文档与 chunk 唯一化。融合保留精确术语信号，并让纯语义结果可被召回。即使命中只来自语义召回，`matchExpression` 仍报告 FTS 查询。
 
 数据库句柄在首次使用时惰性打开，并通过 fiber effect 关闭：只挂载本插件却不摄取、不检索的组合不付出代价，重载组合也不会泄漏文件锁。`node:sqlite` 正是出于同样原因在那次打开内部动态导入。
 

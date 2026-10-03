@@ -1,0 +1,10 @@
+/** Auditable meteorological document product generation and lifecycle. @module @deepseek-ai/dsh-document-products */
+export { generateFromResolvedHazard, generateProduct } from './generate.ts'
+export type { GenerateProductInput, ProductComposer, ResolvedHazard } from './generate.ts'
+export { legalProductActions, transitionProduct, verifyPolish, verifyProduct } from './product.ts'
+export type { DocumentProduct, ProductAction, ProductCitation, ProductDataValue, ProductId, ProductKind, ProductState, ProductTransition, ProductTransitionResult, ReleaseArtifact } from './product.ts'
+export { transitionInSession } from './events.ts'
+export type { ProductSessionEvent } from './events.ts'
+export { assertConfig, Config, DEFAULT_CITATION_LIMIT, DEFAULT_FORECAST_HOURS } from './config.ts'
+export type { Config as ProductConfig } from './config.ts'
+export { apply, DocumentProductService, inject, name } from './plugin.ts'

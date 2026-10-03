@@ -19,7 +19,7 @@ import type { DatabaseSync } from 'node:sqlite'
 export const CORPUS_APPLICATION_ID = 0x4d544351
 
 /** Current schema version; a mismatch resets the derived index in place. */
-export const CORPUS_SCHEMA_VERSION = 1
+export const CORPUS_SCHEMA_VERSION = 2
 
 /** Journal modes a deployment may select for the index file. */
 export type CorpusJournalMode = 'wal' | 'delete' | 'truncate' | 'persist'
@@ -28,6 +28,7 @@ export type CorpusJournalMode = 'wal' | 'delete' | 'truncate' | 'persist'
 const OWNED_TABLES: readonly string[] = [
   'docs',
   'chunks',
+  'chunk_vectors',
   'chunks_fts',
   'chunks_fts_data',
   'chunks_fts_idx',
@@ -69,6 +70,14 @@ const DDL: readonly string[] = [
      text TEXT NOT NULL,
      tokens TEXT NOT NULL,
      PRIMARY KEY (doc_id, ordinal)
+   ) STRICT`,
+  `CREATE TABLE chunk_vectors (
+     doc_id TEXT NOT NULL,
+     ordinal INTEGER NOT NULL,
+     dimensions INTEGER NOT NULL,
+     vector TEXT NOT NULL,
+     PRIMARY KEY (doc_id, ordinal),
+     FOREIGN KEY (doc_id, ordinal) REFERENCES chunks(doc_id, ordinal)
    ) STRICT`,
   `CREATE VIRTUAL TABLE chunks_fts USING fts5(
      tokens,

@@ -31,7 +31,11 @@
     "@deepseek-ai/dsh-meteo-corpus": "workspace:^",
     "@deepseek-ai/dsh-meteo-data": "workspace:^",
     "@deepseek-ai/dsh-system-prompt": "workspace:^",
-    "@deepseek-ai/dsh-tools": "workspace:^"
+    "@deepseek-ai/dsh-tools": "workspace:^",
+    "@deepseek-ai/dsh-document-products": "workspace:*"
+  },
+  "peerDependenciesMeta": {
+    "@deepseek-ai/dsh-document-products": { "optional": true }
   },
   "dependencies": {
     "@deepseek-ai/dsh-util-values": "workspace:^",
@@ -46,6 +50,7 @@
     "@deepseek-ai/dsh-session": "workspace:^",
     "@deepseek-ai/dsh-session-projection": "workspace:^",
     "@deepseek-ai/dsh-system-prompt": "workspace:^",
-    "@deepseek-ai/dsh-tools": "workspace:^"
+    "@deepseek-ai/dsh-tools": "workspace:^",
+    "@deepseek-ai/dsh-document-products": "workspace:*"
   }
 }

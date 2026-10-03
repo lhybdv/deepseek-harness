@@ -547,6 +547,8 @@ const TOOL_PACKAGES: ToolPackage[] = [
         maxMatchTokens: 64,
         maxChunkChars: 800,
         maxDocumentBytes: 4_000_000,
+        embeddingBatchSize: 32,
+        candidateLimit: 100,
       })
       await ctx.plugin(ToolCorpus)
     },
@@ -573,6 +575,8 @@ const TOOL_PACKAGES: ToolPackage[] = [
         maxMatchTokens: 64,
         maxChunkChars: 800,
         maxDocumentBytes: 4_000_000,
+        embeddingBatchSize: 32,
+        candidateLimit: 100,
       })
       await ctx.plugin(ToolMeteo)
     },

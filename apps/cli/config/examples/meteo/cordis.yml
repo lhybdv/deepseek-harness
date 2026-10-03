@@ -67,6 +67,24 @@
     customSkillDirs:
       - !!js process.cwd() + '/apps/cli/config/examples/meteo/skills'
 
+# ── the spoken question, recognized by the account's cloud service ──────────
+# The microphone beside the composer records one question and inserts the
+# transcript as text, so nothing about the consultation changes downstream.
+# Voice input itself arrives with the Voice Input bundle, switched on from the
+# Plugins page; these two rows configure that layer and stay inert (Loader warns
+# and continues) while it is off. The recognizer reads its application id and
+# access key id from IFLYTEK_RTASR_APP_ID / IFLYTEK_RTASR_ACCESS_KEY_ID, and its
+# access key secret from the credential IFLYTEK_RTASR_ACCESS_KEY_SECRET — set
+# through `dsh` credentials, the environment, or the repository `.env`. A
+# missing value fails that one recording with the field named; it never falls
+# back to another recognizer, and the rest of the demonstration runs without it.
+- id: speech-to-text-rtasr
+  disabled: false
+
+- id: speech-to-text
+  config:
+    defaultProvider: iflytek-rtasr
+
 # `--host 0.0.0.0` is refused on the command line ("would expose remote code
 # execution to the network"), while the webserver's own config declares all
 # interfaces a supported value and `web-app`'s README documents the LAN

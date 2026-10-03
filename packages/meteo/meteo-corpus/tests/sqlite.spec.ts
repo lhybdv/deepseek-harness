@@ -27,8 +27,9 @@ import {
   type RemoveResult,
   type SearchRequest,
   type SearchResult,
+  buildMatchExpression,
+  openCorpusDatabase,
 } from '@deepseek-ai/dsh-meteo-corpus'
-
 /** Minimal concrete backend, used only to pin the Service Definition contract. */
 class StubStore extends CorpusStore {
   async ingest(request: IngestRequest): Promise<IngestResult> {
@@ -67,6 +68,27 @@ const DROUGHT_DOC = [
   '连续无有效降水 21 至 30 天为中度干旱，土壤相对湿度低于 60% 时应及时灌溉。',
 ].join('\n')
 
+
+/** Deterministic semantic test provider with no external model dependency. */
+function embeddingContext(vectorize: (texts: readonly string[]) => readonly (readonly number[])[] = texts => texts.map(vectorFor)): Context {
+  const ctx = new Context()
+  const provider = {
+    info: { id: 'fake' as never, name: 'test-vectorizer', location: 'local' as const, model: 'fixture' },
+    embedDocuments: async (texts: readonly string[]) => texts.map(vectorFor),
+    embedQueries: async (texts: readonly string[]) => texts.map(vectorFor),
+  }
+  const service = {
+    resolve: (request: { texts: readonly string[]; kind: 'documents' | 'queries' }) => ({ ...request, provider }),
+    embed: async (spec: { texts: readonly string[] }) => vectorize(spec.texts),
+  }
+  ctx.provide('textEmbeddings', service as never)
+  return ctx
+}
+
+/** Deliberately maps synonymous water-shortage phrases to one exact vector. */
+function vectorFor(text: string): readonly number[] {
+  return /补充水分|土壤含水量下降|及时灌溉/.test(text) ? [1, 0] : [0, 1]
+}
 let root: string
 let opened: SqliteCorpusStore[]
 
@@ -79,13 +101,15 @@ function configuration(path: string, overrides: Partial<Config> = {}): Config {
     maxMatchTokens: 64,
     maxChunkChars: 800,
     maxDocumentBytes: 4_000_000,
+    embeddingBatchSize: 32,
+    candidateLimit: 100,
     ...overrides,
   }
 }
 
 /** Build a store in its own context and index file, tracked for teardown. */
 function openStore(name: string, overrides: Partial<Config> = {}): SqliteCorpusStore {
-  const store = new SqliteCorpusStore(new Context(), configuration(join(root, `${name}.sqlite`), overrides))
+  const store = new SqliteCorpusStore(embeddingContext(), configuration(join(root, `${name}.sqlite`), overrides))
   opened.push(store)
   return store
 }
@@ -102,7 +126,7 @@ afterEach(async () => {
 
 describe('CorpusStore seam', () => {
   it('registers the concrete backend as ctx.corpus', async () => {
-    const ctx = new Context()
+    const ctx = embeddingContext()
     await ctx.plugin(SqliteCorpusStore, configuration(join(root, 'plugin.sqlite')))
     expect(ctx.corpus).toBeInstanceOf(SqliteCorpusStore)
     opened.push(ctx.corpus as SqliteCorpusStore)
@@ -110,7 +134,7 @@ describe('CorpusStore seam', () => {
   })
 
   it('rejects a second backend in the same context', () => {
-    const ctx = new Context()
+    const ctx = embeddingContext()
     opened.push(new SqliteCorpusStore(ctx, configuration(join(root, 'first.sqlite'))))
     expect(() => new SqliteCorpusStore(ctx, configuration(join(root, 'second.sqlite')))).toThrow()
   })
@@ -127,17 +151,17 @@ describe('CorpusStore seam', () => {
 
 describe('configuration', () => {
   it('refuses a non-positive or fractional bound', () => {
-    expect(() => new SqliteCorpusStore(new Context(), configuration(':memory:', { maxLimit: 0 }))).toThrow(
+    expect(() => new SqliteCorpusStore(embeddingContext(), configuration(':memory:', { maxLimit: 0 }))).toThrow(
       /maxLimit must be a positive integer/,
     )
-    expect(() => new SqliteCorpusStore(new Context(), configuration(':memory:', { defaultLimit: 1.5 }))).toThrow(
+    expect(() => new SqliteCorpusStore(embeddingContext(), configuration(':memory:', { defaultLimit: 1.5 }))).toThrow(
       /defaultLimit must be a positive integer/,
     )
   })
 
   it('refuses a default above the ceiling', () => {
     expect(
-      () => new SqliteCorpusStore(new Context(), configuration(':memory:', { defaultLimit: 10, maxLimit: 5 })),
+      () => new SqliteCorpusStore(embeddingContext(), configuration(':memory:', { defaultLimit: 10, maxLimit: 5 })),
     ).toThrow(/defaultLimit must not exceed maxLimit/)
   })
 })
@@ -156,7 +180,7 @@ describe('lifecycle', () => {
   })
 
   it('releases the handle when the owning plugin is disposed', async () => {
-    const ctx = new Context()
+    const ctx = embeddingContext()
     const path = join(root, 'disposed.sqlite')
     const fiber = await ctx.plugin(SqliteCorpusStore, configuration(path))
     await ctx.corpus.listDocuments()
@@ -173,7 +197,7 @@ describe('lifecycle', () => {
     await mkdir(blocked)
     const store = openStore('never')
     await rm(join(root, 'never.sqlite'), { force: true })
-    const failing = new SqliteCorpusStore(new Context(), configuration(blocked))
+    const failing = new SqliteCorpusStore(embeddingContext(), configuration(blocked))
     opened.push(failing)
     await expect(failing.listDocuments()).rejects.toThrow()
     await expect(failing.close()).resolves.toBeUndefined()
@@ -238,15 +262,95 @@ describe('search', () => {
     const store = await seeded('recall')
     const result = await store.search({ query: '明天下午在临河镇打药行不行', terms: ['打药', '施药', '喷药'] })
     expect(result.hits.length).toBeGreaterThan(0)
-    expect(new Set(result.hits.map(hit => hit.docTitle))).toEqual(new Set(['病虫害防治气象指标']))
+    expect(result.hits[0]?.docTitle).toBe('病虫害防治气象指标')
     expect(result.matchExpression).toContain('OR')
   })
 
-  it('returns an empty result rather than a fallback when nothing tokenizes', async () => {
-    const store = await seeded('empty')
+  it('returns no hits when the index contains no vectors', async () => {
+    const store = openStore('empty')
     const result = await store.search({ query: '？？？' })
     expect(result.hits).toEqual([])
     expect(result.matchExpression).toBe('')
+  })
+
+  it('recalls a semantically matching document when lexical FTS has no candidate', async () => {
+    const path = join(root, 'semantic-miss.sqlite')
+    const store = openStore('semantic-miss')
+    await store.ingest({ sources: [{ title: '农业干旱与灌溉建议', text: DROUGHT_DOC, source: 'drought.md' }] })
+    const query = '如何补充水分'
+    const expression = buildMatchExpression(query, [], 64)
+    const db = await openCorpusDatabase(path, 'delete')
+    try {
+      const lexical = db.prepare('SELECT doc_id FROM chunks_fts WHERE chunks_fts MATCH ?').all(expression)
+      expect(lexical).toEqual([])
+    } finally {
+      db.close()
+    }
+    const result = await store.search({ query })
+    expect(result.hits.map(hit => hit.docTitle)).toEqual(['农业干旱与灌溉建议'])
+    expect(result.matchExpression).toBe(expression)
+  })
+  it('rejects corrupt persisted vectors instead of returning a false semantic hit', async () => {
+    const path = join(root, 'corrupt-vector.sqlite')
+    const store = openStore('corrupt-vector')
+    const ingested = await store.ingest({ sources: [{ title: '灌溉', text: DROUGHT_DOC, source: 'drought.md' }] })
+    const db = await openCorpusDatabase(path, 'delete')
+    try {
+      db.prepare('UPDATE chunk_vectors SET vector = ? WHERE doc_id = ?').run('{', ingested.documents[0]!.docId)
+    } finally {
+      db.close()
+    }
+    await expect(store.search({ query: '灌溉建议' })).rejects.toThrow('invalid JSON')
+  })
+  it('rejects malformed and dimension-mismatched stored vectors', async () => {
+    const store = await seeded('malformed-vector')
+    const db = await openCorpusDatabase(join(root, 'malformed-vector.sqlite'), 'delete')
+    try {
+      db.prepare("UPDATE chunk_vectors SET vector = '{}'").run()
+    } finally {
+      db.close()
+    }
+    await expect(store.search({ query: '灌溉建议' })).rejects.toThrow('stored embedding vector is malformed')
+
+    const mismatch = await seeded('dimension-mismatch')
+    const mismatchDb = await openCorpusDatabase(join(root, 'dimension-mismatch.sqlite'), 'delete')
+    try {
+      mismatchDb.prepare('UPDATE chunk_vectors SET dimensions = dimensions + 1').run()
+    } finally {
+      mismatchDb.close()
+    }
+    await expect(mismatch.search({ query: '灌溉建议' })).rejects.toThrow('dimensions do not match')
+  })
+
+  it('rejects omitted document and query vectors', async () => {
+    const missingDocument = new SqliteCorpusStore(
+      embeddingContext(() => []),
+      configuration(join(root, 'missing-document-vector.sqlite')),
+    )
+    opened.push(missingDocument)
+    await expect(missingDocument.ingest({
+      sources: [{ title: '灌溉', text: DROUGHT_DOC, source: 'drought.md' }],
+    })).rejects.toThrow('omitted a document vector')
+
+    let omitQuery = false
+    const queryStore = new SqliteCorpusStore(
+      embeddingContext(texts => omitQuery ? [] : texts.map(vectorFor)),
+      configuration(join(root, 'missing-query-vector.sqlite')),
+    )
+    opened.push(queryStore)
+    await queryStore.ingest({ sources: [{ title: '灌溉', text: DROUGHT_DOC, source: 'drought.md' }] })
+    omitQuery = true
+    await expect(queryStore.search({ query: '灌溉建议' })).rejects.toThrow('omitted the query vector')
+  })
+
+  it('sorts equally scored semantic candidates by stable chunk key', async () => {
+    const store = openStore('semantic-tie')
+    await store.ingest({ sources: [
+      { title: '甲', text: '# 甲\n普通内容', source: 'a.md' },
+      { title: '乙', text: '# 乙\n其他内容', source: 'b.md' },
+    ] })
+    const result = await store.search({ query: '一般问题' })
+    expect(result.hits).toHaveLength(2)
   })
 
   it('keeps a chunk verbatim with the offsets a citation needs', async () => {

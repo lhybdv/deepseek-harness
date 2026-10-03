@@ -9,7 +9,7 @@ English | [中文](README.zh.md)
 
 ## Summary
 
-`dsh-meteo-corpus` ingests uploaded documents into heading-scoped chunks and retrieves the chunks that best answer a question, each carrying the document id, ordinal, and character offsets a citation needs. Give it its own SQLite file and mount it as `ctx.corpus`. Chinese recall drives its design: SQLite's `unicode61` tokenizer treats an unbroken Han run as one token, so searching raw text for `对流` finds nothing, and a colloquial question such as `明天下午在临河镇打药行不行` returns an empty result under any AND-joined query. The index stores bigram token forms and searches with an OR union of question tokens and caller terms.
+`dsh-meteo-corpus` ingests uploaded documents into heading-scoped chunks and retrieves the chunks that best answer a question, each carrying the document id, ordinal, and character offsets a citation needs. Give it its own SQLite file and mount it as `ctx.corpus`. Retrieval combines dense semantic recall from the configured `ctx.textEmbeddings` provider with the Chinese bigram FTS5 index; lexical BM25 alone is not treated as semantic search.
 
 ## Table of Contents
 
@@ -49,10 +49,15 @@ Choose it when a deployment holds professional text that answers questions about
 | `maxMatchTokens` | `64` | Upper bound on distinct MATCH tokens, bounding expression size. |
 | `maxChunkChars` | `800` | Soft upper bound on a chunk's character count. |
 | `maxDocumentBytes` | `4000000` | Largest accepted document, in UTF-8 bytes. |
+| `embeddingBatchSize` | `32` | Maximum chunks sent to an embedding provider in one request. |
+| `candidateLimit` | `100` | Maximum lexical and semantic candidates fused per query. |
 
 ### Choosing the index file
 
-Give the corpus its own database file. A sibling derived index refuses a file whose `application_id` belongs to someone else and drops every table when `user_version` moves, and this store applies the same rules in reverse: a file owned by another application, or a non-empty file that declares no owner, is a hard error rather than a silent takeover.
+Give the corpus its own database file. A sibling derived index refuses a file whose `application_id` belongs to someone else and drops every table when `user_version` moves; this store applies the same rules in reverse. Its schema stores each chunk vector beside the text and FTS rows. Updating the schema version rebuilds this derived database, so re-ingest sources after a version or embedding-model change.
+### Embedding provider
+
+Mount `@deepseek-ai/dsh-text-embeddings` and one provider before this package. The provider's configured model must be identical for indexing and querying; changing models requires re-ingest. Choose the local ONNX provider when model files are deployed with the host, or the OpenAI-compatible provider when an embeddings endpoint is available.
 
 ### Supplying expansion terms
 
@@ -72,7 +77,7 @@ The chunker walks source spans that tile the document exactly — one sentence, 
 
 `ingest` writes each document's chunk rows and FTS rows first and its `docs` row last. That row is the visibility gate: retrieval joins through it, so an ingest interrupted part-way leaves only chunk rows no query returns, rather than a document reporting a count it does not have. Failures are per source — one rejected document never aborts its siblings.
 
-`search` issues one joined query over `chunks_fts`, `chunks`, and `docs`, ordered by FTS5's own `bm25()`. BM25 is used directly here — and not in the session search index — because a single corpus makes scores comparable within one run, which is exactly the property the session index could not rely on across its persistent and live tables.
+`search` gathers up to `candidateLimit` BM25 candidates and up to `candidateLimit` vector-cosine candidates, then combines their ranks using reciprocal-rank fusion: each list contributes `1 / (60 + rank)` (one-based rank). The fused score is the sum; candidate identity is unique by document and chunk. Fusion preserves exact-vocabulary signals while allowing semantic-only results. `matchExpression` reports the FTS query even when only semantic recall found a hit.
 
 The database handle opens lazily on first use and closes through a fiber effect, so a composition that mounts this plugin without ingesting or searching pays nothing, and reloading a composition does not leak the file lock. `node:sqlite` is imported dynamically inside that open for the same reason.
 

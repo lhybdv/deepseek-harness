@@ -25,9 +25,17 @@ pnpm dsh web --patch ./apps/cli/config/examples/meteo/cordis.yml
 | `tool-meteo` | `meteo_consult` / `meteo_station_lookup` / `meteo_set_focus`。 |
 | `meteo-controller` | 浏览器面板所调用的 `meteo` Remote 命名空间。 |
 | `ui-meteo`、`ui-meteo-chat` | 语料库页面与会话卡片。 |
+| `speech-to-text-rtasr`、`speech-to-text`（打补丁） | 演示所用的语音识别器：启用并选中语音输入 Bundle 的云端行。 |
 | `skill-filesystem`（打补丁） | 把 `customSkillDirs` 指向 `./skills`，并启用 `tool-skill`，使 agent 能加载它们。 |
 
 已发布的 `web` profile 已经提供模型适配器、工具注册表、会话日志与浏览器应用；这个 overlay 只加气象相关的行。
+
+## 语音输入
+
+输入框旁的麦克风录制一个问题，并把转写文字作为普通文本插入草稿，因此语音提问与打字提问到达 agent 的方式完全一致。选中本 overlay 的云端识别器时，问题还在说出口的过程中文字就会出现，并随服务对每句话的修正而自我纠正；进入草稿的是修正完成后的转写。语音输入本身随「语音输入」Bundle 提供、而非随本 overlay：请在插件管理页启用它。下面两行只配置该 Bundle 所在的层——在它启用之前保持惰性（各产生一条 Loader 警告）——把演示切到云端识别并选中它。
+
+识别器从 `IFLYTEK_RTASR_APP_ID` 与 `IFLYTEK_RTASR_ACCESS_KEY_ID` 读取应用标识与 Access Key ID，并从凭据引用 `IFLYTEK_RTASR_ACCESS_KEY_SECRET` 读取 Access Key Secret——可通过 `dsh` 凭据、环境变量或仓库 `.env` 提供。缺少取值时只有该次录音失败并指明缺失字段，演示其余部分不受影响，且录音开始前不会读取任何凭据。Host 必须能访问
+`wss://office-api-ast-dx.iflyaisol.com/ast/communicate/v1`；处于代理之后的部署把 `baseWsUrl` 指向自己的端点。
 
 ## 与正式部署的差异
 

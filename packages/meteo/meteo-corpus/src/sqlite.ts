@@ -10,6 +10,7 @@
  * @module @deepseek-ai/dsh-meteo-corpus/sqlite
  */
 
+import type TextEmbeddings from '@deepseek-ai/dsh-text-embeddings'
 import { randomUUID } from 'node:crypto'
 import type { DatabaseSync } from 'node:sqlite'
 import z from '@deepseek-ai/schemastery'
@@ -17,6 +18,7 @@ import { Context } from '@deepseek-ai/cordis'
 import { brandString } from '@deepseek-ai/dsh-brand'
 import { CorpusStore } from './definition.ts'
 import { buildMatchExpression } from './match.ts'
+import { cosineSimilarity, fuseRanks, type RankedChunk } from './fusion.ts'
 import { openCorpusDatabase, resolveCorpusPath, type CorpusJournalMode } from './schema.ts'
 import { chunkText, indexTokens } from './text.ts'
 import type {
@@ -32,7 +34,6 @@ import type {
   SearchResult,
 } from './types.ts'
 
-/** Plugin config: every execution bound, changeable from `cordis.yml`. */
 export interface Config {
   /** Index database path; relative paths resolve against the process working directory. */
   path: string
@@ -48,6 +49,10 @@ export interface Config {
   maxChunkChars: number
   /** Largest accepted document, in UTF-8 bytes. */
   maxDocumentBytes: number
+  /** Max chunks embedded in one provider request. */
+  embeddingBatchSize: number
+  /** Number of lexical and semantic candidates fused per query. */
+  candidateLimit: number
 }
 
 /** A document plus its OR-joined expansion terms is never worth an unbounded query. */
@@ -98,6 +103,16 @@ function toHit(row: HitRow): CorpusHit {
     score: row.score,
   }
 }
+/** Parse a durable vector value and reject corrupt or non-finite contents. @param value - serialized SQLite vector. @returns a finite non-empty numeric vector. */
+function parseVector(value: string): number[] {
+  let parsed: unknown
+  try { parsed = JSON.parse(value) }
+  catch { throw new Error('meteo-corpus: stored embedding vector is invalid JSON') }
+  if (!Array.isArray(parsed) || parsed.length === 0 || parsed.some(item => typeof item !== 'number' || !Number.isFinite(item))) {
+    throw new Error('meteo-corpus: stored embedding vector is malformed')
+  }
+  return parsed
+}
 
 /**
  * Corpus store backed by one SQLite file with an FTS5 bigram index.
@@ -114,6 +129,8 @@ export class SqliteCorpusStore extends CorpusStore {
     maxMatchTokens: z.number().default(64),
     maxChunkChars: z.number().default(800),
     maxDocumentBytes: z.number().default(4_000_000),
+    embeddingBatchSize: z.number().default(32),
+    candidateLimit: z.number().default(100),
   })
 
   private opening: Promise<DatabaseSync> | undefined
@@ -131,15 +148,24 @@ export class SqliteCorpusStore extends CorpusStore {
       maxMatchTokens: config.maxMatchTokens,
       maxChunkChars: config.maxChunkChars,
       maxDocumentBytes: config.maxDocumentBytes,
+      embeddingBatchSize: config.embeddingBatchSize,
+      candidateLimit: config.candidateLimit,
     })) {
-      if (!Number.isInteger(value) || value < 1) {
-        throw new Error(`meteo-corpus: ${name} must be a positive integer`)
-      }
+      if (!Number.isInteger(value) || value < 1) throw new Error(`meteo-corpus: ${name} must be a positive integer`)
     }
-    if (config.defaultLimit > config.maxLimit) {
-      throw new Error('meteo-corpus: defaultLimit must not exceed maxLimit')
-    }
+    if (config.defaultLimit > config.maxLimit) throw new Error('meteo-corpus: defaultLimit must not exceed maxLimit')
+    this.embeddings = ctx.textEmbeddings
     ctx.effect(() => async () => this.close(), 'meteo-corpus: close index')
+  }
+  private readonly embeddings: TextEmbeddings
+  private async embed(kind: 'documents' | 'queries', texts: readonly string[]): Promise<readonly (readonly number[])[]> {
+    const vectors: (readonly number[])[] = []
+    for (let start = 0; start < texts.length; start += this.config.embeddingBatchSize) {
+      const batch = texts.slice(start, start + this.config.embeddingBatchSize)
+      const spec = this.embeddings.resolve({ texts: batch, kind })
+      vectors.push(...await this.embeddings.embed(spec))
+    }
+    return vectors
   }
 
   private open(): Promise<DatabaseSync> {
@@ -192,14 +218,19 @@ export class SqliteCorpusStore extends CorpusStore {
         continue
       }
       const drafts = chunkText(text, this.config.maxChunkChars)
+      const vectors = await this.embed('documents', drafts.map(draft => `${draft.headingPath}\n${draft.text}`))
       const docId = brandString<CorpusDocumentId>(randomUUID())
       const ingestedAt = Date.now()
       const insertChunk = db.prepare('INSERT INTO chunks VALUES (?, ?, ?, ?, ?, ?, ?)')
       const insertFts = db.prepare('INSERT INTO chunks_fts (tokens, doc_id, ordinal) VALUES (?, ?, ?)')
+      const insertVector = db.prepare('INSERT INTO chunk_vectors VALUES (?, ?, ?, ?)')
       for (const [ordinal, draft] of drafts.entries()) {
         const tokens = indexTokens(`${draft.headingPath}\n${draft.text}`)
+        const vector = vectors[ordinal]
+        if (vector === undefined) throw new Error('Embedding provider omitted a document vector')
         insertChunk.run(docId, ordinal, draft.headingPath, draft.charStart, draft.charEnd, draft.text, tokens)
         insertFts.run(tokens, docId, ordinal)
+        insertVector.run(docId, ordinal, vector.length, JSON.stringify(vector))
       }
       // The document row is written last and is the visibility gate: retrieval
       // joins through it, so an ingest interrupted part-way leaves only chunk
@@ -221,10 +252,9 @@ export class SqliteCorpusStore extends CorpusStore {
   override async search(request: SearchRequest): Promise<SearchResult> {
     const db = await this.open()
     const matchExpression = buildMatchExpression(request.query, request.terms ?? [], this.config.maxMatchTokens)
-    if (matchExpression.length === 0) return { hits: [], matchExpression }
     const requested = request.limit ?? this.config.defaultLimit
     const limit = Math.min(Math.max(requested, MIN_LIMIT), this.config.maxLimit)
-    const rows = db
+    const lexical = matchExpression.length === 0 ? [] : db
       .prepare(
         `SELECT c.doc_id, c.ordinal, c.heading_path, c.char_start, c.char_end, c.text,
                 d.title, bm25(chunks_fts) AS score
@@ -235,8 +265,30 @@ export class SqliteCorpusStore extends CorpusStore {
           ORDER BY score
           LIMIT ?`,
       )
-      .all(matchExpression, limit) as unknown as HitRow[]
-    return { hits: rows.map(toHit), matchExpression }
+      .all(matchExpression, this.config.candidateLimit) as unknown as HitRow[]
+    const queryVector = (await this.embed('queries', [request.query]))[0]
+    if (queryVector === undefined) throw new Error('Embedding provider omitted the query vector')
+    const vectors = db.prepare(
+      `SELECT c.doc_id, c.ordinal, c.heading_path, c.char_start, c.char_end, c.text,
+              d.title, v.dimensions, v.vector
+         FROM chunk_vectors v
+         JOIN chunks c ON c.doc_id = v.doc_id AND c.ordinal = v.ordinal
+         JOIN docs d ON d.doc_id = c.doc_id`,
+    ).all() as (Omit<HitRow, 'score'> & { dimensions: number; vector: string })[]
+    const semantic: RankedChunk[] = vectors
+      .map(row => {
+        const vector = parseVector(row.vector)
+        if (vector.length !== row.dimensions) throw new Error('meteo-corpus: stored embedding dimensions do not match')
+        return {
+          ...toHit({ ...row, score: 0 }),
+          key: `${row.doc_id}:${row.ordinal}`,
+          score: cosineSimilarity(queryVector, vector),
+        }
+      })
+      .sort((a, b) => b.score - a.score || a.key.localeCompare(b.key))
+      .slice(0, this.config.candidateLimit)
+    const lexicalRanked = lexical.map((row, rank) => ({ ...toHit(row), key: `${row.doc_id}:${row.ordinal}`, score: rank }))
+    return { hits: fuseRanks(lexicalRanked, semantic, limit), matchExpression }
   }
 
   override async readChunk(docId: CorpusDocumentId, ordinal: number): Promise<CorpusChunk | undefined> {
@@ -270,6 +322,7 @@ export class SqliteCorpusStore extends CorpusStore {
   override async remove(docId: CorpusDocumentId): Promise<RemoveResult> {
     const db = await this.open()
     db.prepare('DELETE FROM chunks_fts WHERE doc_id = ?').run(docId)
+    db.prepare('DELETE FROM chunk_vectors WHERE doc_id = ?').run(docId)
     db.prepare('DELETE FROM chunks WHERE doc_id = ?').run(docId)
     const removed = db.prepare('DELETE FROM docs WHERE doc_id = ?').run(docId).changes > 0
     return { docId, removed }

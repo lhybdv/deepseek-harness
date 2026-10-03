@@ -2,6 +2,7 @@
  * Active Loader-backed plugin package inventory for official DeepSeek requests.
  * Host entries and the requesting agent's standing preset are resolved at request time;
  * installed dependencies and plugin fibers without Loader-backed package identity are excluded.
+ * An active entry whose package manifest does not resolve is reported once and omitted.
  * @module @deepseek-ai/dsh-plugin-package-inventory-deepseek
  */
 
@@ -97,7 +98,13 @@ function nearestManifest(modulePath: string): string | undefined {
   }
 }
 
-/** Exact package identity resolver with immutable per-process manifest caching. */
+/**
+ * Exact package identity resolver with immutable per-process manifest caching.
+ * An active entry whose bare package name resolves to no manifest contributes no
+ * identity: a source-plane Loader mapping can reach a workspace package that this
+ * artifact-plane lookup does not index, and one such entry must not fail every
+ * request. Each unresolvable active entry is reported once per process.
+ */
 class PackageIdentityResolver {
   // TODO: Invalidate manifest identities if in-process package-version replacement becomes a supported upgrade path.
   private readonly cache = new Map<string, DeepSeekPluginPackageIdentity | undefined>()
@@ -105,9 +112,10 @@ class PackageIdentityResolver {
   constructor(
     private readonly hostBaseUrl: string,
     private readonly packages: Context['pluginPackages'] | undefined,
+    private readonly reportUnresolved: (packageName: string) => void,
   ) {}
 
-  /** Resolve one Loader entry's owning package, or absence for a non-package loose module. */
+  /** Resolve one Loader entry's owning package, or absence for a loose module or an unresolvable package name. */
   resolve({ entry, bareBaseUrl }: ActiveEntry): DeepSeekPluginPackageIdentity | undefined {
     /* v8 ignore next -- Loader entry trees inherit a base URL; the fallback supports direct embedders. */
     const treeBase = entry.parent.tree.ctx.baseUrl ?? this.hostBaseUrl
@@ -120,7 +128,9 @@ class PackageIdentityResolver {
     if (packageName !== undefined) {
       manifest = barePackageManifest(packageName, anchors, this.packages)
       if (manifest === undefined) {
-        throw new Error(`plugin-package-inventory-deepseek: cannot resolve active package ${JSON.stringify(packageName)}`)
+        this.reportUnresolved(packageName)
+        this.cache.set(key, undefined)
+        return undefined
       }
     } else if (!entry.options.name.startsWith('cordis:')) {
       const moduleUrl = isAbsolute(entry.options.name)
@@ -192,7 +202,11 @@ async function collectActivePluginPackages(
 export function apply(ctx: Context, config: Config): void {
   if (config.enabled === false) return
   const hostBaseUrl = ctx.baseUrl ?? import.meta.url
-  const resolver = new PackageIdentityResolver(hostBaseUrl, ctx.get('pluginPackages'))
+  const resolver = new PackageIdentityResolver(hostBaseUrl, ctx.get('pluginPackages'), (packageName) => {
+    ctx.logger.warn(
+      `plugin-package-inventory-deepseek: no package manifest resolves ${JSON.stringify(packageName)}; the active Loader entry contributes no inventory identity`,
+    )
+  })
   ctx.deepseekLlmApiExtensions.register('dsh_plugin_packages', {
     prepare: async (request) => {
       const value: DeepSeekPluginPackageInventoryExtension = {

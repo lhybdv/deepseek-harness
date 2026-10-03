@@ -30,11 +30,34 @@ repository and are deliberately not published with their packages.
 | `tool-meteo` | `meteo_consult` / `meteo_station_lookup` / `meteo_set_focus`. |
 | `meteo-controller` | The `meteo` Remote namespace the browser panels call. |
 | `ui-meteo`, `ui-meteo-chat` | The corpus page and the conversation cards. |
+| `speech-to-text-rtasr`, `speech-to-text` (patched) | The demonstration's speech recognizer: the Voice Input bundle's cloud row is enabled and selected. |
 | `skill-filesystem` (patched) | Points `customSkillDirs` at `./skills`, and `tool-skill` is enabled so the agent can load them. |
 
 The shipped `web` profile already provides the model adapter, the tool registry,
 the session log, and the browser application; this overlay adds only the
 meteorology rows.
+
+## Voice input
+
+The microphone beside the composer records one question and inserts the
+transcript into the draft as ordinary text, so a spoken question reaches the
+agent exactly as a typed one does. With this overlay's cloud recognizer
+selected, the text also appears while the question is still being spoken and
+corrects itself as the service refines each sentence; the settled transcript is
+what reaches the draft. Voice input itself travels with the Voice
+Input bundle rather than with this overlay: enable it in Plugins. The two rows
+below configure that bundle's layer — they stay inert, one Loader warning each,
+until it is on — and switch the demonstration to cloud recognition and select it.
+
+The recognizer reads its application id and access key id from
+`IFLYTEK_RTASR_APP_ID` and `IFLYTEK_RTASR_ACCESS_KEY_ID`, and its access key
+secret from the credential reference `IFLYTEK_RTASR_ACCESS_KEY_SECRET` — set it
+through `dsh` credentials, the environment, or the repository `.env`. A missing
+value fails that one recording with the field named; the rest of the
+demonstration is unaffected, and no credential is read until a recording starts.
+The Host must be able to reach
+`wss://office-api-ast-dx.iflyaisol.com/ast/communicate/v1`; a deployment behind a
+proxy points `baseWsUrl` at its own endpoint.
 
 ## Deployment differences
 

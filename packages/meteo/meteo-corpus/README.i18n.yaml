@@ -9,8 +9,8 @@
   en: 543c577c82451db2
   zh: 861f231d1aafb810
 /deepseek-ai-dsh-meteo-corpus/summary:
-  en: 599f8ff1ba5dd82e
-  zh: cf60ed8c76552e73
+  en: d59840f76225601c
+  zh: 6f3962921ff4e1b6
 /deepseek-ai-dsh-meteo-corpus/table-of-contents:
   en: d152484eb41ac6b4
   zh: 82bbd1ae631975a1
@@ -21,17 +21,20 @@
   en: 12543ab7efdebfe0
   zh: 8acdaa082d1d15e0
 /deepseek-ai-dsh-meteo-corpus/use-this-package/minimal-configuration:
-  en: 964ce33e862cdf6a
-  zh: 9a9e04a03c8a00b5
+  en: 8e85ef1a09b348fa
+  zh: 76594d58db9ea500
 /deepseek-ai-dsh-meteo-corpus/use-this-package/choosing-the-index-file:
-  en: d7414c15f0506a76
-  zh: 1ecac2ee3a15a86a
+  en: 45422e3afccf260c
+  zh: 710ede8b7e3d9c75
+/deepseek-ai-dsh-meteo-corpus/use-this-package/embedding-provider:
+  en: 012e8e06f1e8402f
+  zh: 080933c873b62cc8
 /deepseek-ai-dsh-meteo-corpus/use-this-package/supplying-expansion-terms:
   en: a530333a2ee8c670
   zh: dc50b11cdf73b953
 /deepseek-ai-dsh-meteo-corpus/understand-the-implementation:
-  en: 3c2c3bf7789bbe5f
-  zh: 88fce18573d70f26
+  en: 57467825d13d41ca
+  zh: 51cf354f70a51aed
 /deepseek-ai-dsh-meteo-corpus/further-exploration:
   en: c6053de55f023192
   zh: a564b890932ca42e

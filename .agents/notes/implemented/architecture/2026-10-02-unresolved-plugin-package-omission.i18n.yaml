@@ -1,0 +1,22 @@
+# Bilingual-pair consistency record for 2026-10-02-unresolved-plugin-package-omission.md (docs/i18n/README.md): per heading
+# section, a hash of its English and Chinese blocks outside code blocks and generated regions.
+# After editing either side, bring the other along and re-record with:
+#   pnpm run verify-translation-pairing --write .agents/notes/implemented/architecture/2026-10-02-unresolved-plugin-package-omission.md
+/agent-note-an-unresolved-plugin-package-identity-is-reported-and-omitted-not-fatal:
+  en: 86493dd207b13101
+  zh: cf1b3416c4ddb519
+/agent-note-an-unresolved-plugin-package-identity-is-reported-and-omitted-not-fatal/problem:
+  en: f631d170596ba371
+  zh: 16eca50b90b853be
+/agent-note-an-unresolved-plugin-package-identity-is-reported-and-omitted-not-fatal/decision:
+  en: 7a908aaa93ed0f8e
+  zh: 3df34731c56d77e5
+/agent-note-an-unresolved-plugin-package-identity-is-reported-and-omitted-not-fatal/rationale:
+  en: 42cfeb4fff2447ae
+  zh: f3c7c604cc84678b
+/agent-note-an-unresolved-plugin-package-identity-is-reported-and-omitted-not-fatal/alternatives-considered:
+  en: 60d920b577b9bb1c
+  zh: f9d64e55bbedd072
+/agent-note-an-unresolved-plugin-package-identity-is-reported-and-omitted-not-fatal/consequences:
+  en: 572da085b2b8343c
+  zh: 54c5b55eb756e2a5
