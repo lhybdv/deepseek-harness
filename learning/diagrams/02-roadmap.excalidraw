@@ -1,0 +1,301 @@
+{
+  "type": "excalidraw",
+  "version": 2,
+  "source": "dsh-learning-plan",
+  "elements": [
+    {
+      "type": "text",
+      "id": "d2t",
+      "x": 280,
+      "y": 1346,
+      "text": "建议学习顺序（阶段之间有硬依赖）",
+      "fontSize": 32,
+      "strokeColor": "#1e1e1e",
+      "fontFamily": 1,
+      "roughness": 1,
+      "width": 512,
+      "height": 42
+    },
+    {
+      "type": "rectangle",
+      "id": "d2S1",
+      "x": 280,
+      "y": 1430,
+      "width": 183,
+      "height": 93,
+      "roundness": {
+        "type": 3
+      },
+      "backgroundColor": "#a5d8ff",
+      "fillStyle": "solid",
+      "strokeColor": "#4a9eed",
+      "strokeWidth": 2,
+      "roughness": 1,
+      "label": {
+        "text": "Stage 1\n跑起来 + 全局地图\n4–6 h",
+        "fontSize": 17,
+        "fontFamily": 1
+      }
+    },
+    {
+      "type": "rectangle",
+      "id": "d2S2",
+      "x": 497,
+      "y": 1430,
+      "width": 150,
+      "height": 93,
+      "roundness": {
+        "type": 3
+      },
+      "backgroundColor": "#f8f9fa",
+      "fillStyle": "solid",
+      "strokeColor": "#868e96",
+      "strokeWidth": 2,
+      "roughness": 1,
+      "label": {
+        "text": "Stage 2\nCordis 底座\n8–12 h",
+        "fontSize": 17,
+        "fontFamily": 1
+      }
+    },
+    {
+      "type": "arrow",
+      "id": "d2aS2",
+      "x": 463,
+      "y": 1476.5,
+      "width": 0,
+      "height": 0.0,
+      "points": [
+        [
+          0,
+          0
+        ],
+        [
+          0,
+          0.0
+        ]
+      ],
+      "strokeColor": "#343a40",
+      "strokeWidth": 2,
+      "roughness": 1,
+      "endArrowhead": "arrow"
+    },
+    {
+      "type": "rectangle",
+      "id": "d2S3",
+      "x": 681,
+      "y": 1430,
+      "width": 150,
+      "height": 93,
+      "roundness": {
+        "type": 3
+      },
+      "backgroundColor": "#f8f9fa",
+      "fillStyle": "solid",
+      "strokeColor": "#868e96",
+      "strokeWidth": 2,
+      "roughness": 1,
+      "label": {
+        "text": "Stage 3\n核心循环\n10–14 h",
+        "fontSize": 17,
+        "fontFamily": 1
+      }
+    },
+    {
+      "type": "arrow",
+      "id": "d2aS3",
+      "x": 647,
+      "y": 1476.5,
+      "width": 0,
+      "height": 0.0,
+      "points": [
+        [
+          0,
+          0
+        ],
+        [
+          0,
+          0.0
+        ]
+      ],
+      "strokeColor": "#343a40",
+      "strokeWidth": 2,
+      "roughness": 1,
+      "endArrowhead": "arrow"
+    },
+    {
+      "type": "rectangle",
+      "id": "d2S4",
+      "x": 865,
+      "y": 1430,
+      "width": 150,
+      "height": 93,
+      "roundness": {
+        "type": 3
+      },
+      "backgroundColor": "#f8f9fa",
+      "fillStyle": "solid",
+      "strokeColor": "#868e96",
+      "strokeWidth": 2,
+      "roughness": 1,
+      "label": {
+        "text": "Stage 4\n能力缝\n8–10 h",
+        "fontSize": 17,
+        "fontFamily": 1
+      }
+    },
+    {
+      "type": "arrow",
+      "id": "d2aS4",
+      "x": 831,
+      "y": 1476.5,
+      "width": 0,
+      "height": 0.0,
+      "points": [
+        [
+          0,
+          0
+        ],
+        [
+          0,
+          0.0
+        ]
+      ],
+      "strokeColor": "#343a40",
+      "strokeWidth": 2,
+      "roughness": 1,
+      "endArrowhead": "arrow"
+    },
+    {
+      "type": "rectangle",
+      "id": "d2S5",
+      "x": 1049,
+      "y": 1430,
+      "width": 150,
+      "height": 93,
+      "roundness": {
+        "type": 3
+      },
+      "backgroundColor": "#f8f9fa",
+      "fillStyle": "solid",
+      "strokeColor": "#868e96",
+      "strokeWidth": 2,
+      "roughness": 1,
+      "label": {
+        "text": "Stage 5\n组合层\n4–6 h",
+        "fontSize": 17,
+        "fontFamily": 1
+      }
+    },
+    {
+      "type": "arrow",
+      "id": "d2aS5",
+      "x": 1015,
+      "y": 1476.5,
+      "width": 0,
+      "height": 0.0,
+      "points": [
+        [
+          0,
+          0
+        ],
+        [
+          0,
+          0.0
+        ]
+      ],
+      "strokeColor": "#343a40",
+      "strokeWidth": 2,
+      "roughness": 1,
+      "endArrowhead": "arrow"
+    },
+    {
+      "type": "rectangle",
+      "id": "d2S6",
+      "x": 1233,
+      "y": 1430,
+      "width": 150,
+      "height": 93,
+      "roundness": {
+        "type": 3
+      },
+      "backgroundColor": "#f8f9fa",
+      "fillStyle": "solid",
+      "strokeColor": "#868e96",
+      "strokeWidth": 2,
+      "roughness": 1,
+      "label": {
+        "text": "Stage 6\n持久化与载体\n6–10 h",
+        "fontSize": 17,
+        "fontFamily": 1
+      }
+    },
+    {
+      "type": "arrow",
+      "id": "d2aS6",
+      "x": 1199,
+      "y": 1476.5,
+      "width": 0,
+      "height": 0.0,
+      "points": [
+        [
+          0,
+          0
+        ],
+        [
+          0,
+          0.0
+        ]
+      ],
+      "strokeColor": "#343a40",
+      "strokeWidth": 2,
+      "roughness": 1,
+      "endArrowhead": "arrow"
+    },
+    {
+      "type": "rectangle",
+      "id": "d2S7",
+      "x": 1417,
+      "y": 1430,
+      "width": 180,
+      "height": 93,
+      "roundness": {
+        "type": 3
+      },
+      "backgroundColor": "#ffd8a8",
+      "fillStyle": "solid",
+      "strokeColor": "#f59e0b",
+      "strokeWidth": 2,
+      "roughness": 1,
+      "label": {
+        "text": "Stage 7 可选\n政策层与工程约束\n8–12 h",
+        "fontSize": 17,
+        "fontFamily": 1
+      }
+    },
+    {
+      "type": "arrow",
+      "id": "d2aS7",
+      "x": 1383,
+      "y": 1476.5,
+      "width": 0,
+      "height": 0.0,
+      "points": [
+        [
+          0,
+          0
+        ],
+        [
+          0,
+          0.0
+        ]
+      ],
+      "strokeColor": "#343a40",
+      "strokeWidth": 2,
+      "roughness": 1,
+      "endArrowhead": "arrow"
+    }
+  ],
+  "appState": {},
+  "files": {}
+}

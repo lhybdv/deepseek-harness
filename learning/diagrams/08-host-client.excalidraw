@@ -1,0 +1,428 @@
+{
+  "type": "excalidraw",
+  "version": 2,
+  "source": "dsh-learning-plan",
+  "elements": [
+    {
+      "type": "text",
+      "id": "d8t",
+      "x": 300,
+      "y": 7638,
+      "text": "Host / Client 双面载体",
+      "fontSize": 32,
+      "strokeColor": "#1e1e1e",
+      "fontFamily": 1,
+      "roughness": 1,
+      "width": 368,
+      "height": 42
+    },
+    {
+      "type": "rectangle",
+      "id": "d8zh",
+      "x": 300,
+      "y": 7702,
+      "width": 1180,
+      "height": 470,
+      "roundness": {
+        "type": 3
+      },
+      "backgroundColor": "#dbe4ff",
+      "fillStyle": "solid",
+      "strokeColor": "#4a9eed",
+      "strokeWidth": 1,
+      "roughness": 1,
+      "opacity": 28
+    },
+    {
+      "type": "text",
+      "id": "d8zht",
+      "x": 326,
+      "y": 7716,
+      "text": "Host 面（Node 进程）",
+      "fontSize": 19,
+      "strokeColor": "#4a9eed",
+      "fontFamily": 1,
+      "roughness": 1,
+      "width": 198,
+      "height": 25
+    },
+    {
+      "type": "rectangle",
+      "id": "d8h1",
+      "x": 350,
+      "y": 7758,
+      "width": 331,
+      "height": 48,
+      "roundness": {
+        "type": 3
+      },
+      "backgroundColor": "#a5d8ff",
+      "fillStyle": "solid",
+      "strokeColor": "#4a9eed",
+      "strokeWidth": 2,
+      "roughness": 1,
+      "label": {
+        "text": "业务服务 @Remote / @RemoteScope",
+        "fontSize": 17,
+        "fontFamily": 1
+      }
+    },
+    {
+      "type": "rectangle",
+      "id": "d8h2",
+      "x": 350,
+      "y": 7840,
+      "width": 229,
+      "height": 48,
+      "roundness": {
+        "type": 3
+      },
+      "backgroundColor": "#d0bfff",
+      "fillStyle": "solid",
+      "strokeColor": "#8b5cf6",
+      "strokeWidth": 2,
+      "roughness": 1,
+      "label": {
+        "text": "typert 扫描 Host 类型",
+        "fontSize": 17,
+        "fontFamily": 1
+      }
+    },
+    {
+      "type": "arrow",
+      "id": "d8hah2",
+      "x": 464.5,
+      "y": 7806,
+      "width": 0.0,
+      "height": 34,
+      "points": [
+        [
+          0,
+          0
+        ],
+        [
+          0.0,
+          34
+        ]
+      ],
+      "strokeColor": "#343a40",
+      "strokeWidth": 2,
+      "roughness": 1,
+      "endArrowhead": "arrow"
+    },
+    {
+      "type": "rectangle",
+      "id": "d8h3",
+      "x": 350,
+      "y": 7922,
+      "width": 409,
+      "height": 48,
+      "roundness": {
+        "type": 3
+      },
+      "backgroundColor": "#d0bfff",
+      "fillStyle": "solid",
+      "strokeColor": "#8b5cf6",
+      "strokeWidth": 2,
+      "roughness": 1,
+      "label": {
+        "text": "生成物：Host-for-Client 类型 + 运行时贡献",
+        "fontSize": 17,
+        "fontFamily": 1
+      }
+    },
+    {
+      "type": "arrow",
+      "id": "d8hah3",
+      "x": 554.5,
+      "y": 7888,
+      "width": 0.0,
+      "height": 34,
+      "points": [
+        [
+          0,
+          0
+        ],
+        [
+          0.0,
+          34
+        ]
+      ],
+      "strokeColor": "#343a40",
+      "strokeWidth": 2,
+      "roughness": 1,
+      "endArrowhead": "arrow"
+    },
+    {
+      "type": "rectangle",
+      "id": "d8h4",
+      "x": 350,
+      "y": 8004,
+      "width": 156,
+      "height": 48,
+      "roundness": {
+        "type": 3
+      },
+      "backgroundColor": "#c3fae8",
+      "fillStyle": "solid",
+      "strokeColor": "#0d9488",
+      "strokeWidth": 2,
+      "roughness": 1,
+      "label": {
+        "text": "api/gateway",
+        "fontSize": 17,
+        "fontFamily": 1
+      }
+    },
+    {
+      "type": "arrow",
+      "id": "d8hah4",
+      "x": 428.0,
+      "y": 7970,
+      "width": 0.0,
+      "height": 34,
+      "points": [
+        [
+          0,
+          0
+        ],
+        [
+          0.0,
+          34
+        ]
+      ],
+      "strokeColor": "#343a40",
+      "strokeWidth": 2,
+      "roughness": 1,
+      "endArrowhead": "arrow"
+    },
+    {
+      "type": "rectangle",
+      "id": "d8zc",
+      "x": 1600,
+      "y": 7702,
+      "width": 1120,
+      "height": 470,
+      "roundness": {
+        "type": 3
+      },
+      "backgroundColor": "#d3f9d8",
+      "fillStyle": "solid",
+      "strokeColor": "#22c55e",
+      "strokeWidth": 1,
+      "roughness": 1,
+      "opacity": 28
+    },
+    {
+      "type": "text",
+      "id": "d8zct",
+      "x": 1626,
+      "y": 7716,
+      "text": "Client 面（浏览器 / 桌面渲染进程）",
+      "fontSize": 19,
+      "strokeColor": "#15803d",
+      "fontFamily": 1,
+      "roughness": 1,
+      "width": 325,
+      "height": 25
+    },
+    {
+      "type": "rectangle",
+      "id": "d8c1",
+      "x": 1626,
+      "y": 7758,
+      "width": 285,
+      "height": 48,
+      "roundness": {
+        "type": 3
+      },
+      "backgroundColor": "#c3fae8",
+      "fillStyle": "solid",
+      "strokeColor": "#0d9488",
+      "strokeWidth": 2,
+      "roughness": 1,
+      "label": {
+        "text": "api/remotes · ctx.remote",
+        "fontSize": 17,
+        "fontFamily": 1
+      }
+    },
+    {
+      "type": "rectangle",
+      "id": "d8c2",
+      "x": 1626,
+      "y": 7840,
+      "width": 335,
+      "height": 48,
+      "roundness": {
+        "type": 3
+      },
+      "backgroundColor": "#d0bfff",
+      "fillStyle": "solid",
+      "strokeColor": "#8b5cf6",
+      "strokeWidth": 2,
+      "roughness": 1,
+      "label": {
+        "text": "client/modules · client/* 插件",
+        "fontSize": 17,
+        "fontFamily": 1
+      }
+    },
+    {
+      "type": "arrow",
+      "id": "d8cac2",
+      "x": 1793.5,
+      "y": 7806,
+      "width": 0.0,
+      "height": 34,
+      "points": [
+        [
+          0,
+          0
+        ],
+        [
+          0.0,
+          34
+        ]
+      ],
+      "strokeColor": "#343a40",
+      "strokeWidth": 2,
+      "roughness": 1,
+      "endArrowhead": "arrow"
+    },
+    {
+      "type": "rectangle",
+      "id": "d8c3",
+      "x": 1626,
+      "y": 7922,
+      "width": 292,
+      "height": 48,
+      "roundness": {
+        "type": 3
+      },
+      "backgroundColor": "#b2f2bb",
+      "fillStyle": "solid",
+      "strokeColor": "#22c55e",
+      "strokeWidth": 2,
+      "roughness": 1,
+      "label": {
+        "text": "Conversation / Slots / 卡片",
+        "fontSize": 17,
+        "fontFamily": 1
+      }
+    },
+    {
+      "type": "arrow",
+      "id": "d8cac3",
+      "x": 1772.0,
+      "y": 7888,
+      "width": 0.0,
+      "height": 34,
+      "points": [
+        [
+          0,
+          0
+        ],
+        [
+          0.0,
+          34
+        ]
+      ],
+      "strokeColor": "#343a40",
+      "strokeWidth": 2,
+      "roughness": 1,
+      "endArrowhead": "arrow"
+    },
+    {
+      "type": "arrow",
+      "id": "d8gw1",
+      "x": 1480,
+      "y": 8028.0,
+      "width": 146,
+      "height": -253.2,
+      "points": [
+        [
+          0,
+          0
+        ],
+        [
+          146,
+          -253.2
+        ]
+      ],
+      "strokeColor": "#4a9eed",
+      "strokeWidth": 2,
+      "roughness": 1,
+      "endArrowhead": "arrow",
+      "label": {
+        "text": "版本化字节管道 / Web",
+        "fontSize": 15,
+        "fontFamily": 1
+      }
+    },
+    {
+      "type": "arrow",
+      "id": "d8gw2",
+      "x": 1626,
+      "y": 7789.2,
+      "width": -146,
+      "height": 258.0,
+      "points": [
+        [
+          0,
+          0
+        ],
+        [
+          -146,
+          258.0
+        ]
+      ],
+      "strokeColor": "#22c55e",
+      "strokeWidth": 2,
+      "roughness": 1,
+      "endArrowhead": "arrow",
+      "label": {
+        "text": "ctx.remote 调用",
+        "fontSize": 15,
+        "fontFamily": 1
+      }
+    },
+    {
+      "type": "arrow",
+      "id": "d8raw",
+      "x": 1918,
+      "y": 7946.0,
+      "width": 150,
+      "height": 0.0,
+      "points": [
+        [
+          0,
+          0
+        ],
+        [
+          150,
+          0.0
+        ]
+      ],
+      "strokeColor": "#22c55e",
+      "strokeWidth": 2,
+      "roughness": 1,
+      "endArrowhead": "arrow"
+    },
+    {
+      "type": "text",
+      "id": "d8rawl",
+      "x": 2078,
+      "y": 7920.0,
+      "text": "从原始\nsession 事件推导",
+      "fontSize": 15,
+      "strokeColor": "#15803d",
+      "fontFamily": 1,
+      "roughness": 1,
+      "width": 128,
+      "height": 40
+    }
+  ],
+  "appState": {},
+  "files": {}
+}

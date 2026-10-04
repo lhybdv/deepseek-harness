@@ -1,0 +1,857 @@
+{
+  "type": "excalidraw",
+  "version": 2,
+  "source": "dsh-learning-plan",
+  "elements": [
+    {
+      "type": "text",
+      "id": "d5t",
+      "x": 280,
+      "y": 3993,
+      "text": "核心循环：一次 turn 的完整时序",
+      "fontSize": 32,
+      "strokeColor": "#1e1e1e",
+      "fontFamily": 1,
+      "roughness": 1,
+      "width": 480,
+      "height": 42
+    },
+    {
+      "type": "rectangle",
+      "id": "d5p0",
+      "x": 280,
+      "y": 4077,
+      "width": 170,
+      "height": 47,
+      "roundness": {
+        "type": 3
+      },
+      "backgroundColor": "#a5d8ff",
+      "fillStyle": "solid",
+      "strokeColor": "#4a9eed",
+      "strokeWidth": 2,
+      "roughness": 1,
+      "label": {
+        "text": "User",
+        "fontSize": 16,
+        "fontFamily": 1
+      }
+    },
+    {
+      "type": "rectangle",
+      "id": "d5p1",
+      "x": 488,
+      "y": 4077,
+      "width": 170,
+      "height": 68,
+      "roundness": {
+        "type": 3
+      },
+      "backgroundColor": "#a5d8ff",
+      "fillStyle": "solid",
+      "strokeColor": "#4a9eed",
+      "strokeWidth": 2,
+      "roughness": 1,
+      "label": {
+        "text": "Agent\nctx.agents",
+        "fontSize": 16,
+        "fontFamily": 1
+      }
+    },
+    {
+      "type": "rectangle",
+      "id": "d5p2",
+      "x": 696,
+      "y": 4077,
+      "width": 170,
+      "height": 68,
+      "roundness": {
+        "type": 3
+      },
+      "backgroundColor": "#d0bfff",
+      "fillStyle": "solid",
+      "strokeColor": "#8b5cf6",
+      "strokeWidth": 2,
+      "roughness": 1,
+      "label": {
+        "text": "Driver\nagent-loop",
+        "fontSize": 16,
+        "fontFamily": 1
+      }
+    },
+    {
+      "type": "rectangle",
+      "id": "d5p3",
+      "x": 904,
+      "y": 4077,
+      "width": 198,
+      "height": 47,
+      "roundness": {
+        "type": 3
+      },
+      "backgroundColor": "#ffd8a8",
+      "fillStyle": "solid",
+      "strokeColor": "#f59e0b",
+      "strokeWidth": 2,
+      "roughness": 1,
+      "label": {
+        "text": "ctx.systemPrompt",
+        "fontSize": 16,
+        "fontFamily": 1
+      }
+    },
+    {
+      "type": "rectangle",
+      "id": "d5p4",
+      "x": 1140,
+      "y": 4077,
+      "width": 170,
+      "height": 47,
+      "roundness": {
+        "type": 3
+      },
+      "backgroundColor": "#ffd8a8",
+      "fillStyle": "solid",
+      "strokeColor": "#f59e0b",
+      "strokeWidth": 2,
+      "roughness": 1,
+      "label": {
+        "text": "ctx.llm",
+        "fontSize": 16,
+        "fontFamily": 1
+      }
+    },
+    {
+      "type": "rectangle",
+      "id": "d5p5",
+      "x": 1348,
+      "y": 4077,
+      "width": 170,
+      "height": 47,
+      "roundness": {
+        "type": 3
+      },
+      "backgroundColor": "#ffd8a8",
+      "fillStyle": "solid",
+      "strokeColor": "#f59e0b",
+      "strokeWidth": 2,
+      "roughness": 1,
+      "label": {
+        "text": "ctx.tools",
+        "fontSize": 16,
+        "fontFamily": 1
+      }
+    },
+    {
+      "type": "rectangle",
+      "id": "d5p6",
+      "x": 1556,
+      "y": 4077,
+      "width": 170,
+      "height": 47,
+      "roundness": {
+        "type": 3
+      },
+      "backgroundColor": "#b2f2bb",
+      "fillStyle": "solid",
+      "strokeColor": "#22c55e",
+      "strokeWidth": 2,
+      "roughness": 1,
+      "label": {
+        "text": "Session log",
+        "fontSize": 16,
+        "fontFamily": 1
+      }
+    },
+    {
+      "type": "arrow",
+      "id": "d5l0",
+      "x": 365.0,
+      "y": 4145,
+      "width": 0,
+      "height": 1038,
+      "points": [
+        [
+          0,
+          0
+        ],
+        [
+          0,
+          1038
+        ]
+      ],
+      "strokeColor": "#adb5bd",
+      "strokeWidth": 1,
+      "strokeStyle": "dashed",
+      "roughness": 1,
+      "endArrowhead": null
+    },
+    {
+      "type": "arrow",
+      "id": "d5l1",
+      "x": 573.0,
+      "y": 4145,
+      "width": 0,
+      "height": 1038,
+      "points": [
+        [
+          0,
+          0
+        ],
+        [
+          0,
+          1038
+        ]
+      ],
+      "strokeColor": "#adb5bd",
+      "strokeWidth": 1,
+      "strokeStyle": "dashed",
+      "roughness": 1,
+      "endArrowhead": null
+    },
+    {
+      "type": "arrow",
+      "id": "d5l2",
+      "x": 781.0,
+      "y": 4145,
+      "width": 0,
+      "height": 1038,
+      "points": [
+        [
+          0,
+          0
+        ],
+        [
+          0,
+          1038
+        ]
+      ],
+      "strokeColor": "#adb5bd",
+      "strokeWidth": 1,
+      "strokeStyle": "dashed",
+      "roughness": 1,
+      "endArrowhead": null
+    },
+    {
+      "type": "arrow",
+      "id": "d5l3",
+      "x": 1003.0,
+      "y": 4145,
+      "width": 0,
+      "height": 1038,
+      "points": [
+        [
+          0,
+          0
+        ],
+        [
+          0,
+          1038
+        ]
+      ],
+      "strokeColor": "#adb5bd",
+      "strokeWidth": 1,
+      "strokeStyle": "dashed",
+      "roughness": 1,
+      "endArrowhead": null
+    },
+    {
+      "type": "arrow",
+      "id": "d5l4",
+      "x": 1225.0,
+      "y": 4145,
+      "width": 0,
+      "height": 1038,
+      "points": [
+        [
+          0,
+          0
+        ],
+        [
+          0,
+          1038
+        ]
+      ],
+      "strokeColor": "#adb5bd",
+      "strokeWidth": 1,
+      "strokeStyle": "dashed",
+      "roughness": 1,
+      "endArrowhead": null
+    },
+    {
+      "type": "arrow",
+      "id": "d5l5",
+      "x": 1433.0,
+      "y": 4145,
+      "width": 0,
+      "height": 1038,
+      "points": [
+        [
+          0,
+          0
+        ],
+        [
+          0,
+          1038
+        ]
+      ],
+      "strokeColor": "#adb5bd",
+      "strokeWidth": 1,
+      "strokeStyle": "dashed",
+      "roughness": 1,
+      "endArrowhead": null
+    },
+    {
+      "type": "arrow",
+      "id": "d5l6",
+      "x": 1641.0,
+      "y": 4145,
+      "width": 0,
+      "height": 1038,
+      "points": [
+        [
+          0,
+          0
+        ],
+        [
+          0,
+          1038
+        ]
+      ],
+      "strokeColor": "#adb5bd",
+      "strokeWidth": 1,
+      "strokeStyle": "dashed",
+      "roughness": 1,
+      "endArrowhead": null
+    },
+    {
+      "type": "arrow",
+      "id": "d5m0",
+      "x": 365.0,
+      "y": 4235,
+      "width": 208.0,
+      "height": 0,
+      "points": [
+        [
+          0,
+          0
+        ],
+        [
+          208.0,
+          0
+        ]
+      ],
+      "strokeColor": "#4a9eed",
+      "strokeWidth": 2,
+      "roughness": 1,
+      "endArrowhead": "arrow",
+      "label": {
+        "text": "followup(message)",
+        "fontSize": 15,
+        "fontFamily": 1
+      }
+    },
+    {
+      "type": "arrow",
+      "id": "d5m1",
+      "x": 573.0,
+      "y": 4289,
+      "width": 208.0,
+      "height": 0,
+      "points": [
+        [
+          0,
+          0
+        ],
+        [
+          208.0,
+          0
+        ]
+      ],
+      "strokeColor": "#4a9eed",
+      "strokeWidth": 2,
+      "roughness": 1,
+      "endArrowhead": "arrow",
+      "strokeStyle": "dashed",
+      "label": {
+        "text": "inbox 唤醒",
+        "fontSize": 15,
+        "fontFamily": 1
+      }
+    },
+    {
+      "type": "arrow",
+      "id": "d5m2",
+      "x": 781.0,
+      "y": 4343,
+      "width": 860.0,
+      "height": 0,
+      "points": [
+        [
+          0,
+          0
+        ],
+        [
+          860.0,
+          0
+        ]
+      ],
+      "strokeColor": "#0d9488",
+      "strokeWidth": 2,
+      "roughness": 1,
+      "endArrowhead": "arrow",
+      "label": {
+        "text": "turn/start",
+        "fontSize": 15,
+        "fontFamily": 1
+      }
+    },
+    {
+      "type": "arrow",
+      "id": "d5m3",
+      "x": 781.0,
+      "y": 4397,
+      "width": 222.0,
+      "height": 0,
+      "points": [
+        [
+          0,
+          0
+        ],
+        [
+          222.0,
+          0
+        ]
+      ],
+      "strokeColor": "#8b5cf6",
+      "strokeWidth": 2,
+      "roughness": 1,
+      "endArrowhead": "arrow",
+      "label": {
+        "text": "system-prompt/assemble",
+        "fontSize": 15,
+        "fontFamily": 1
+      }
+    },
+    {
+      "type": "arrow",
+      "id": "d5m4",
+      "x": 781.0,
+      "y": 4451,
+      "width": 860.0,
+      "height": 0,
+      "points": [
+        [
+          0,
+          0
+        ],
+        [
+          860.0,
+          0
+        ]
+      ],
+      "strokeColor": "#0d9488",
+      "strokeWidth": 2,
+      "roughness": 1,
+      "endArrowhead": "arrow",
+      "label": {
+        "text": "step/start",
+        "fontSize": 15,
+        "fontFamily": 1
+      }
+    },
+    {
+      "type": "arrow",
+      "id": "d5m5",
+      "x": 781.0,
+      "y": 4505,
+      "width": 444.0,
+      "height": 0,
+      "points": [
+        [
+          0,
+          0
+        ],
+        [
+          444.0,
+          0
+        ]
+      ],
+      "strokeColor": "#ef4444",
+      "strokeWidth": 2,
+      "roughness": 1,
+      "endArrowhead": "arrow",
+      "label": {
+        "text": "prepareCall(config, signal)",
+        "fontSize": 15,
+        "fontFamily": 1
+      }
+    },
+    {
+      "type": "arrow",
+      "id": "d5m6",
+      "x": 781.0,
+      "y": 4559,
+      "width": 860.0,
+      "height": 0,
+      "points": [
+        [
+          0,
+          0
+        ],
+        [
+          860.0,
+          0
+        ]
+      ],
+      "strokeColor": "#0d9488",
+      "strokeWidth": 2,
+      "roughness": 1,
+      "endArrowhead": "arrow",
+      "label": {
+        "text": "system/message · user/message",
+        "fontSize": 15,
+        "fontFamily": 1
+      }
+    },
+    {
+      "type": "arrow",
+      "id": "d5m7",
+      "x": 781.0,
+      "y": 4613,
+      "width": 860.0,
+      "height": 0,
+      "points": [
+        [
+          0,
+          0
+        ],
+        [
+          860.0,
+          0
+        ]
+      ],
+      "strokeColor": "#0d9488",
+      "strokeWidth": 2,
+      "roughness": 1,
+      "endArrowhead": "arrow",
+      "label": {
+        "text": "request/header · request/context",
+        "fontSize": 15,
+        "fontFamily": 1
+      }
+    },
+    {
+      "type": "arrow",
+      "id": "d5m8",
+      "x": 781.0,
+      "y": 4667,
+      "width": 444.0,
+      "height": 0,
+      "points": [
+        [
+          0,
+          0
+        ],
+        [
+          444.0,
+          0
+        ]
+      ],
+      "strokeColor": "#ef4444",
+      "strokeWidth": 2,
+      "roughness": 1,
+      "endArrowhead": "arrow",
+      "label": {
+        "text": "llm/stream（流式调用）",
+        "fontSize": 15,
+        "fontFamily": 1
+      }
+    },
+    {
+      "type": "arrow",
+      "id": "d5m9",
+      "x": 1225.0,
+      "y": 4721,
+      "width": -444.0,
+      "height": 0,
+      "points": [
+        [
+          0,
+          0
+        ],
+        [
+          -444.0,
+          0
+        ]
+      ],
+      "strokeColor": "#ef4444",
+      "strokeWidth": 2,
+      "roughness": 1,
+      "endArrowhead": "arrow",
+      "strokeStyle": "dashed",
+      "label": {
+        "text": "StreamChunk*",
+        "fontSize": 15,
+        "fontFamily": 1
+      }
+    },
+    {
+      "type": "arrow",
+      "id": "d5m10",
+      "x": 781.0,
+      "y": 4775,
+      "width": -208.0,
+      "height": 0,
+      "points": [
+        [
+          0,
+          0
+        ],
+        [
+          -208.0,
+          0
+        ]
+      ],
+      "strokeColor": "#8b5cf6",
+      "strokeWidth": 2,
+      "roughness": 1,
+      "endArrowhead": "arrow",
+      "strokeStyle": "dashed",
+      "label": {
+        "text": "agent/assistant-stream chunk*",
+        "fontSize": 15,
+        "fontFamily": 1
+      }
+    },
+    {
+      "type": "arrow",
+      "id": "d5m11",
+      "x": 781.0,
+      "y": 4829,
+      "width": 860.0,
+      "height": 0,
+      "points": [
+        [
+          0,
+          0
+        ],
+        [
+          860.0,
+          0
+        ]
+      ],
+      "strokeColor": "#0d9488",
+      "strokeWidth": 2,
+      "roughness": 1,
+      "endArrowhead": "arrow",
+      "label": {
+        "text": "assistant/message | attempt",
+        "fontSize": 15,
+        "fontFamily": 1
+      }
+    },
+    {
+      "type": "arrow",
+      "id": "d5m12",
+      "x": 781.0,
+      "y": 4883,
+      "width": 652.0,
+      "height": 0,
+      "points": [
+        [
+          0,
+          0
+        ],
+        [
+          652.0,
+          0
+        ]
+      ],
+      "strokeColor": "#f59e0b",
+      "strokeWidth": 2,
+      "roughness": 1,
+      "endArrowhead": "arrow",
+      "label": {
+        "text": "tools/pre-execute → guard → execute",
+        "fontSize": 15,
+        "fontFamily": 1
+      }
+    },
+    {
+      "type": "arrow",
+      "id": "d5m13",
+      "x": 1433.0,
+      "y": 4937,
+      "width": -652.0,
+      "height": 0,
+      "points": [
+        [
+          0,
+          0
+        ],
+        [
+          -652.0,
+          0
+        ]
+      ],
+      "strokeColor": "#f59e0b",
+      "strokeWidth": 2,
+      "roughness": 1,
+      "endArrowhead": "arrow",
+      "strokeStyle": "dashed",
+      "label": {
+        "text": "结果（模型顺序）",
+        "fontSize": 15,
+        "fontFamily": 1
+      }
+    },
+    {
+      "type": "arrow",
+      "id": "d5m14",
+      "x": 781.0,
+      "y": 4991,
+      "width": 860.0,
+      "height": 0,
+      "points": [
+        [
+          0,
+          0
+        ],
+        [
+          860.0,
+          0
+        ]
+      ],
+      "strokeColor": "#0d9488",
+      "strokeWidth": 2,
+      "roughness": 1,
+      "endArrowhead": "arrow",
+      "label": {
+        "text": "tool/result · step/end",
+        "fontSize": 15,
+        "fontFamily": 1
+      }
+    },
+    {
+      "type": "arrow",
+      "id": "d5m15",
+      "x": 781.0,
+      "y": 5045,
+      "width": 860.0,
+      "height": 0,
+      "points": [
+        [
+          0,
+          0
+        ],
+        [
+          860.0,
+          0
+        ]
+      ],
+      "strokeColor": "#0d9488",
+      "strokeWidth": 2,
+      "roughness": 1,
+      "endArrowhead": "arrow",
+      "label": {
+        "text": "turn/end",
+        "fontSize": 15,
+        "fontFamily": 1
+      }
+    },
+    {
+      "type": "arrow",
+      "id": "d5m16",
+      "x": 781.0,
+      "y": 5099,
+      "width": -208.0,
+      "height": 0,
+      "points": [
+        [
+          0,
+          0
+        ],
+        [
+          -208.0,
+          0
+        ]
+      ],
+      "strokeColor": "#8b5cf6",
+      "strokeWidth": 2,
+      "roughness": 1,
+      "endArrowhead": "arrow",
+      "strokeStyle": "dashed",
+      "label": {
+        "text": "agent/status idle",
+        "fontSize": 15,
+        "fontFamily": 1
+      }
+    },
+    {
+      "type": "rectangle",
+      "id": "d5n1",
+      "x": 280,
+      "y": 5183,
+      "width": 276,
+      "height": 66,
+      "roundness": {
+        "type": 3
+      },
+      "backgroundColor": "#fff3bf",
+      "fillStyle": "hachure",
+      "strokeColor": "#f59e0b",
+      "strokeWidth": 1,
+      "roughness": 1,
+      "label": {
+        "text": "reject 或首个 enter 被改写成空\n→ 关 turn，不产生 step",
+        "fontSize": 15,
+        "fontFamily": 1
+      }
+    },
+    {
+      "type": "rectangle",
+      "id": "d5n2",
+      "x": 616,
+      "y": 5183,
+      "width": 378,
+      "height": 66,
+      "roundness": {
+        "type": 3
+      },
+      "backgroundColor": "#fff3bf",
+      "fillStyle": "hachure",
+      "strokeColor": "#f59e0b",
+      "strokeWidth": 1,
+      "roughness": 1,
+      "label": {
+        "text": "prepareCall 与 agent/request 两阶段中取消\n→ system 与 user 都不提交",
+        "fontSize": 15,
+        "fontFamily": 1
+      }
+    },
+    {
+      "type": "rectangle",
+      "id": "d5n3",
+      "x": 1054,
+      "y": 5183,
+      "width": 311,
+      "height": 66,
+      "roundness": {
+        "type": 3
+      },
+      "backgroundColor": "#fff3bf",
+      "fillStyle": "hachure",
+      "strokeColor": "#f59e0b",
+      "strokeWidth": 1,
+      "roughness": 1,
+      "label": {
+        "text": "只有结算后的 assistant/message 与\nassistant/attempt 是持久事实",
+        "fontSize": 15,
+        "fontFamily": 1
+      }
+    }
+  ],
+  "appState": {},
+  "files": {}
+}

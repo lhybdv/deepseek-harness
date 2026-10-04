@@ -1,0 +1,796 @@
+{
+  "type": "excalidraw",
+  "version": 2,
+  "source": "dsh-learning-plan",
+  "elements": [
+    {
+      "type": "text",
+      "id": "d7t",
+      "x": 620,
+      "y": 6223,
+      "text": "工具执行管线：策略不进工具实现",
+      "fontSize": 32,
+      "strokeColor": "#1e1e1e",
+      "fontFamily": 1,
+      "roughness": 1,
+      "width": 480,
+      "height": 42
+    },
+    {
+      "type": "rectangle",
+      "id": "d7call",
+      "x": 620,
+      "y": 6287,
+      "width": 243,
+      "height": 48,
+      "roundness": {
+        "type": 3
+      },
+      "backgroundColor": "#a5d8ff",
+      "fillStyle": "solid",
+      "strokeColor": "#4a9eed",
+      "strokeWidth": 2,
+      "roughness": 1,
+      "label": {
+        "text": "模型回复里的 tool-call",
+        "fontSize": 17,
+        "fontFamily": 1
+      }
+    },
+    {
+      "type": "rectangle",
+      "id": "d7logged",
+      "x": 620,
+      "y": 6393,
+      "width": 370,
+      "height": 48,
+      "roundness": {
+        "type": 3
+      },
+      "backgroundColor": "#d0bfff",
+      "fillStyle": "solid",
+      "strokeColor": "#8b5cf6",
+      "strokeWidth": 2,
+      "roughness": 1,
+      "label": {
+        "text": "session 事件 tool/call（执行前落盘）",
+        "fontSize": 17,
+        "fontFamily": 1
+      }
+    },
+    {
+      "type": "arrow",
+      "id": "d7llogged",
+      "x": 741.5,
+      "y": 6335,
+      "width": 63.5,
+      "height": 58,
+      "points": [
+        [
+          0,
+          0
+        ],
+        [
+          63.5,
+          58
+        ]
+      ],
+      "strokeColor": "#343a40",
+      "strokeWidth": 2,
+      "roughness": 1,
+      "endArrowhead": "arrow"
+    },
+    {
+      "type": "rectangle",
+      "id": "d7pre",
+      "x": 620,
+      "y": 6499,
+      "width": 323,
+      "height": 71,
+      "roundness": {
+        "type": 3
+      },
+      "backgroundColor": "#ffd8a8",
+      "fillStyle": "solid",
+      "strokeColor": "#f59e0b",
+      "strokeWidth": 2,
+      "roughness": 1,
+      "label": {
+        "text": "tools/pre-execute waterfall\nhooks · permission · sandbox",
+        "fontSize": 17,
+        "fontFamily": 1
+      }
+    },
+    {
+      "type": "arrow",
+      "id": "d7lpre",
+      "x": 805.0,
+      "y": 6441,
+      "width": -23.5,
+      "height": 58,
+      "points": [
+        [
+          0,
+          0
+        ],
+        [
+          -23.5,
+          58
+        ]
+      ],
+      "strokeColor": "#343a40",
+      "strokeWidth": 2,
+      "roughness": 1,
+      "endArrowhead": "arrow"
+    },
+    {
+      "type": "rectangle",
+      "id": "d7guard",
+      "x": 620,
+      "y": 6628,
+      "width": 358,
+      "height": 48,
+      "roundness": {
+        "type": 3
+      },
+      "backgroundColor": "#ffd8a8",
+      "fillStyle": "solid",
+      "strokeColor": "#f59e0b",
+      "strokeWidth": 2,
+      "roughness": 1,
+      "label": {
+        "text": "已注册的单调 guard：deny 或 abstain",
+        "fontSize": 17,
+        "fontFamily": 1
+      }
+    },
+    {
+      "type": "arrow",
+      "id": "d7lguard",
+      "x": 781.5,
+      "y": 6570,
+      "width": 17.5,
+      "height": 58,
+      "points": [
+        [
+          0,
+          0
+        ],
+        [
+          17.5,
+          58
+        ]
+      ],
+      "strokeColor": "#343a40",
+      "strokeWidth": 2,
+      "roughness": 1,
+      "endArrowhead": "arrow"
+    },
+    {
+      "type": "rectangle",
+      "id": "d7around",
+      "x": 620,
+      "y": 6734,
+      "width": 292,
+      "height": 71,
+      "roundness": {
+        "type": 3
+      },
+      "backgroundColor": "#ffd8a8",
+      "fillStyle": "solid",
+      "strokeColor": "#f59e0b",
+      "strokeWidth": 2,
+      "roughness": 1,
+      "label": {
+        "text": "tools/execute waterfall\ntimeout · retry · metrics",
+        "fontSize": 17,
+        "fontFamily": 1
+      }
+    },
+    {
+      "type": "arrow",
+      "id": "d7laround",
+      "x": 799.0,
+      "y": 6676,
+      "width": -33.0,
+      "height": 58,
+      "points": [
+        [
+          0,
+          0
+        ],
+        [
+          -33.0,
+          58
+        ]
+      ],
+      "strokeColor": "#343a40",
+      "strokeWidth": 2,
+      "roughness": 1,
+      "endArrowhead": "arrow"
+    },
+    {
+      "type": "rectangle",
+      "id": "d7body",
+      "x": 620,
+      "y": 6863,
+      "width": 282,
+      "height": 48,
+      "roundness": {
+        "type": 3
+      },
+      "backgroundColor": "#b2f2bb",
+      "fillStyle": "solid",
+      "strokeColor": "#22c55e",
+      "strokeWidth": 2,
+      "roughness": 1,
+      "label": {
+        "text": "已注册工具的 execute() 主体",
+        "fontSize": 17,
+        "fontFamily": 1
+      }
+    },
+    {
+      "type": "arrow",
+      "id": "d7lbody",
+      "x": 766.0,
+      "y": 6805,
+      "width": -5.0,
+      "height": 58,
+      "points": [
+        [
+          0,
+          0
+        ],
+        [
+          -5.0,
+          58
+        ]
+      ],
+      "strokeColor": "#343a40",
+      "strokeWidth": 2,
+      "roughness": 1,
+      "endArrowhead": "arrow"
+    },
+    {
+      "type": "rectangle",
+      "id": "d7post",
+      "x": 620,
+      "y": 6969,
+      "width": 324,
+      "height": 71,
+      "roundness": {
+        "type": 3
+      },
+      "backgroundColor": "#ffd8a8",
+      "fillStyle": "solid",
+      "strokeColor": "#f59e0b",
+      "strokeWidth": 2,
+      "roughness": 1,
+      "label": {
+        "text": "tools/post-execute waterfall\n接受 · 阻断 · 替换 · 附加",
+        "fontSize": 17,
+        "fontFamily": 1
+      }
+    },
+    {
+      "type": "arrow",
+      "id": "d7lpost",
+      "x": 761.0,
+      "y": 6911,
+      "width": 21.0,
+      "height": 58,
+      "points": [
+        [
+          0,
+          0
+        ],
+        [
+          21.0,
+          58
+        ]
+      ],
+      "strokeColor": "#343a40",
+      "strokeWidth": 2,
+      "roughness": 1,
+      "endArrowhead": "arrow"
+    },
+    {
+      "type": "rectangle",
+      "id": "d7fin",
+      "x": 620,
+      "y": 7098,
+      "width": 333,
+      "height": 48,
+      "roundness": {
+        "type": 3
+      },
+      "backgroundColor": "#d0bfff",
+      "fillStyle": "solid",
+      "strokeColor": "#8b5cf6",
+      "strokeWidth": 2,
+      "roughness": 1,
+      "label": {
+        "text": "finalizeContent（纯内容不变式）",
+        "fontSize": 17,
+        "fontFamily": 1
+      }
+    },
+    {
+      "type": "arrow",
+      "id": "d7lfin",
+      "x": 782.0,
+      "y": 7040,
+      "width": 4.5,
+      "height": 58,
+      "points": [
+        [
+          0,
+          0
+        ],
+        [
+          4.5,
+          58
+        ]
+      ],
+      "strokeColor": "#343a40",
+      "strokeWidth": 2,
+      "roughness": 1,
+      "endArrowhead": "arrow"
+    },
+    {
+      "type": "rectangle",
+      "id": "d7res",
+      "x": 620,
+      "y": 7204,
+      "width": 319,
+      "height": 48,
+      "roundness": {
+        "type": 3
+      },
+      "backgroundColor": "#d0bfff",
+      "fillStyle": "solid",
+      "strokeColor": "#8b5cf6",
+      "strokeWidth": 2,
+      "roughness": 1,
+      "label": {
+        "text": "tools/result（冻结的权威结果）",
+        "fontSize": 17,
+        "fontFamily": 1
+      }
+    },
+    {
+      "type": "arrow",
+      "id": "d7lres",
+      "x": 786.5,
+      "y": 7146,
+      "width": -7.0,
+      "height": 58,
+      "points": [
+        [
+          0,
+          0
+        ],
+        [
+          -7.0,
+          58
+        ]
+      ],
+      "strokeColor": "#343a40",
+      "strokeWidth": 2,
+      "roughness": 1,
+      "endArrowhead": "arrow"
+    },
+    {
+      "type": "rectangle",
+      "id": "d7tr",
+      "x": 620,
+      "y": 7310,
+      "width": 272,
+      "height": 48,
+      "roundness": {
+        "type": 3
+      },
+      "backgroundColor": "#c3fae8",
+      "fillStyle": "solid",
+      "strokeColor": "#0d9488",
+      "strokeWidth": 2,
+      "roughness": 1,
+      "label": {
+        "text": "session 事件 tool/result",
+        "fontSize": 17,
+        "fontFamily": 1
+      }
+    },
+    {
+      "type": "arrow",
+      "id": "d7ltr",
+      "x": 779.5,
+      "y": 7252,
+      "width": -23.5,
+      "height": 58,
+      "points": [
+        [
+          0,
+          0
+        ],
+        [
+          -23.5,
+          58
+        ]
+      ],
+      "strokeColor": "#343a40",
+      "strokeWidth": 2,
+      "roughness": 1,
+      "endArrowhead": "arrow"
+    },
+    {
+      "type": "rectangle",
+      "id": "d7pending",
+      "x": 1190,
+      "y": 6393,
+      "width": 207,
+      "height": 68,
+      "roundness": {
+        "type": 3
+      },
+      "backgroundColor": "#c3fae8",
+      "fillStyle": "solid",
+      "strokeColor": "#0d9488",
+      "strokeWidth": 2,
+      "roughness": 1,
+      "label": {
+        "text": "UI pending 卡片\npresentCall(args)",
+        "fontSize": 16,
+        "fontFamily": 1
+      }
+    },
+    {
+      "type": "arrow",
+      "id": "d7b1",
+      "x": 990,
+      "y": 6417.0,
+      "width": 200,
+      "height": 10.0,
+      "points": [
+        [
+          0,
+          0
+        ],
+        [
+          200,
+          10.0
+        ]
+      ],
+      "strokeColor": "#0d9488",
+      "strokeWidth": 2,
+      "roughness": 1,
+      "endArrowhead": "arrow"
+    },
+    {
+      "type": "rectangle",
+      "id": "d7denied",
+      "x": 62,
+      "y": 6628,
+      "width": 150,
+      "height": 68,
+      "roundness": {
+        "type": 3
+      },
+      "backgroundColor": "#ffc9c9",
+      "fillStyle": "solid",
+      "strokeColor": "#ef4444",
+      "strokeWidth": 2,
+      "roughness": 1,
+      "label": {
+        "text": "被拒绝\n跳过工具主体",
+        "fontSize": 16,
+        "fontFamily": 1
+      }
+    },
+    {
+      "type": "arrow",
+      "id": "d7b2",
+      "x": 620,
+      "y": 6652.0,
+      "width": -408,
+      "height": 10.0,
+      "points": [
+        [
+          0,
+          0
+        ],
+        [
+          -408,
+          10.0
+        ]
+      ],
+      "strokeColor": "#ef4444",
+      "strokeWidth": 2,
+      "roughness": 1,
+      "endArrowhead": "arrow",
+      "label": {
+        "text": "deny",
+        "fontSize": 15,
+        "fontFamily": 1
+      }
+    },
+    {
+      "type": "rectangle",
+      "id": "d7appr",
+      "x": 1178,
+      "y": 6628,
+      "width": 244,
+      "height": 68,
+      "roundness": {
+        "type": 3
+      },
+      "backgroundColor": "#fff3bf",
+      "fillStyle": "solid",
+      "strokeColor": "#f59e0b",
+      "strokeWidth": 2,
+      "roughness": 1,
+      "label": {
+        "text": "ctx.approval 一次性询问\n（不可用即拒绝）",
+        "fontSize": 16,
+        "fontFamily": 1
+      }
+    },
+    {
+      "type": "arrow",
+      "id": "d7b3",
+      "x": 978,
+      "y": 6642.4,
+      "width": 200,
+      "height": 19.600000000000023,
+      "points": [
+        [
+          0,
+          0
+        ],
+        [
+          200,
+          19.600000000000023
+        ]
+      ],
+      "strokeColor": "#f59e0b",
+      "strokeWidth": 2,
+      "roughness": 1,
+      "endArrowhead": "arrow",
+      "label": {
+        "text": "ask",
+        "fontSize": 15,
+        "fontFamily": 1
+      }
+    },
+    {
+      "type": "arrow",
+      "id": "d7b4",
+      "x": 1178,
+      "y": 6696,
+      "width": -324.4,
+      "height": 38,
+      "points": [
+        [
+          0,
+          0
+        ],
+        [
+          -324.4,
+          38
+        ]
+      ],
+      "strokeColor": "#f59e0b",
+      "strokeWidth": 2,
+      "roughness": 1,
+      "endArrowhead": "arrow",
+      "strokeStyle": "dashed",
+      "label": {
+        "text": "allowed-once",
+        "fontSize": 15,
+        "fontFamily": 1
+      }
+    },
+    {
+      "type": "rectangle",
+      "id": "d7fsgate",
+      "x": 138,
+      "y": 6863,
+      "width": 199,
+      "height": 68,
+      "roundness": {
+        "type": 3
+      },
+      "backgroundColor": "#d0bfff",
+      "fillStyle": "solid",
+      "strokeColor": "#8b5cf6",
+      "strokeWidth": 2,
+      "roughness": 1,
+      "label": {
+        "text": "fs/write-intent\n· fs/edit-intent",
+        "fontSize": 16,
+        "fontFamily": 1
+      }
+    },
+    {
+      "type": "rectangle",
+      "id": "d7owned",
+      "x": 1102,
+      "y": 6863,
+      "width": 271,
+      "height": 68,
+      "roundness": {
+        "type": 3
+      },
+      "backgroundColor": "#d0bfff",
+      "fillStyle": "solid",
+      "strokeColor": "#8b5cf6",
+      "strokeWidth": 2,
+      "roughness": 1,
+      "label": {
+        "text": "工具自有 session 事件\ntodo/write · fs/observed",
+        "fontSize": 16,
+        "fontFamily": 1
+      }
+    },
+    {
+      "type": "arrow",
+      "id": "d7b5",
+      "x": 620,
+      "y": 6887.0,
+      "width": -283,
+      "height": 10.0,
+      "points": [
+        [
+          0,
+          0
+        ],
+        [
+          -283,
+          10.0
+        ]
+      ],
+      "strokeColor": "#8b5cf6",
+      "strokeWidth": 2,
+      "roughness": 1,
+      "endArrowhead": "arrow"
+    },
+    {
+      "type": "arrow",
+      "id": "d7b6",
+      "x": 902,
+      "y": 6887.0,
+      "width": 200,
+      "height": 10.0,
+      "points": [
+        [
+          0,
+          0
+        ],
+        [
+          200,
+          10.0
+        ]
+      ],
+      "strokeColor": "#8b5cf6",
+      "strokeWidth": 2,
+      "roughness": 1,
+      "endArrowhead": "arrow"
+    },
+    {
+      "type": "arrow",
+      "id": "d7b7",
+      "x": 717.2,
+      "y": 7004.5,
+      "width": -505.20000000000005,
+      "height": -313.94,
+      "points": [
+        [
+          0,
+          0
+        ],
+        [
+          -505.20000000000005,
+          -313.94
+        ]
+      ],
+      "strokeColor": "#ef4444",
+      "strokeWidth": 2,
+      "roughness": 1,
+      "endArrowhead": "arrow",
+      "label": {
+        "text": "denied",
+        "fontSize": 15,
+        "fontFamily": 1
+      }
+    },
+    {
+      "type": "rectangle",
+      "id": "d7batch",
+      "x": 148,
+      "y": 7310,
+      "width": 254,
+      "height": 68,
+      "roundness": {
+        "type": 3
+      },
+      "backgroundColor": "#b2f2bb",
+      "fillStyle": "solid",
+      "strokeColor": "#22c55e",
+      "strokeWidth": 2,
+      "roughness": 1,
+      "label": {
+        "text": "批次结算\nadditionalContexts 注入",
+        "fontSize": 16,
+        "fontFamily": 1
+      }
+    },
+    {
+      "type": "rectangle",
+      "id": "d7card",
+      "x": 1092,
+      "y": 7310,
+      "width": 298,
+      "height": 68,
+      "roundness": {
+        "type": 3
+      },
+      "backgroundColor": "#c3fae8",
+      "fillStyle": "solid",
+      "strokeColor": "#0d9488",
+      "strokeWidth": 2,
+      "roughness": 1,
+      "label": {
+        "text": "UI completed 卡片\npresentResult(args, result)",
+        "fontSize": 16,
+        "fontFamily": 1
+      }
+    },
+    {
+      "type": "arrow",
+      "id": "d7b8",
+      "x": 620,
+      "y": 7334.0,
+      "width": -218,
+      "height": 10.0,
+      "points": [
+        [
+          0,
+          0
+        ],
+        [
+          -218,
+          10.0
+        ]
+      ],
+      "strokeColor": "#22c55e",
+      "strokeWidth": 2,
+      "roughness": 1,
+      "endArrowhead": "arrow"
+    },
+    {
+      "type": "arrow",
+      "id": "d7b9",
+      "x": 892,
+      "y": 7334.0,
+      "width": 200,
+      "height": 10.0,
+      "points": [
+        [
+          0,
+          0
+        ],
+        [
+          200,
+          10.0
+        ]
+      ],
+      "strokeColor": "#0d9488",
+      "strokeWidth": 2,
+      "roughness": 1,
+      "endArrowhead": "arrow"
+    }
+  ],
+  "appState": {},
+  "files": {}
+}

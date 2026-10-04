@@ -1,0 +1,443 @@
+{
+  "type": "excalidraw",
+  "version": 2,
+  "source": "dsh-learning-plan",
+  "elements": [
+    {
+      "type": "text",
+      "id": "d6t",
+      "x": 300,
+      "y": 5509,
+      "text": "会话日志：唯一真相来源（Model-visible ⟺ logged）",
+      "fontSize": 32,
+      "strokeColor": "#1e1e1e",
+      "fontFamily": 1,
+      "roughness": 1,
+      "width": 819,
+      "height": 42
+    },
+    {
+      "type": "rectangle",
+      "id": "d6ev",
+      "x": 300,
+      "y": 5573,
+      "width": 442,
+      "height": 50,
+      "roundness": {
+        "type": 3
+      },
+      "backgroundColor": "#d0bfff",
+      "fillStyle": "solid",
+      "strokeColor": "#8b5cf6",
+      "strokeWidth": 2,
+      "roughness": 1,
+      "label": {
+        "text": "committed SessionEvent*（append-only）",
+        "fontSize": 18,
+        "fontFamily": 1
+      }
+    },
+    {
+      "type": "rectangle",
+      "id": "d6log",
+      "x": 300,
+      "y": 5719,
+      "width": 204,
+      "height": 74,
+      "roundness": {
+        "type": 3
+      },
+      "backgroundColor": "#c3fae8",
+      "fillStyle": "solid",
+      "strokeColor": "#0d9488",
+      "strokeWidth": 2,
+      "roughness": 1,
+      "label": {
+        "text": "append-only 日志\nctx.sessions",
+        "fontSize": 18,
+        "fontFamily": 1
+      }
+    },
+    {
+      "type": "rectangle",
+      "id": "d6jsonl",
+      "x": 300,
+      "y": 5889,
+      "width": 292,
+      "height": 74,
+      "roundness": {
+        "type": 3
+      },
+      "backgroundColor": "#c3fae8",
+      "fillStyle": "solid",
+      "strokeColor": "#0d9488",
+      "strokeWidth": 2,
+      "roughness": 1,
+      "label": {
+        "text": "session.vN.jsonl[.zstd]\n世代文件",
+        "fontSize": 18,
+        "fontFamily": 1
+      }
+    },
+    {
+      "type": "arrow",
+      "id": "d6a1",
+      "x": 521.0,
+      "y": 5623,
+      "width": -119.0,
+      "height": 96,
+      "points": [
+        [
+          0,
+          0
+        ],
+        [
+          -119.0,
+          96
+        ]
+      ],
+      "strokeColor": "#343a40",
+      "strokeWidth": 2,
+      "roughness": 1,
+      "endArrowhead": "arrow",
+      "label": {
+        "text": "append",
+        "fontSize": 15,
+        "fontFamily": 1
+      }
+    },
+    {
+      "type": "arrow",
+      "id": "d6a2",
+      "x": 402.0,
+      "y": 5793,
+      "width": 44.0,
+      "height": 96,
+      "points": [
+        [
+          0,
+          0
+        ],
+        [
+          44.0,
+          96
+        ]
+      ],
+      "strokeColor": "#343a40",
+      "strokeWidth": 2,
+      "roughness": 1,
+      "endArrowhead": "arrow",
+      "label": {
+        "text": "持久化",
+        "fontSize": 15,
+        "fontFamily": 1
+      }
+    },
+    {
+      "type": "rectangle",
+      "id": "d6msg",
+      "x": 634,
+      "y": 5579,
+      "width": 231,
+      "height": 74,
+      "roundness": {
+        "type": 3
+      },
+      "backgroundColor": "#b2f2bb",
+      "fillStyle": "solid",
+      "strokeColor": "#22c55e",
+      "strokeWidth": 2,
+      "roughness": 1,
+      "label": {
+        "text": "Message[] 模型历史\n（deriveMessages）",
+        "fontSize": 18,
+        "fontFamily": 1
+      }
+    },
+    {
+      "type": "rectangle",
+      "id": "d6req",
+      "x": 1015,
+      "y": 5579,
+      "width": 150,
+      "height": 50,
+      "roundness": {
+        "type": 3
+      },
+      "backgroundColor": "#b2f2bb",
+      "fillStyle": "solid",
+      "strokeColor": "#22c55e",
+      "strokeWidth": 2,
+      "roughness": 1,
+      "label": {
+        "text": "模型请求",
+        "fontSize": 18,
+        "fontFamily": 1
+      }
+    },
+    {
+      "type": "rectangle",
+      "id": "d6surf",
+      "x": 634,
+      "y": 5719,
+      "width": 206,
+      "height": 74,
+      "roundness": {
+        "type": 3
+      },
+      "backgroundColor": "#ffd8a8",
+      "fillStyle": "solid",
+      "strokeColor": "#f59e0b",
+      "strokeWidth": 2,
+      "roughness": 1,
+      "label": {
+        "text": "surface 折叠\n替换事件遮蔽旧节点",
+        "fontSize": 18,
+        "fontFamily": 1
+      }
+    },
+    {
+      "type": "rectangle",
+      "id": "d6proj",
+      "x": 634,
+      "y": 5889,
+      "width": 282,
+      "height": 74,
+      "roundness": {
+        "type": 3
+      },
+      "backgroundColor": "#ffd8a8",
+      "fillStyle": "solid",
+      "strokeColor": "#f59e0b",
+      "strokeWidth": 2,
+      "roughness": 1,
+      "label": {
+        "text": "ctx.sessionProjections\nstateOf() 类型化状态",
+        "fontSize": 18,
+        "fontFamily": 1
+      }
+    },
+    {
+      "type": "rectangle",
+      "id": "d6ui",
+      "x": 1066,
+      "y": 5889,
+      "width": 150,
+      "height": 50,
+      "roundness": {
+        "type": 3
+      },
+      "backgroundColor": "#b2f2bb",
+      "fillStyle": "solid",
+      "strokeColor": "#22c55e",
+      "strokeWidth": 2,
+      "roughness": 1,
+      "label": {
+        "text": "客户端视图",
+        "fontSize": 18,
+        "fontFamily": 1
+      }
+    },
+    {
+      "type": "arrow",
+      "id": "d6a4",
+      "x": 504,
+      "y": 5756.0,
+      "width": 130,
+      "height": -140.0,
+      "points": [
+        [
+          0,
+          0
+        ],
+        [
+          130,
+          -140.0
+        ]
+      ],
+      "strokeColor": "#343a40",
+      "strokeWidth": 2,
+      "roughness": 1,
+      "endArrowhead": "arrow",
+      "label": {
+        "text": "deriveMessages",
+        "fontSize": 15,
+        "fontFamily": 1
+      }
+    },
+    {
+      "type": "arrow",
+      "id": "d6a5",
+      "x": 865,
+      "y": 5616.0,
+      "width": 150,
+      "height": -12.0,
+      "points": [
+        [
+          0,
+          0
+        ],
+        [
+          150,
+          -12.0
+        ]
+      ],
+      "strokeColor": "#343a40",
+      "strokeWidth": 2,
+      "roughness": 1,
+      "endArrowhead": "arrow"
+    },
+    {
+      "type": "arrow",
+      "id": "d6a6",
+      "x": 504,
+      "y": 5772.28,
+      "width": 130,
+      "height": -16.279999999999973,
+      "points": [
+        [
+          0,
+          0
+        ],
+        [
+          130,
+          -16.279999999999973
+        ]
+      ],
+      "strokeColor": "#343a40",
+      "strokeWidth": 2,
+      "roughness": 1,
+      "endArrowhead": "arrow",
+      "label": {
+        "text": "foldSurface",
+        "fontSize": 15,
+        "fontFamily": 1
+      }
+    },
+    {
+      "type": "arrow",
+      "id": "d6a7",
+      "x": 504,
+      "y": 5791.52,
+      "width": 130,
+      "height": 134.48000000000002,
+      "points": [
+        [
+          0,
+          0
+        ],
+        [
+          130,
+          134.48000000000002
+        ]
+      ],
+      "strokeColor": "#343a40",
+      "strokeWidth": 2,
+      "roughness": 1,
+      "endArrowhead": "arrow",
+      "label": {
+        "text": "projection units",
+        "fontSize": 15,
+        "fontFamily": 1
+      }
+    },
+    {
+      "type": "arrow",
+      "id": "d6a8",
+      "x": 916,
+      "y": 5926.0,
+      "width": 150,
+      "height": -12.0,
+      "points": [
+        [
+          0,
+          0
+        ],
+        [
+          150,
+          -12.0
+        ]
+      ],
+      "strokeColor": "#343a40",
+      "strokeWidth": 2,
+      "roughness": 1,
+      "endArrowhead": "arrow",
+      "label": {
+        "text": "snapshot",
+        "fontSize": 15,
+        "fontFamily": 1
+      }
+    },
+    {
+      "type": "arrow",
+      "id": "d6a3",
+      "x": 300,
+      "y": 5926.0,
+      "width": -130,
+      "height": 0.0,
+      "points": [
+        [
+          0,
+          0
+        ],
+        [
+          -150,
+          0
+        ],
+        [
+          -150,
+          -170.0
+        ],
+        [
+          0,
+          -170.0
+        ],
+        [
+          -130,
+          0.0
+        ]
+      ],
+      "strokeColor": "#0d9488",
+      "strokeWidth": 2,
+      "roughness": 1,
+      "endArrowhead": "arrow"
+    },
+    {
+      "type": "arrow",
+      "id": "d6a3b",
+      "x": 170,
+      "y": 5756.0,
+      "width": 130,
+      "height": 0.0,
+      "points": [
+        [
+          0,
+          0
+        ],
+        [
+          130,
+          0.0
+        ]
+      ],
+      "strokeColor": "#0d9488",
+      "strokeWidth": 2,
+      "roughness": 1,
+      "endArrowhead": "arrow"
+    },
+    {
+      "type": "text",
+      "id": "d6a3l",
+      "x": 20,
+      "y": 5774.0,
+      "text": "open → 相邻迁移链",
+      "fontSize": 15,
+      "strokeColor": "#0d9488",
+      "fontFamily": 1,
+      "roughness": 1,
+      "width": 129,
+      "height": 20
+    }
+  ],
+  "appState": {},
+  "files": {}
+}

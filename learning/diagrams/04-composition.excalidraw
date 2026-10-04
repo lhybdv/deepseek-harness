@@ -1,0 +1,322 @@
+{
+  "type": "excalidraw",
+  "version": 2,
+  "source": "dsh-learning-plan",
+  "elements": [
+    {
+      "type": "text",
+      "id": "d4t",
+      "x": 280,
+      "y": 3091,
+      "text": "组合层：一个 profile 如何变成一棵插件树",
+      "fontSize": 32,
+      "strokeColor": "#1e1e1e",
+      "fontFamily": 1,
+      "roughness": 1,
+      "width": 634,
+      "height": 42
+    },
+    {
+      "type": "rectangle",
+      "id": "d4n0",
+      "x": 280,
+      "y": 3155,
+      "width": 150,
+      "height": 50,
+      "roundness": {
+        "type": 3
+      },
+      "backgroundColor": "#a5d8ff",
+      "fillStyle": "solid",
+      "strokeColor": "#4a9eed",
+      "strokeWidth": 2,
+      "roughness": 1,
+      "label": {
+        "text": "空条目列表",
+        "fontSize": 18,
+        "fontFamily": 1
+      }
+    },
+    {
+      "type": "rectangle",
+      "id": "d4n1",
+      "x": 280,
+      "y": 3243,
+      "width": 219,
+      "height": 50,
+      "roundness": {
+        "type": 3
+      },
+      "backgroundColor": "#d0bfff",
+      "fillStyle": "solid",
+      "strokeColor": "#8b5cf6",
+      "strokeWidth": 2,
+      "roughness": 1,
+      "label": {
+        "text": "bundle #1 的 patch",
+        "fontSize": 18,
+        "fontFamily": 1
+      }
+    },
+    {
+      "type": "arrow",
+      "id": "d4an1",
+      "x": 355.0,
+      "y": 3205,
+      "width": 34.5,
+      "height": 38,
+      "points": [
+        [
+          0,
+          0
+        ],
+        [
+          34.5,
+          38
+        ]
+      ],
+      "strokeColor": "#343a40",
+      "strokeWidth": 2,
+      "roughness": 1,
+      "endArrowhead": "arrow"
+    },
+    {
+      "type": "rectangle",
+      "id": "d4n2",
+      "x": 280,
+      "y": 3331,
+      "width": 418,
+      "height": 50,
+      "roundness": {
+        "type": 3
+      },
+      "backgroundColor": "#d0bfff",
+      "fillStyle": "solid",
+      "strokeColor": "#8b5cf6",
+      "strokeWidth": 2,
+      "roughness": 1,
+      "label": {
+        "text": "bundle #2 的 patch …（按 bundles 顺序）",
+        "fontSize": 18,
+        "fontFamily": 1
+      }
+    },
+    {
+      "type": "arrow",
+      "id": "d4an2",
+      "x": 389.5,
+      "y": 3293,
+      "width": 99.5,
+      "height": 38,
+      "points": [
+        [
+          0,
+          0
+        ],
+        [
+          99.5,
+          38
+        ]
+      ],
+      "strokeColor": "#343a40",
+      "strokeWidth": 2,
+      "roughness": 1,
+      "endArrowhead": "arrow"
+    },
+    {
+      "type": "rectangle",
+      "id": "d4n3",
+      "x": 280,
+      "y": 3419,
+      "width": 357,
+      "height": 50,
+      "roundness": {
+        "type": 3
+      },
+      "backgroundColor": "#ffd8a8",
+      "fillStyle": "solid",
+      "strokeColor": "#f59e0b",
+      "strokeWidth": 2,
+      "roughness": 1,
+      "label": {
+        "text": "profile 自己的 cordis.patch.yml",
+        "fontSize": 18,
+        "fontFamily": 1
+      }
+    },
+    {
+      "type": "arrow",
+      "id": "d4an3",
+      "x": 489.0,
+      "y": 3381,
+      "width": -30.5,
+      "height": 38,
+      "points": [
+        [
+          0,
+          0
+        ],
+        [
+          -30.5,
+          38
+        ]
+      ],
+      "strokeColor": "#343a40",
+      "strokeWidth": 2,
+      "roughness": 1,
+      "endArrowhead": "arrow"
+    },
+    {
+      "type": "rectangle",
+      "id": "d4n4",
+      "x": 280,
+      "y": 3507,
+      "width": 289,
+      "height": 50,
+      "roundness": {
+        "type": 3
+      },
+      "backgroundColor": "#ffd8a8",
+      "fillStyle": "solid",
+      "strokeColor": "#f59e0b",
+      "strokeWidth": 2,
+      "roughness": 1,
+      "label": {
+        "text": "home 级 cordis.patch.yml",
+        "fontSize": 18,
+        "fontFamily": 1
+      }
+    },
+    {
+      "type": "arrow",
+      "id": "d4an4",
+      "x": 458.5,
+      "y": 3469,
+      "width": -34.0,
+      "height": 38,
+      "points": [
+        [
+          0,
+          0
+        ],
+        [
+          -34.0,
+          38
+        ]
+      ],
+      "strokeColor": "#343a40",
+      "strokeWidth": 2,
+      "roughness": 1,
+      "endArrowhead": "arrow"
+    },
+    {
+      "type": "rectangle",
+      "id": "d4n5",
+      "x": 280,
+      "y": 3595,
+      "width": 364,
+      "height": 50,
+      "roundness": {
+        "type": 3
+      },
+      "backgroundColor": "#ffc9c9",
+      "fillStyle": "solid",
+      "strokeColor": "#ef4444",
+      "strokeWidth": 2,
+      "roughness": 1,
+      "label": {
+        "text": "命令行 --patch 覆盖层（含遥测开关）",
+        "fontSize": 18,
+        "fontFamily": 1
+      }
+    },
+    {
+      "type": "arrow",
+      "id": "d4an5",
+      "x": 424.5,
+      "y": 3557,
+      "width": 37.5,
+      "height": 38,
+      "points": [
+        [
+          0,
+          0
+        ],
+        [
+          37.5,
+          38
+        ]
+      ],
+      "strokeColor": "#343a40",
+      "strokeWidth": 2,
+      "roughness": 1,
+      "endArrowhead": "arrow"
+    },
+    {
+      "type": "rectangle",
+      "id": "d4n6",
+      "x": 280,
+      "y": 3683,
+      "width": 188,
+      "height": 50,
+      "roundness": {
+        "type": 3
+      },
+      "backgroundColor": "#b2f2bb",
+      "fillStyle": "solid",
+      "strokeColor": "#22c55e",
+      "strokeWidth": 2,
+      "roughness": 1,
+      "label": {
+        "text": "挂载完成的插件树",
+        "fontSize": 18,
+        "fontFamily": 1
+      }
+    },
+    {
+      "type": "arrow",
+      "id": "d4an6",
+      "x": 462.0,
+      "y": 3645,
+      "width": -88.0,
+      "height": 38,
+      "points": [
+        [
+          0,
+          0
+        ],
+        [
+          -88.0,
+          38
+        ]
+      ],
+      "strokeColor": "#343a40",
+      "strokeWidth": 2,
+      "roughness": 1,
+      "endArrowhead": "arrow"
+    },
+    {
+      "type": "rectangle",
+      "id": "d4note",
+      "x": 788,
+      "y": 3195,
+      "width": 314,
+      "height": 168,
+      "roundness": {
+        "type": 3
+      },
+      "backgroundColor": "#fff3bf",
+      "fillStyle": "hachure",
+      "strokeColor": "#f59e0b",
+      "strokeWidth": 1,
+      "roughness": 1,
+      "label": {
+        "text": "patch 语义\n按 id 命中行\n→ 整行替换 config\n→ 或插入新行\n\nvendor/include/src/index.ts:58\napplyEntryPatches",
+        "fontSize": 15,
+        "fontFamily": 1
+      }
+    }
+  ],
+  "appState": {},
+  "files": {}
+}

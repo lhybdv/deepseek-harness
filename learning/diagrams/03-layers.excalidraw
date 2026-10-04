@@ -1,0 +1,785 @@
+{
+  "type": "excalidraw",
+  "version": 2,
+  "source": "dsh-learning-plan",
+  "elements": [
+    {
+      "type": "text",
+      "id": "d3t",
+      "x": 240,
+      "y": 1783,
+      "text": "整体分层：只有一条启动路径",
+      "fontSize": 32,
+      "strokeColor": "#1e1e1e",
+      "fontFamily": 1,
+      "roughness": 1,
+      "width": 416,
+      "height": 42
+    },
+    {
+      "type": "rectangle",
+      "id": "zBOOT",
+      "x": 240,
+      "y": 1847,
+      "width": 1760,
+      "height": 160,
+      "roundness": {
+        "type": 3
+      },
+      "backgroundColor": "#dbe4ff",
+      "fillStyle": "solid",
+      "strokeColor": "#4a9eed",
+      "strokeWidth": 1,
+      "roughness": 1,
+      "opacity": 28
+    },
+    {
+      "type": "text",
+      "id": "zBOOTt",
+      "x": 262,
+      "y": 1863,
+      "text": "启动层   apps/ + packages/boot",
+      "fontSize": 19,
+      "strokeColor": "#4a9eed",
+      "fontFamily": 1,
+      "roughness": 1,
+      "width": 302,
+      "height": 25
+    },
+    {
+      "type": "rectangle",
+      "id": "d3c1",
+      "x": 276,
+      "y": 1903,
+      "width": 396,
+      "height": 74,
+      "roundness": {
+        "type": 3
+      },
+      "backgroundColor": "#ffffff",
+      "fillStyle": "solid",
+      "strokeColor": "#4a9eed",
+      "strokeWidth": 2,
+      "roughness": 1,
+      "label": {
+        "text": "apps/cli/bin.ts\n唯一启动入口",
+        "fontSize": 18,
+        "fontFamily": 1
+      }
+    },
+    {
+      "type": "rectangle",
+      "id": "d3c2",
+      "x": 706,
+      "y": 1903,
+      "width": 396,
+      "height": 74,
+      "roundness": {
+        "type": 3
+      },
+      "backgroundColor": "#ffffff",
+      "fillStyle": "solid",
+      "strokeColor": "#4a9eed",
+      "strokeWidth": 2,
+      "roughness": 1,
+      "label": {
+        "text": "profile-boot\nprofile 解析与层应用",
+        "fontSize": 18,
+        "fontFamily": 1
+      }
+    },
+    {
+      "type": "rectangle",
+      "id": "d3c3",
+      "x": 1136,
+      "y": 1903,
+      "width": 396,
+      "height": 74,
+      "roundness": {
+        "type": 3
+      },
+      "backgroundColor": "#ffffff",
+      "fillStyle": "solid",
+      "strokeColor": "#4a9eed",
+      "strokeWidth": 2,
+      "roughness": 1,
+      "label": {
+        "text": "app-boot\nloadProfile / patch",
+        "fontSize": 18,
+        "fontFamily": 1
+      }
+    },
+    {
+      "type": "rectangle",
+      "id": "d3c4",
+      "x": 1566,
+      "y": 1903,
+      "width": 396,
+      "height": 74,
+      "roundness": {
+        "type": 3
+      },
+      "backgroundColor": "#ffffff",
+      "fillStyle": "solid",
+      "strokeColor": "#4a9eed",
+      "strokeWidth": 2,
+      "roughness": 1,
+      "label": {
+        "text": "cmdline\n应用参数快照",
+        "fontSize": 18,
+        "fontFamily": 1
+      }
+    },
+    {
+      "type": "rectangle",
+      "id": "zCOMP",
+      "x": 240,
+      "y": 2053,
+      "width": 1760,
+      "height": 160,
+      "roundness": {
+        "type": 3
+      },
+      "backgroundColor": "#e5dbff",
+      "fillStyle": "solid",
+      "strokeColor": "#8b5cf6",
+      "strokeWidth": 1,
+      "roughness": 1,
+      "opacity": 28
+    },
+    {
+      "type": "text",
+      "id": "zCOMPt",
+      "x": 262,
+      "y": 2069,
+      "text": "组合层   packages/bundle",
+      "fontSize": 19,
+      "strokeColor": "#8b5cf6",
+      "fontFamily": 1,
+      "roughness": 1,
+      "width": 245,
+      "height": 25
+    },
+    {
+      "type": "rectangle",
+      "id": "d3b1",
+      "x": 276,
+      "y": 2109,
+      "width": 253,
+      "height": 74,
+      "roundness": {
+        "type": 3
+      },
+      "backgroundColor": "#ffffff",
+      "fillStyle": "solid",
+      "strokeColor": "#8b5cf6",
+      "strokeWidth": 2,
+      "roughness": 1,
+      "label": {
+        "text": "dsh-base\n适配器·工具·沙箱",
+        "fontSize": 18,
+        "fontFamily": 1
+      }
+    },
+    {
+      "type": "rectangle",
+      "id": "d3b2",
+      "x": 563,
+      "y": 2109,
+      "width": 253,
+      "height": 50,
+      "roundness": {
+        "type": 3
+      },
+      "backgroundColor": "#ffffff",
+      "fillStyle": "solid",
+      "strokeColor": "#8b5cf6",
+      "strokeWidth": 2,
+      "roughness": 1,
+      "label": {
+        "text": "dsh-web-app",
+        "fontSize": 18,
+        "fontFamily": 1
+      }
+    },
+    {
+      "type": "rectangle",
+      "id": "d3b3",
+      "x": 850,
+      "y": 2109,
+      "width": 253,
+      "height": 50,
+      "roundness": {
+        "type": 3
+      },
+      "backgroundColor": "#ffffff",
+      "fillStyle": "solid",
+      "strokeColor": "#8b5cf6",
+      "strokeWidth": 2,
+      "roughness": 1,
+      "label": {
+        "text": "dsh-headless",
+        "fontSize": 18,
+        "fontFamily": 1
+      }
+    },
+    {
+      "type": "rectangle",
+      "id": "d3b4",
+      "x": 1137,
+      "y": 2109,
+      "width": 253,
+      "height": 50,
+      "roundness": {
+        "type": 3
+      },
+      "backgroundColor": "#ffffff",
+      "fillStyle": "solid",
+      "strokeColor": "#8b5cf6",
+      "strokeWidth": 2,
+      "roughness": 1,
+      "label": {
+        "text": "dsh-sdk-app",
+        "fontSize": 18,
+        "fontFamily": 1
+      }
+    },
+    {
+      "type": "rectangle",
+      "id": "d3b5",
+      "x": 1424,
+      "y": 2109,
+      "width": 253,
+      "height": 50,
+      "roundness": {
+        "type": 3
+      },
+      "backgroundColor": "#ffffff",
+      "fillStyle": "solid",
+      "strokeColor": "#8b5cf6",
+      "strokeWidth": 2,
+      "roughness": 1,
+      "label": {
+        "text": "dsh-acp-app",
+        "fontSize": 18,
+        "fontFamily": 1
+      }
+    },
+    {
+      "type": "rectangle",
+      "id": "d3b6",
+      "x": 1711,
+      "y": 2109,
+      "width": 253,
+      "height": 74,
+      "roundness": {
+        "type": 3
+      },
+      "backgroundColor": "#ffffff",
+      "fillStyle": "solid",
+      "strokeColor": "#8b5cf6",
+      "strokeWidth": 2,
+      "roughness": 1,
+      "label": {
+        "text": "dsh-sdk-minimal\n独立树，不用 base",
+        "fontSize": 18,
+        "fontFamily": 1
+      }
+    },
+    {
+      "type": "arrow",
+      "id": "d3aCOMP",
+      "x": 258,
+      "y": 2007,
+      "width": 0,
+      "height": 46,
+      "points": [
+        [
+          0,
+          0
+        ],
+        [
+          0,
+          46
+        ]
+      ],
+      "strokeColor": "#343a40",
+      "strokeWidth": 2,
+      "roughness": 1,
+      "endArrowhead": "arrow"
+    },
+    {
+      "type": "rectangle",
+      "id": "zSPINE",
+      "x": 240,
+      "y": 2259,
+      "width": 1760,
+      "height": 160,
+      "roundness": {
+        "type": 3
+      },
+      "backgroundColor": "#d3f9d8",
+      "fillStyle": "solid",
+      "strokeColor": "#22c55e",
+      "strokeWidth": 1,
+      "roughness": 1,
+      "opacity": 28
+    },
+    {
+      "type": "text",
+      "id": "zSPINEt",
+      "x": 262,
+      "y": 2275,
+      "text": "脊柱层   packages/core",
+      "fontSize": 19,
+      "strokeColor": "#22c55e",
+      "fontFamily": 1,
+      "roughness": 1,
+      "width": 222,
+      "height": 25
+    },
+    {
+      "type": "rectangle",
+      "id": "d3p1",
+      "x": 276,
+      "y": 2315,
+      "width": 253,
+      "height": 74,
+      "roundness": {
+        "type": 3
+      },
+      "backgroundColor": "#ffffff",
+      "fillStyle": "solid",
+      "strokeColor": "#22c55e",
+      "strokeWidth": 2,
+      "roughness": 1,
+      "label": {
+        "text": "session\nctx.sessions",
+        "fontSize": 18,
+        "fontFamily": 1
+      }
+    },
+    {
+      "type": "rectangle",
+      "id": "d3p2",
+      "x": 563,
+      "y": 2315,
+      "width": 253,
+      "height": 74,
+      "roundness": {
+        "type": 3
+      },
+      "backgroundColor": "#ffffff",
+      "fillStyle": "solid",
+      "strokeColor": "#22c55e",
+      "strokeWidth": 2,
+      "roughness": 1,
+      "label": {
+        "text": "system-prompt\nctx.systemPrompt",
+        "fontSize": 18,
+        "fontFamily": 1
+      }
+    },
+    {
+      "type": "rectangle",
+      "id": "d3p3",
+      "x": 850,
+      "y": 2315,
+      "width": 253,
+      "height": 74,
+      "roundness": {
+        "type": 3
+      },
+      "backgroundColor": "#ffffff",
+      "fillStyle": "solid",
+      "strokeColor": "#22c55e",
+      "strokeWidth": 2,
+      "roughness": 1,
+      "label": {
+        "text": "tools\nctx.tools",
+        "fontSize": 18,
+        "fontFamily": 1
+      }
+    },
+    {
+      "type": "rectangle",
+      "id": "d3p4",
+      "x": 1137,
+      "y": 2315,
+      "width": 253,
+      "height": 74,
+      "roundness": {
+        "type": 3
+      },
+      "backgroundColor": "#ffffff",
+      "fillStyle": "solid",
+      "strokeColor": "#22c55e",
+      "strokeWidth": 2,
+      "roughness": 1,
+      "label": {
+        "text": "agent\nctx.agents",
+        "fontSize": 18,
+        "fontFamily": 1
+      }
+    },
+    {
+      "type": "rectangle",
+      "id": "d3p5",
+      "x": 1424,
+      "y": 2315,
+      "width": 253,
+      "height": 74,
+      "roundness": {
+        "type": 3
+      },
+      "backgroundColor": "#ffffff",
+      "fillStyle": "solid",
+      "strokeColor": "#22c55e",
+      "strokeWidth": 2,
+      "roughness": 1,
+      "label": {
+        "text": "agent-loop\nctx.agentLoop",
+        "fontSize": 18,
+        "fontFamily": 1
+      }
+    },
+    {
+      "type": "rectangle",
+      "id": "d3p6",
+      "x": 1711,
+      "y": 2315,
+      "width": 253,
+      "height": 74,
+      "roundness": {
+        "type": 3
+      },
+      "backgroundColor": "#ffffff",
+      "fillStyle": "solid",
+      "strokeColor": "#22c55e",
+      "strokeWidth": 2,
+      "roughness": 1,
+      "label": {
+        "text": "scope\n库，无 ctx 键",
+        "fontSize": 18,
+        "fontFamily": 1
+      }
+    },
+    {
+      "type": "arrow",
+      "id": "d3aSPINE",
+      "x": 258,
+      "y": 2213,
+      "width": 0,
+      "height": 46,
+      "points": [
+        [
+          0,
+          0
+        ],
+        [
+          0,
+          46
+        ]
+      ],
+      "strokeColor": "#343a40",
+      "strokeWidth": 2,
+      "roughness": 1,
+      "endArrowhead": "arrow"
+    },
+    {
+      "type": "rectangle",
+      "id": "zSEAM",
+      "x": 240,
+      "y": 2465,
+      "width": 1760,
+      "height": 160,
+      "roundness": {
+        "type": 3
+      },
+      "backgroundColor": "#ffd8a8",
+      "fillStyle": "solid",
+      "strokeColor": "#f59e0b",
+      "strokeWidth": 1,
+      "roughness": 1,
+      "opacity": 28
+    },
+    {
+      "type": "text",
+      "id": "zSEAMt",
+      "x": 262,
+      "y": 2481,
+      "text": "能力缝   packages/{llm,shell,fs,...}",
+      "fontSize": 19,
+      "strokeColor": "#f59e0b",
+      "fontFamily": 1,
+      "roughness": 1,
+      "width": 382,
+      "height": 25
+    },
+    {
+      "type": "rectangle",
+      "id": "d3s1",
+      "x": 276,
+      "y": 2521,
+      "width": 310,
+      "height": 74,
+      "roundness": {
+        "type": 3
+      },
+      "backgroundColor": "#ffffff",
+      "fillStyle": "solid",
+      "strokeColor": "#f59e0b",
+      "strokeWidth": 2,
+      "roughness": 1,
+      "label": {
+        "text": "llm\n/ llm-deepseek",
+        "fontSize": 18,
+        "fontFamily": 1
+      }
+    },
+    {
+      "type": "rectangle",
+      "id": "d3s2",
+      "x": 620,
+      "y": 2521,
+      "width": 310,
+      "height": 74,
+      "roundness": {
+        "type": 3
+      },
+      "backgroundColor": "#ffffff",
+      "fillStyle": "solid",
+      "strokeColor": "#f59e0b",
+      "strokeWidth": 2,
+      "roughness": 1,
+      "label": {
+        "text": "shell\n/ bash-local",
+        "fontSize": 18,
+        "fontFamily": 1
+      }
+    },
+    {
+      "type": "rectangle",
+      "id": "d3s3",
+      "x": 964,
+      "y": 2521,
+      "width": 310,
+      "height": 74,
+      "roundness": {
+        "type": 3
+      },
+      "backgroundColor": "#ffffff",
+      "fillStyle": "solid",
+      "strokeColor": "#f59e0b",
+      "strokeWidth": 2,
+      "roughness": 1,
+      "label": {
+        "text": "fs\n/ fs-local",
+        "fontSize": 18,
+        "fontFamily": 1
+      }
+    },
+    {
+      "type": "rectangle",
+      "id": "d3s4",
+      "x": 1308,
+      "y": 2521,
+      "width": 310,
+      "height": 74,
+      "roundness": {
+        "type": 3
+      },
+      "backgroundColor": "#ffffff",
+      "fillStyle": "solid",
+      "strokeColor": "#f59e0b",
+      "strokeWidth": 2,
+      "roughness": 1,
+      "label": {
+        "text": "subagent\n+ tool-subagent",
+        "fontSize": 18,
+        "fontFamily": 1
+      }
+    },
+    {
+      "type": "rectangle",
+      "id": "d3s5",
+      "x": 1652,
+      "y": 2521,
+      "width": 310,
+      "height": 74,
+      "roundness": {
+        "type": 3
+      },
+      "backgroundColor": "#ffffff",
+      "fillStyle": "solid",
+      "strokeColor": "#f59e0b",
+      "strokeWidth": 2,
+      "roughness": 1,
+      "label": {
+        "text": "web · lsp · jobs\nworkflow · 代码运行",
+        "fontSize": 18,
+        "fontFamily": 1
+      }
+    },
+    {
+      "type": "arrow",
+      "id": "d3aSEAM",
+      "x": 258,
+      "y": 2419,
+      "width": 0,
+      "height": 46,
+      "points": [
+        [
+          0,
+          0
+        ],
+        [
+          0,
+          46
+        ]
+      ],
+      "strokeColor": "#343a40",
+      "strokeWidth": 2,
+      "roughness": 1,
+      "endArrowhead": "arrow"
+    },
+    {
+      "type": "rectangle",
+      "id": "zCARR",
+      "x": 240,
+      "y": 2671,
+      "width": 1760,
+      "height": 160,
+      "roundness": {
+        "type": 3
+      },
+      "backgroundColor": "#c3fae8",
+      "fillStyle": "solid",
+      "strokeColor": "#0d9488",
+      "strokeWidth": 1,
+      "roughness": 1,
+      "opacity": 28
+    },
+    {
+      "type": "text",
+      "id": "zCARRt",
+      "x": 262,
+      "y": 2687,
+      "text": "载体层   packages/{host,client,api,typert}",
+      "fontSize": 19,
+      "strokeColor": "#0d9488",
+      "fontFamily": 1,
+      "roughness": 1,
+      "width": 450,
+      "height": 25
+    },
+    {
+      "type": "rectangle",
+      "id": "d3v1",
+      "x": 276,
+      "y": 2727,
+      "width": 396,
+      "height": 74,
+      "roundness": {
+        "type": 3
+      },
+      "backgroundColor": "#ffffff",
+      "fillStyle": "solid",
+      "strokeColor": "#0d9488",
+      "strokeWidth": 2,
+      "roughness": 1,
+      "label": {
+        "text": "typert\n类型图与 Remote",
+        "fontSize": 18,
+        "fontFamily": 1
+      }
+    },
+    {
+      "type": "rectangle",
+      "id": "d3v2",
+      "x": 706,
+      "y": 2727,
+      "width": 396,
+      "height": 74,
+      "roundness": {
+        "type": 3
+      },
+      "backgroundColor": "#ffffff",
+      "fillStyle": "solid",
+      "strokeColor": "#0d9488",
+      "strokeWidth": 2,
+      "roughness": 1,
+      "label": {
+        "text": "api\nRemote BFF 与网关",
+        "fontSize": 18,
+        "fontFamily": 1
+      }
+    },
+    {
+      "type": "rectangle",
+      "id": "d3v3",
+      "x": 1136,
+      "y": 2727,
+      "width": 396,
+      "height": 50,
+      "roundness": {
+        "type": 3
+      },
+      "backgroundColor": "#ffffff",
+      "fillStyle": "solid",
+      "strokeColor": "#0d9488",
+      "strokeWidth": 2,
+      "roughness": 1,
+      "label": {
+        "text": "host",
+        "fontSize": 18,
+        "fontFamily": 1
+      }
+    },
+    {
+      "type": "rectangle",
+      "id": "d3v4",
+      "x": 1566,
+      "y": 2727,
+      "width": 396,
+      "height": 74,
+      "roundness": {
+        "type": 3
+      },
+      "backgroundColor": "#ffffff",
+      "fillStyle": "solid",
+      "strokeColor": "#0d9488",
+      "strokeWidth": 2,
+      "roughness": 1,
+      "label": {
+        "text": "client\n51 个前端包",
+        "fontSize": 18,
+        "fontFamily": 1
+      }
+    },
+    {
+      "type": "arrow",
+      "id": "d3aCARR",
+      "x": 258,
+      "y": 2625,
+      "width": 0,
+      "height": 46,
+      "points": [
+        [
+          0,
+          0
+        ],
+        [
+          0,
+          46
+        ]
+      ],
+      "strokeColor": "#343a40",
+      "strokeWidth": 2,
+      "roughness": 1,
+      "endArrowhead": "arrow"
+    }
+  ],
+  "appState": {},
+  "files": {}
+}

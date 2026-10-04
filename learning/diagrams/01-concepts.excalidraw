@@ -1,0 +1,453 @@
+{
+  "type": "excalidraw",
+  "version": 2,
+  "source": "dsh-learning-plan",
+  "elements": [
+    {
+      "type": "text",
+      "id": "d1t",
+      "x": 260,
+      "y": 36,
+      "text": "概念依赖图：箭头方向 = 学习顺序",
+      "fontSize": 32,
+      "strokeColor": "#1e1e1e",
+      "fontFamily": 1,
+      "roughness": 1,
+      "width": 486,
+      "height": 42
+    },
+    {
+      "type": "rectangle",
+      "id": "d1L0",
+      "x": 260,
+      "y": 100,
+      "width": 303,
+      "height": 74,
+      "roundness": {
+        "type": 3
+      },
+      "backgroundColor": "#a5d8ff",
+      "fillStyle": "solid",
+      "strokeColor": "#4a9eed",
+      "strokeWidth": 2,
+      "roughness": 1,
+      "label": {
+        "text": "L0 运行时底座\nContext / Service / effect",
+        "fontSize": 18,
+        "fontFamily": 1
+      }
+    },
+    {
+      "type": "rectangle",
+      "id": "d1L1",
+      "x": 260,
+      "y": 214,
+      "width": 368,
+      "height": 74,
+      "roundness": {
+        "type": 3
+      },
+      "backgroundColor": "#a5d8ff",
+      "fillStyle": "solid",
+      "strokeColor": "#4a9eed",
+      "strokeWidth": 2,
+      "roughness": 1,
+      "label": {
+        "text": "L1 能力缝\nDefinition / Provider / Consumer",
+        "fontSize": 18,
+        "fontFamily": 1
+      }
+    },
+    {
+      "type": "arrow",
+      "id": "d1aL1",
+      "x": 411.5,
+      "y": 174,
+      "width": 32.5,
+      "height": 40,
+      "points": [
+        [
+          0,
+          0
+        ],
+        [
+          32.5,
+          40
+        ]
+      ],
+      "strokeColor": "#343a40",
+      "strokeWidth": 2,
+      "roughness": 1,
+      "endArrowhead": "arrow"
+    },
+    {
+      "type": "rectangle",
+      "id": "d1L2",
+      "x": 260,
+      "y": 328,
+      "width": 346,
+      "height": 74,
+      "roundness": {
+        "type": 3
+      },
+      "backgroundColor": "#d0bfff",
+      "fillStyle": "solid",
+      "strokeColor": "#8b5cf6",
+      "strokeWidth": 2,
+      "roughness": 1,
+      "label": {
+        "text": "L2 会话日志\nSessionEvent / deriveMessages",
+        "fontSize": 18,
+        "fontFamily": 1
+      }
+    },
+    {
+      "type": "arrow",
+      "id": "d1aL2",
+      "x": 444.0,
+      "y": 288,
+      "width": -11.0,
+      "height": 40,
+      "points": [
+        [
+          0,
+          0
+        ],
+        [
+          -11.0,
+          40
+        ]
+      ],
+      "strokeColor": "#343a40",
+      "strokeWidth": 2,
+      "roughness": 1,
+      "endArrowhead": "arrow"
+    },
+    {
+      "type": "rectangle",
+      "id": "d1L3",
+      "x": 260,
+      "y": 442,
+      "width": 287,
+      "height": 74,
+      "roundness": {
+        "type": 3
+      },
+      "backgroundColor": "#d0bfff",
+      "fillStyle": "solid",
+      "strokeColor": "#8b5cf6",
+      "strokeWidth": 2,
+      "roughness": 1,
+      "label": {
+        "text": "L3 请求构造\nsystem-prompt / llm seam",
+        "fontSize": 18,
+        "fontFamily": 1
+      }
+    },
+    {
+      "type": "arrow",
+      "id": "d1aL3",
+      "x": 433.0,
+      "y": 402,
+      "width": -29.5,
+      "height": 40,
+      "points": [
+        [
+          0,
+          0
+        ],
+        [
+          -29.5,
+          40
+        ]
+      ],
+      "strokeColor": "#343a40",
+      "strokeWidth": 2,
+      "roughness": 1,
+      "endArrowhead": "arrow"
+    },
+    {
+      "type": "rectangle",
+      "id": "d1L4",
+      "x": 260,
+      "y": 556,
+      "width": 314,
+      "height": 74,
+      "roundness": {
+        "type": 3
+      },
+      "backgroundColor": "#d0bfff",
+      "fillStyle": "solid",
+      "strokeColor": "#8b5cf6",
+      "strokeWidth": 2,
+      "roughness": 1,
+      "label": {
+        "text": "L4 工具管线\nregistry / guard / approval",
+        "fontSize": 18,
+        "fontFamily": 1
+      }
+    },
+    {
+      "type": "arrow",
+      "id": "d1aL4",
+      "x": 403.5,
+      "y": 516,
+      "width": 13.5,
+      "height": 40,
+      "points": [
+        [
+          0,
+          0
+        ],
+        [
+          13.5,
+          40
+        ]
+      ],
+      "strokeColor": "#343a40",
+      "strokeWidth": 2,
+      "roughness": 1,
+      "endArrowhead": "arrow"
+    },
+    {
+      "type": "rectangle",
+      "id": "d1L5",
+      "x": 260,
+      "y": 670,
+      "width": 282,
+      "height": 74,
+      "roundness": {
+        "type": 3
+      },
+      "backgroundColor": "#d0bfff",
+      "fillStyle": "solid",
+      "strokeColor": "#8b5cf6",
+      "strokeWidth": 2,
+      "roughness": 1,
+      "label": {
+        "text": "L5 循环\nturn / step / agent-loop",
+        "fontSize": 18,
+        "fontFamily": 1
+      }
+    },
+    {
+      "type": "arrow",
+      "id": "d1aL5",
+      "x": 417.0,
+      "y": 630,
+      "width": -16.0,
+      "height": 40,
+      "points": [
+        [
+          0,
+          0
+        ],
+        [
+          -16.0,
+          40
+        ]
+      ],
+      "strokeColor": "#343a40",
+      "strokeWidth": 2,
+      "roughness": 1,
+      "endArrowhead": "arrow"
+    },
+    {
+      "type": "rectangle",
+      "id": "d1L6",
+      "x": 260,
+      "y": 784,
+      "width": 336,
+      "height": 74,
+      "roundness": {
+        "type": 3
+      },
+      "backgroundColor": "#b2f2bb",
+      "fillStyle": "solid",
+      "strokeColor": "#22c55e",
+      "strokeWidth": 2,
+      "roughness": 1,
+      "label": {
+        "text": "L6 作用域\nscope / agent.ctx / shadowing",
+        "fontSize": 18,
+        "fontFamily": 1
+      }
+    },
+    {
+      "type": "arrow",
+      "id": "d1aL6",
+      "x": 401.0,
+      "y": 744,
+      "width": 27.0,
+      "height": 40,
+      "points": [
+        [
+          0,
+          0
+        ],
+        [
+          27.0,
+          40
+        ]
+      ],
+      "strokeColor": "#343a40",
+      "strokeWidth": 2,
+      "roughness": 1,
+      "endArrowhead": "arrow"
+    },
+    {
+      "type": "rectangle",
+      "id": "d1L7",
+      "x": 260,
+      "y": 898,
+      "width": 282,
+      "height": 74,
+      "roundness": {
+        "type": 3
+      },
+      "backgroundColor": "#b2f2bb",
+      "fillStyle": "solid",
+      "strokeColor": "#22c55e",
+      "strokeWidth": 2,
+      "roughness": 1,
+      "label": {
+        "text": "L7 组合\nprofile / bundle / patch",
+        "fontSize": 18,
+        "fontFamily": 1
+      }
+    },
+    {
+      "type": "arrow",
+      "id": "d1aL7",
+      "x": 428.0,
+      "y": 858,
+      "width": -27.0,
+      "height": 40,
+      "points": [
+        [
+          0,
+          0
+        ],
+        [
+          -27.0,
+          40
+        ]
+      ],
+      "strokeColor": "#343a40",
+      "strokeWidth": 2,
+      "roughness": 1,
+      "endArrowhead": "arrow"
+    },
+    {
+      "type": "rectangle",
+      "id": "d1L8",
+      "x": 260,
+      "y": 1012,
+      "width": 343,
+      "height": 74,
+      "roundness": {
+        "type": 3
+      },
+      "backgroundColor": "#b2f2bb",
+      "fillStyle": "solid",
+      "strokeColor": "#22c55e",
+      "strokeWidth": 2,
+      "roughness": 1,
+      "label": {
+        "text": "L8 载体\nhost·client / Typert / Remote",
+        "fontSize": 18,
+        "fontFamily": 1
+      }
+    },
+    {
+      "type": "arrow",
+      "id": "d1aL8",
+      "x": 401.0,
+      "y": 972,
+      "width": 30.5,
+      "height": 40,
+      "points": [
+        [
+          0,
+          0
+        ],
+        [
+          30.5,
+          40
+        ]
+      ],
+      "strokeColor": "#343a40",
+      "strokeWidth": 2,
+      "roughness": 1,
+      "endArrowhead": "arrow"
+    },
+    {
+      "type": "rectangle",
+      "id": "d1side",
+      "x": 1062,
+      "y": 550,
+      "width": 260,
+      "height": 74,
+      "roundness": {
+        "type": 3
+      },
+      "backgroundColor": "#ffc9c9",
+      "fillStyle": "solid",
+      "strokeColor": "#ef4444",
+      "strokeWidth": 2,
+      "roughness": 1,
+      "label": {
+        "text": "L9 政策层\nsubagent / goal / jobs",
+        "fontSize": 18,
+        "fontFamily": 1
+      }
+    },
+    {
+      "type": "arrow",
+      "id": "d1a59",
+      "x": 542,
+      "y": 707.0,
+      "width": 520,
+      "height": -120.0,
+      "points": [
+        [
+          0,
+          0
+        ],
+        [
+          520,
+          -120.0
+        ]
+      ],
+      "strokeColor": "#343a40",
+      "strokeWidth": 2,
+      "roughness": 1,
+      "endArrowhead": "arrow"
+    },
+    {
+      "type": "arrow",
+      "id": "d1a19",
+      "x": 628,
+      "y": 251.0,
+      "width": 434,
+      "height": 299.0,
+      "points": [
+        [
+          0,
+          0
+        ],
+        [
+          434,
+          299.0
+        ]
+      ],
+      "strokeColor": "#8b5cf6",
+      "strokeWidth": 2,
+      "roughness": 1,
+      "endArrowhead": "arrow",
+      "strokeStyle": "dashed"
+    }
+  ],
+  "appState": {},
+  "files": {}
+}
