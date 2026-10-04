@@ -699,8 +699,8 @@ export function applyMeteoConsultTool(ctx: Context, limits: MeteoLimits): void {
       presentationMeta: (_args, value) => consultMetaFromValue(value, limits.maxSnippetChars),
     },
     timeoutMs: limits.timeoutMs,
-    // A consultation reads the seams and writes nothing, so two may overlap.
-    isConcurrencySafe: () => true,
+    // A supported grade writes a warning product and its session events, so two consults must not overlap.
+    isConcurrencySafe: () => false,
     async execute(args, exec) {
       const question = nonEmpty(args.question)
       if (question === undefined) throw new Error('question must be a non-empty string')
@@ -831,9 +831,11 @@ export function applyMeteoConsultTool(ctx: Context, limits: MeteoLimits): void {
         ruleVersion,
       })
       const sampleTimes = evaluatedSamples.map(sample => sample.time).filter(time => time.length > 0).sort()
-      const evaluated = sampleTimes.length === 0
+      const firstSampleTime = sampleTimes.at(0)
+      const lastSampleTime = sampleTimes.at(-1)
+      const evaluated = firstSampleTime === undefined || lastSampleTime === undefined
         ? undefined
-        : { from: sampleTimes[0]!, to: sampleTimes[sampleTimes.length - 1]! }
+        : { from: firstSampleTime, to: lastSampleTime }
       const hazard = {
         ...hazardFinding,
         ...(evaluated === undefined ? {} : { evaluated }),

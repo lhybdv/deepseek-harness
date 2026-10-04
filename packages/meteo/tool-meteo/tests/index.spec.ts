@@ -75,7 +75,7 @@ describe('tool-meteo config', () => {
     expect(ctx.tools.get('meteo_set_focus')?.timeoutMs).toBe(1500)
   })
 
-  it('registers three consultation tools and schedules the write alone', async () => {
+  it('registers three consultation tools and schedules writes alone', async () => {
     const { ctx } = await mountTools()
     const { scope } = await guidanceScope(ctx)
     const assembly = await ctx.systemPrompt.assemble({ scope })
@@ -87,7 +87,8 @@ describe('tool-meteo config', () => {
       name,
       arguments: args,
     })
-    expect(mode('meteo_consult', { question: 'x' })).toEqual({ kind: 'parallel' })
+    // A supported grade writes a warning product and its session events, so consultations no longer overlap.
+    expect(mode('meteo_consult', { question: 'x' })).toEqual({ kind: 'exclusive' })
     expect(mode('meteo_station_lookup')).toEqual({ kind: 'parallel' })
     expect(mode('meteo_set_focus')).toEqual({ kind: 'exclusive' })
     await scope.dispose()
