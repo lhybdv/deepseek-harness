@@ -1,7 +1,7 @@
 /** Session-scoped Remote controller lifecycle behavior. */
 import DocumentProductsController from '../src/index.ts'
 import { describe, expect, it, vi } from 'vitest'
-import type { DocumentProductService } from '@deepseek-ai/dsh-document-products/src/plugin.ts'
+import type { DocumentProductService } from '@deepseek-ai/dsh-document-products'
 import type { Session } from '@deepseek-ai/dsh-session'
 
 describe('document product Remote controller', () => {
