@@ -2,7 +2,6 @@
 import { act, cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 vi.mock('@deepseek-ai/dsh-api-document-products/remote', () => ({ default: {} }))
-import type { Context } from '@deepseek-ai/cordis'
 import type { DocumentProduct, ProductAction, ProductId } from '@deepseek-ai/dsh-document-products'
 import { brandString } from '@deepseek-ai/dsh-brand'
 import { legalProductActions, transitionProduct } from '@deepseek-ai/dsh-document-products'
@@ -122,7 +121,7 @@ describe('document products client', () => {
       },
       effect: (effect: () => unknown) => effect(),
     }
-    await apply(ctx as Context)
+    await Reflect.apply(apply, undefined, [ctx])
     expect(ctx.remote.$mount).toHaveBeenCalledOnce()
     expect(ctx.locale.register).toHaveBeenCalledOnce()
     expect(entries.map(entry => entry.options.name)).toEqual(['sidebar.panellist', 'main'])

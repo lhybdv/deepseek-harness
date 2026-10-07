@@ -12,7 +12,6 @@ import {
 import type { LanguageRowInjected, LocaleRuntime } from '@deepseek-ai/dsh-client-locale/client'
 import { LOCALE_SETTINGS_NAMESPACE, LocaleSettingsSchema, type LocaleSettings } from '../src/locale-settings.ts'
 import { AnswerLanguageRow } from '../src/client/AnswerLanguageRow.tsx'
-import type { AnswerLanguageRowInjected } from '../src/client/AnswerLanguageRow.tsx'
 import type { AnswerLanguageStore } from '../src/client/answer-language-store.ts'
 import { LanguageRow } from '../src/client/LanguageRow.tsx'
 import type { createLanguageRowStore } from '../src/client/settings-store.ts'
@@ -71,8 +70,10 @@ function answerFaceOf(slots: SlotRegistry) {
   const entry = slots.entries(SLOT).find(e => e.component === AnswerLanguageRow)!
   const handle = entry.store as AnswerLanguageStore
   const instance = handle.create()
-  const inject = entry.inject as (actions: typeof instance.actions) => AnswerLanguageRowInjected
-  return { entry, instance, face: inject(instance.actions) }
+  if (entry.inject === undefined) throw new Error('answer language injection was not registered')
+  const face = Reflect.apply(entry.inject, undefined, [instance.actions])
+  if (typeof face.setAnswerLanguage !== 'function') throw new Error('answer language injection was not registered')
+  return { entry, instance, face }
 }
 
 describe('locale apply', () => {

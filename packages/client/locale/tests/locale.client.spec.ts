@@ -280,7 +280,7 @@ describe('LocaleRuntime', () => {
   it('adopts a saved external locale when its definition registers later', () => {
     const host = stubConfigForm<LocaleSettings>()
     const { svc, events } = make(host)
-    host.publish({ status: 'ready', value: { preference: 'ja' }, revision: 1, writable: true })
+    host.publish({ status: 'ready', value: { preference: 'ja', answerLanguage: 'zh' }, revision: 1, writable: true })
     expect(svc.getLocale().active).toBe('zh')
 
     svc.addLanguage({ id: 'ja', label: '日本語', fallback: 'en' })
@@ -292,26 +292,26 @@ describe('LocaleRuntime', () => {
   it('adopts a Host preference over the browser language without writing it back', () => {
     const host = stubConfigForm<LocaleSettings>()
     const { svc, events } = make(host)
-    host.publish({ status: 'ready', value: { preference: 'en' }, revision: 1, writable: true })
+    host.publish({ status: 'ready', value: { preference: 'en', answerLanguage: 'zh' }, revision: 1, writable: true })
     expect(svc.getLocale().active).toBe('en')
     expect(events).toHaveLength(1)
     expect(host.set).not.toHaveBeenCalled()
-    host.publish({ value: { preference: 'en' }, revision: 2 })
+    host.publish({ value: { preference: 'en', answerLanguage: 'zh' }, revision: 2 })
     expect(events).toHaveLength(1)
   })
 
   it('an absent Host preference returns to the browser-derived locale', () => {
     const host = stubConfigForm<LocaleSettings>()
     const { svc } = make(host)
-    host.publish({ status: 'ready', value: { preference: 'en' }, revision: 1, writable: true })
+    host.publish({ status: 'ready', value: { preference: 'en', answerLanguage: 'zh' }, revision: 1, writable: true })
     expect(svc.getLocale().active).toBe('en')
-    host.publish({ value: {}, revision: 2 })
+    host.publish({ value: { answerLanguage: 'zh' }, revision: 2 })
     expect(svc.getLocale().active).toBe('zh')
   })
 
   it('adopts a section already standing at construction and releases its subscription on dispose', async () => {
     const host = stubConfigForm<LocaleSettings>()
-    host.publish({ status: 'ready', value: { preference: 'en' }, revision: 1, writable: true })
+    host.publish({ status: 'ready', value: { preference: 'en', answerLanguage: 'zh' }, revision: 1, writable: true })
     const { ctx, svc } = make(host)
     expect(svc.getLocale().active).toBe('en')
     expect(host.listenerCount()).toBe(1)

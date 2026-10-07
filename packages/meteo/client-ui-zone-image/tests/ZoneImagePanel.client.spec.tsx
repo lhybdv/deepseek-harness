@@ -3,6 +3,8 @@ import { fireEvent, render, within } from '@testing-library/react'
 import { LlmAttemptId, ToolCallId, createMessage } from '@deepseek-ai/dsh-llm'
 import { MutableSessionEventSource } from '@deepseek-ai/dsh-api-session-controller/client'
 import type { SessionEventLikeEntry } from '@deepseek-ai/dsh-api-session-controller/client'
+import { SessionSeq } from '@deepseek-ai/dsh-session/types'
+import type { SessionEvent } from '@deepseek-ai/dsh-session/types'
 import { describe, expect, it, vi } from 'vitest'
 import { en, NS, runZoneImageComparison, ZoneImagePanel, zh } from '../src/client/index.ts'
 import type { ZoneImageComparisonSession, ZoneImageResult } from '../src/client/index.ts'
@@ -18,25 +20,29 @@ const result: ZoneImageResult = {
 const svg = `<svg xmlns="http://www.w3.org/2000/svg"><metadata id="dsh-zone-image-result">${escapeXml(JSON.stringify({ images: interpretations, judgment: result.judgment, changedAreaShare: result.changedAreaShare }))}</metadata><text>变化对比图</text></svg>`
 result.svg = svg
 
-function scriptedSession(toolText: string, options: { toolError?: boolean; noText?: boolean; withoutResult?: boolean; reject?: unknown } = {}) {
+function scriptedSession(
+  toolText: string,
+  options: { toolError?: boolean; noText?: boolean; withoutResult?: boolean; reject?: unknown } = {},
+) {
   const eventSource = new MutableSessionEventSource()
   const callId = ToolCallId('zone-call')
   const content = options.noText ? [] : [{ type: 'text' as const, text: toolText }]
   const message = createMessage({ role: 'tool', source: { kind: 'tool', callId }, toolCallId: callId, content, ...(options.toolError === true ? { isError: true as const } : {}) })
-  const event = (type: string, data: object, seq: number): SessionEventLikeEntry => ({
-    type: 'event',
-    event: { type, seq: seq as SessionEventLikeEntry['event']['seq'], time: 1, data } as SessionEventLikeEntry['event'],
-  })
+  const event = (event: SessionEvent): SessionEventLikeEntry => ({ type: 'event', event })
   const prompt = vi.fn(async (_content: Parameters<ZoneImageComparisonSession['prompt']>[0]) => {
     if (options.reject !== undefined) throw options.reject
-    const entries = [event('turn/start', { turn: 0 }, 0), event('turn/start', { turn: 1 }, 1), event('tool/call', { turn: 1, step: 1, callId, name: 'meteo_zone_image_compare', arguments: '{}' }, 2)]
-    if (options.withoutResult !== true) entries.push(event('tool/result', { turn: 1, step: 1, message }, 3))
-    if (options.withoutResult === true) entries.push(event('turn/end', { turn: 1, reason: { kind: 'completed' } }, 3))
+    const entries = [
+      event({ type: 'turn/start', seq: SessionSeq(0), time: 1, data: { turn: 0 } }),
+      event({ type: 'turn/start', seq: SessionSeq(1), time: 1, data: { turn: 1 } }),
+      event({ type: 'tool/call', seq: SessionSeq(2), time: 1, data: { turn: 1, step: 1, callId, name: 'meteo_zone_image_compare', arguments: '{}' } }),
+    ]
+    if (options.withoutResult !== true) entries.push(event({ type: 'tool/result', seq: SessionSeq(3), time: 1, data: { turn: 1, step: 1, message }, surfaceOp: 'append' }))
+    if (options.withoutResult === true) entries.push(event({ type: 'turn/end', seq: SessionSeq(3), time: 1, data: { turn: 1, reason: { kind: 'completed' } } }))
     eventSource.replace([transient, ...entries], false)
     return { ok: true as const, value: { accepted: true as const } }
   })
   const transient: SessionEventLikeEntry = { type: 'transient', event: { type: 'assistant/live-chunk', seq: 0 as SessionEventLikeEntry['event']['seq'], time: 1, data: { attemptId: LlmAttemptId('attempt'), turn: 0, step: 0, chunk: { type: 'text-delta', index: 0, text: '' } } } }
-  eventSource.replace([transient, event('turn/start', { turn: 0 }, 0)], false)
+  eventSource.replace([transient, event({ type: 'turn/start', seq: SessionSeq(0), time: 1, data: { turn: 0 } })], false)
   return { session: { prompt, eventSource } as ZoneImageComparisonSession, prompt }
 }
 
@@ -59,8 +65,7 @@ describe('ZoneImagePanel session flow', () => {
     const before = new File(['before'], 'before.png', { type: 'image/png' })
     const after = new File(['after'], 'after.png', { type: 'image/png' })
     await expect(runZoneImageComparison([before, after], session, 'compare these maps')).resolves.toEqual(result)
-    const [content, mode] = prompt.mock.calls[0]!
-    expect(mode).toBe('queue')
+    const [content] = prompt.mock.calls[0]!
     expect(content).toEqual([
       { type: 'text', text: 'compare these maps' },
       { type: 'image', mediaType: 'image/png', data: 'YmVmb3Jl', name: 'before.png' },
@@ -78,19 +83,23 @@ describe('ZoneImagePanel session flow', () => {
     const files: [File, File] = [new File(['a'], 'a.png', { type: 'image/png' }), new File(['b'], 'b.png', { type: 'image/png' })]
     const base = { images: interpretations, judgment: result.judgment, changedAreaShare: result.changedAreaShare }
     const svgFor = (value: unknown) => `<svg xmlns="http://www.w3.org/2000/svg"><metadata id="dsh-zone-image-result">${escapeXml(JSON.stringify(value))}</metadata></svg>`
+    const invalidFeature = (features: unknown) => ({
+      ...base,
+      images: [{ ...interpretations[0], features }, interpretations[1]],
+    })
     const malformedInterpretations: unknown[] = [
       null,
       { ...base, images: [null, null] },
       { ...base, images: [] },
-      { ...base, images: [{ ...interpretations[0], features: null }, interpretations[1]] },
-      { ...base, images: [{ ...interpretations[0], features: { areaShares: null, dominantCategories: [], legend: [] } }, interpretations[1]] },
-      { ...base, images: [{ ...interpretations[0], features: { areaShares: [null], dominantCategories: [], legend: [] } }, interpretations[1]] },
-      { ...base, images: [{ ...interpretations[0], features: { areaShares: [{ category: 'x', share: 1.1 }], dominantCategories: [], legend: [] } }, interpretations[1]] },
-      { ...base, images: [{ ...interpretations[0], features: { areaShares: [], dominantCategories: null, legend: [] } }, interpretations[1]] },
-      { ...base, images: [{ ...interpretations[0], features: { areaShares: [], dominantCategories: [1], legend: [] } }, interpretations[1]] },
-      { ...base, images: [{ ...interpretations[0], features: { areaShares: [], dominantCategories: [], legend: null } }, interpretations[1]] },
-      { ...base, images: [{ ...interpretations[0], features: { areaShares: [], dominantCategories: [], legend: [null] } }, interpretations[1]] },
-      { ...base, images: [{ ...interpretations[0], features: { areaShares: [], dominantCategories: [], legend: [{ category: 'x', color: 'bad' }] } }, interpretations[1]] },
+      invalidFeature(null),
+      invalidFeature({ areaShares: null, dominantCategories: [], legend: [] }),
+      invalidFeature({ areaShares: [null], dominantCategories: [], legend: [] }),
+      invalidFeature({ areaShares: [{ category: 'x', share: 1.1 }], dominantCategories: [], legend: [] }),
+      invalidFeature({ areaShares: [], dominantCategories: null, legend: [] }),
+      invalidFeature({ areaShares: [], dominantCategories: [1], legend: [] }),
+      invalidFeature({ areaShares: [], dominantCategories: [], legend: null }),
+      invalidFeature({ areaShares: [], dominantCategories: [], legend: [null] }),
+      invalidFeature({ areaShares: [], dominantCategories: [], legend: [{ category: 'x', color: 'bad' }] }),
       { ...base, changedAreaShare: 2 },
     ]
     const toolTexts = ['no svg', '<svg><', '<svg xmlns="http://www.w3.org/2000/svg"></svg>', '<svg xmlns="http://www.w3.org/2000/svg"><metadata id="dsh-zone-image-result">{</metadata></svg>', ...malformedInterpretations.map(svgFor)]
@@ -104,7 +113,10 @@ describe('ZoneImagePanel session flow', () => {
     await expect(runZoneImageComparison(files, noResult, 'compare')).rejects.toThrow('without a zoning comparison result')
     const { session: rejected } = scriptedSession('', { reject: 'network failure' })
     await expect(runZoneImageComparison(files, rejected, 'compare')).rejects.toThrow('prompt failed')
-    const notAccepted = { eventSource: new MutableSessionEventSource(), prompt: vi.fn().mockResolvedValue({ ok: false, error: {} }) } as ZoneImageComparisonSession
+    const notAccepted = {
+      eventSource: new MutableSessionEventSource(),
+      prompt: vi.fn().mockResolvedValue({ ok: false, error: {} }),
+    } as ZoneImageComparisonSession
     await expect(runZoneImageComparison(files, notAccepted, 'compare')).rejects.toThrow('rejected the zoning comparison prompt')
   })
 

@@ -72,8 +72,8 @@ function fixture(recording?: Recording, options: { streaming?: boolean; answer?:
     () => stream.handle)
   const synthesize = vi.fn<(request: SynthesisRequest, signal: AbortSignal) => Promise<RemoteResult<SynthesisResult>>>(
     async () => ({ ok: true, value: { audioBase64: '//uQ', mimeType: 'audio/mpeg' } }))
-  const useChat: VoiceInputProps['useChat'] = selector => {
-    const node = { key: 'answer', kind: 'assistant-step', id: 'answer', target: 'chat', anchorSeq: 1,
+  const useChat: VoiceInputProps['useChat'] = (selector) => {
+    const node = { key: 'answer', kind: 'assistant-step', id: 'answer', target: 'chat' as const, anchorSeq: 1,
       location: { kind: 'session' as const }, visibility: 'visible' as const,
       data: { status: 'settled' as const, turn: 1, step: 0, blocks: [{ kind: 'text' as const, text: options.answer ?? '' }], time: 1 } }
     const snapshot = options.answer === undefined ? EMPTY_CHAT_SNAPSHOT : {
@@ -99,11 +99,12 @@ it('reads the latest settled assistant answer and supports pause and stop', asyn
     play = play
     pause = pause
     addEventListener = vi.fn()
-    constructor(_url: string) {}
+    src: string
+    constructor(url: string) { this.src = url }
   }
   class URLMock extends URL {
-    static createObjectURL = vi.fn(() => 'blob:test')
-    static revokeObjectURL = vi.fn()
+    static override createObjectURL = vi.fn(() => 'blob:test')
+    static override revokeObjectURL = vi.fn()
   }
   vi.stubGlobal('Audio', AudioMock)
   vi.stubGlobal('URL', URLMock)
@@ -126,7 +127,7 @@ it('keeps playback controls unavailable without an answer and contains synthesis
   empty.view.unmount()
   cleanup()
   const b = fixture(undefined, { answer: '你好' })
-  b.synthesize.mockResolvedValueOnce({ ok: false, error: new RemoteError('speech-synthesis/failed', 'Coze credential is unavailable: coze-api-token', {}) })
+  b.synthesize.mockResolvedValueOnce({ ok: false, error: new RemoteError('speech-synthesis/failed', 'Coze credential is unavailable: coze-api-token', { reason: 'credential unavailable' }) })
   fireEvent.click(screen.getByRole('button', { name: zh.playAnswer }))
   expect(await screen.findByText(zh.playbackFailed)).toBeTruthy()
   expect(screen.getByRole('button', { name: zh.start })).toBeTruthy()
