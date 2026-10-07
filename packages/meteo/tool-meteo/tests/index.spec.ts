@@ -66,9 +66,10 @@ describe('tool-meteo config', () => {
       .toThrow('tool-meteo: defaultLimit must not exceed maxLimit')
   })
 
-  it('states the window and horizon the config grants the model in each description', async () => {
+  it('describes place coverage and the station lookup path for bare covered places', async () => {
     const { ctx } = await mountTools({ defaultLimit: 2, maxLimit: 3, forecastHours: 24, timeoutMs: 1500 })
-    expect(ctx.tools.get('meteo_consult')?.description).toContain('six steps')
+    expect(ctx.tools.get('meteo_consult')?.description).toContain('First use meteo_station_lookup')
+    expect(ctx.tools.get('meteo_consult')?.description).toContain('五常市, 榆树市, 昌图县')
 
     expect(ctx.tools.get('meteo_consult')?.timeoutMs).toBe(1500)
     expect(ctx.tools.get('meteo_station_lookup')?.timeoutMs).toBe(1500)

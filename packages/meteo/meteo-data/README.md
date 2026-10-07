@@ -63,7 +63,7 @@ taxonomy.json
 meta.json
 ```
 
-`thresholds.json` and `crop-calendar.json` carry the warning criteria a grower is graded against and the windows those criteria apply in; `synonyms.json` and `taxonomy.json` are what turn a colloquial `倒春寒` into the hazard name the criteria are filed under; `meta.json` publishes the revision of every dataset so an answer can say how old its numbers are.
+`thresholds.json` and `crop-calendar.json` carry the warning criteria a grower is graded against and the windows those criteria apply in. This fixture publishes 33 stations: eight township stations each in Wuchang City, Heilongjiang; Yushu City, Jilin; and Changtu County, Liaoning, plus three city stations each in Harbin (Daoli, Songbei, Acheng), Changchun (Chaoyang, Nanguan, Jiutai), and Shenyang (Heping, Shenbei New Area, Liaozhong). The 33 station records have 33 observation files and 33 forecast files; each new city station has 24 observation rows from 2026-09-23 00:00–23:00 UTC and 24 forecast rows from 2026-09-24 00:00 through 2026-09-26 21:00 UTC. Its crops are maize, soybean, and rice, with criteria for spring drought, low-temperature cold damage, early frost, heavy rain, and waterlogging. `synonyms.json` and `taxonomy.json` map colloquial hazard names to the names filed under the criteria; `meta.json` publishes the revision of every dataset so an answer can say how old its numbers are.
 
 ### Carrying the focus across turns
 
@@ -77,7 +77,7 @@ declare const ctx: Context
 declare const session: Session
 declare const agent: Agent
 
-appendFocus(session, { stationId: 'ha-xx-01', crop: '冬小麦', updatedAt: Date.now() })
+appendFocus(session, { stationId: 'hl-wc-01', crop: '玉米', updatedAt: Date.now() })
 const focus = readFocus(ctx, agent)
 ```
 

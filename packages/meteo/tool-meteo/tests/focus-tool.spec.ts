@@ -23,48 +23,48 @@ function expectFocus(focus: FocusSnapshot | null, expected: { stationId?: string
 describe('meteo_set_focus', () => {
   it('records the station and crop it was given', async () => {
     const { agent, call } = await mountTools()
-    const out = await call('meteo_set_focus', { stationId: 'ha-xx-02', crop: '冬小麦' })
-    expectFocus(readFocus(agent.ctx, agent), { stationId: 'ha-xx-02', crop: '冬小麦' })
-    expect(modelText(out)).toContain('Session focus now holds station 新乡县翟坡自动站 (ha-xx-02), 新乡县 翟坡镇 and crop 冬小麦.')
+    const out = await call('meteo_set_focus', { stationId: 'hl-wc-02', crop: '玉米' })
+    expectFocus(readFocus(agent.ctx, agent), { stationId: 'hl-wc-02', crop: '玉米' })
+    expect(modelText(out)).toContain('Session focus now holds station 五常市拉林满族镇自动站 (hl-wc-02), 五常市 拉林满族镇 and crop 玉米.')
     expect(modelText(out)).toContain('unless it names otherwise')
   })
 
   it('keeps the crop the session already held when only the station is named', async () => {
     const { agent, call } = await mountTools()
-    appendFocus(agent.session, { crop: '冬小麦', updatedAt: 1_759_000_000_000 })
-    await call('meteo_set_focus', { stationId: 'ha-yc-03' })
-    expectFocus(readFocus(agent.ctx, agent), { stationId: 'ha-yc-03', crop: '冬小麦' })
+    appendFocus(agent.session, { crop: '大豆', updatedAt: 1_759_000_000_000 })
+    await call('meteo_set_focus', { stationId: 'jl-ys-03' })
+    expectFocus(readFocus(agent.ctx, agent), { stationId: 'jl-ys-03', crop: '大豆' })
   })
 
   it('keeps the station the session already held when only the crop is named', async () => {
     const { agent, data, call } = await mountTools()
-    appendFocus(agent.session, { stationId: 'ha-xx-01', updatedAt: 1_759_000_000_000 })
+    appendFocus(agent.session, { stationId: 'hl-wc-01', updatedAt: 1_759_000_000_000 })
     const out = await call('meteo_set_focus', { crop: '玉米' })
-    expectFocus(readFocus(agent.ctx, agent), { stationId: 'ha-xx-01', crop: '玉米' })
-    expect(data.stationLookups).toEqual(['ha-xx-01'])
-    expect(modelText(out)).toContain('station 新乡县城关自动站 (ha-xx-01)')
+    expectFocus(readFocus(agent.ctx, agent), { stationId: 'hl-wc-01', crop: '玉米' })
+    expect(data.stationLookups).toEqual(['hl-wc-01'])
+    expect(modelText(out)).toContain('station 五常市五常镇自动站 (hl-wc-01)')
     expect(modelText(out)).toContain('crop 玉米')
   })
 
   it('writes only the crop when the station the focus held has gone unpublished', async () => {
     const { agent, data, call } = await mountTools()
-    appendFocus(agent.session, { stationId: 'ha-xx-09', crop: '冬小麦', updatedAt: 1_759_000_000_000 })
+    appendFocus(agent.session, { stationId: 'hl-wc-09', crop: '大豆', updatedAt: 1_759_000_000_000 })
     await call('meteo_set_focus', { crop: '玉米' })
     expectFocus(readFocus(agent.ctx, agent), { crop: '玉米' })
-    expect(data.stationLookups).toEqual(['ha-xx-09'])
+    expect(data.stationLookups).toEqual(['hl-wc-09'])
   })
 
   it('refuses a station this deployment does not publish', async () => {
     const { agent, call } = await mountTools()
-    const out = await call('meteo_set_focus', { stationId: 'ha-xx-09' })
+    const out = await call('meteo_set_focus', { stationId: 'hl-wc-09' })
     expect(out.isError).toBe(true)
-    expect(modelText(out)).toContain('station ha-xx-09 is not a station this deployment publishes')
+    expect(modelText(out)).toContain('station hl-wc-09 is not a station this deployment publishes')
     expect(readFocus(agent.ctx, agent)).toBeNull()
   })
 
   it('releases the focus when it is given neither slot', async () => {
     const { agent, data, call } = await mountTools()
-    appendFocus(agent.session, { stationId: 'ha-xx-01', crop: '冬小麦', updatedAt: 1_759_000_000_000 })
+    appendFocus(agent.session, { stationId: 'hl-wc-01', crop: '玉米', updatedAt: 1_759_000_000_000 })
     const out = await call('meteo_set_focus', {})
     expect(readFocus(agent.ctx, agent)).toBeNull()
     expect(modelText(out)).toBe('Session focus released: a consultation in this session will ask which place the farmer means instead of assuming one.')
@@ -75,14 +75,14 @@ describe('meteo_set_focus', () => {
 
   it('refuses to record a focus for a call that carries no session', async () => {
     const { callWithoutAgent } = await mountTools()
-    const out = await callWithoutAgent('meteo_set_focus', { crop: '冬小麦' })
+    const out = await callWithoutAgent('meteo_set_focus', { crop: '玉米' })
     expect(out.isError).toBe(true)
     expect(modelText(out)).toContain('meteo_set_focus needs an agent session to record the focus on')
   })
 
   it('treats blank slots as nothing named, and releases on them', async () => {
     const { agent, call } = await mountTools()
-    appendFocus(agent.session, { stationId: 'ha-xx-01', crop: '冬小麦', updatedAt: 1_759_000_000_000 })
+    appendFocus(agent.session, { stationId: 'hl-wc-01', crop: '玉米', updatedAt: 1_759_000_000_000 })
     await call('meteo_set_focus', { stationId: '  ', crop: '' })
     expect(readFocus(agent.ctx, agent)).toBeNull()
   })
@@ -99,19 +99,19 @@ describe('meteo_set_focus', () => {
 
   it('says what a focus holds without going through the tool runtime', () => {
     expect(formatFocusResult({})).toContain('Session focus released')
-    expect(formatFocusResult({ crop: '冬小麦', updatedAt: 1 })).toBe(
-      'Session focus now holds crop 冬小麦. A consultation in this session answers about these unless it names otherwise.')
+    expect(formatFocusResult({ crop: '玉米', updatedAt: 1 })).toBe(
+      'Session focus now holds crop 玉米. A consultation in this session answers about these unless it names otherwise.')
     expect(formatFocusResult({
-      station: { id: 'ha-xx-01', name: '新乡县城关自动站', county: '新乡县', township: '城关镇' },
+      station: { id: 'hl-wc-01', name: '五常市五常镇自动站', county: '五常市', township: '五常镇' },
       updatedAt: 1,
-    })).toContain('station 新乡县城关自动站 (ha-xx-01), 新乡县 城关镇')
+    })).toContain('station 五常市五常镇自动站 (hl-wc-01), 五常市 五常镇')
   })
 
   it('records a station alone when the session held no crop', async () => {
     const { agent, call } = await mountTools()
-    const out = await call('meteo_set_focus', { stationId: 'ha-xx-02' })
-    expectFocus(readFocus(agent.ctx, agent), { stationId: 'ha-xx-02' })
-    expect(modelText(out)).toContain('Session focus now holds station 新乡县翟坡自动站 (ha-xx-02), 新乡县 翟坡镇')
+    const out = await call('meteo_set_focus', { stationId: 'hl-wc-02' })
+    expectFocus(readFocus(agent.ctx, agent), { stationId: 'hl-wc-02' })
+    expect(modelText(out)).toContain('Session focus now holds station 五常市拉林满族镇自动站 (hl-wc-02), 五常市 拉林满族镇')
   })
 
   it('records a crop alone when the session held no station', async () => {

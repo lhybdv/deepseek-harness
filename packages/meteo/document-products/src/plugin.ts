@@ -3,20 +3,36 @@ import type { Context } from '@deepseek-ai/cordis'
 import type { Session } from '@deepseek-ai/dsh-session'
 import type { CorpusStore } from '@deepseek-ai/dsh-meteo-corpus'
 import type { MeteoData } from '@deepseek-ai/dsh-meteo-data'
-import type { Config as ProductConfig } from './config.ts'
-import { assertConfig } from './config.ts'
+import { assertConfig, resolve } from './config.ts'
+import type { Config as ProductRequest, ResolvedConfig as ProductConfig } from './config.ts'
 import { generateFromResolvedHazard, generateProduct } from './generate.ts'
 import type { GenerateProductInput, ProductComposer, ResolvedHazard } from './generate.ts'
-import { appendProductCreated, transitionInSession } from './events.ts'
+import { appendProductCreated, editProductInSession, transitionInSession } from './events.ts'
+import { applyDocumentProductTool } from './tool.ts'
+import { verifyProduct } from './product.ts'
 import type { DocumentProduct, ProductAction, ProductId, ReleaseArtifact } from './product.ts'
 /** Session-owned access to generated products, releases, and legal state transitions. */
 export class DocumentProductService {
   private readonly bySession = new Map<Session, { products: Map<ProductId, DocumentProduct>; releases: ReleaseArtifact[] }>()
   private readonly hazardProducts = new Map<Session, Map<string, Promise<DocumentProduct>>>()
-  constructor(private readonly data: MeteoData, private readonly corpus: CorpusStore, private readonly config: Required<ProductConfig>) {}
-  /** Generate and retain a manually requested draft in a session. @param session - owning session. @param input - explicit product fields. @param compose - optional professional wording adapter. @returns verified draft. */
+  constructor(private readonly data: MeteoData, private readonly corpus: CorpusStore, private readonly config: ProductConfig) {}
+  /** Generate and retain a manually requested draft in a session.
+   * @param session - owning session.
+   * @param input - explicit product fields.
+   * @param compose - optional professional wording adapter.
+   * @returns verified draft.
+   */
   async generate(session: Session, input: GenerateProductInput, compose?: ProductComposer): Promise<DocumentProduct> {
-    const product = await generateProduct(this.data, this.corpus, { ...input, forecastHours: input.forecastHours ?? this.config.forecastHours, citationLimit: input.citationLimit ?? this.config.citationLimit }, compose)
+    const product = await generateProduct(
+      this.data,
+      this.corpus,
+      {
+        ...input,
+        forecastHours: input.forecastHours ?? this.config.forecastHours,
+        citationLimit: input.citationLimit ?? this.config.citationLimit,
+      },
+      compose,
+    )
     appendProductCreated(session, product)
     this.records(session).products.set(product.id, product)
     return product
@@ -37,12 +53,21 @@ export class DocumentProductService {
     const key = JSON.stringify([grading.stationId, grading.hazard, grading.grade, grading.from, grading.to])
     const existing = products.get(key)
     if (existing) return existing
-    const generated = generateFromResolvedHazard(this.data, this.corpus, { ...grading, forecastHours: this.config.forecastHours, citationLimit: this.config.citationLimit }, compose)
-    const pending = generated.then(product => {
+    const generated = generateFromResolvedHazard(
+      this.data,
+      this.corpus,
+      {
+        ...grading,
+        forecastHours: this.config.forecastHours,
+        citationLimit: this.config.citationLimit,
+      },
+      compose,
+    )
+    const pending = generated.then((product) => {
       appendProductCreated(session, product)
       this.records(session).products.set(product.id, product)
       return product
-    }).catch(error => {
+    }).catch((error) => {
       products.delete(key)
       throw error
     })
@@ -53,8 +78,21 @@ export class DocumentProductService {
   list(session: Session): readonly DocumentProduct[] { return [...this.records(session).products.values()] }
   /** List immutable releases for a session. @param session - owning session. @returns releases in publication order. */
   releases(session: Session): readonly ReleaseArtifact[] { return this.records(session).releases }
-  /** Validate, apply, and record an explicit actor's state transition. @param session - owning session. @param id - product identity. @param action - requested transition. @param actor - responsible user or service. @param at - ISO timestamp. @returns updated product and optional release. */
-  act(session: Session, id: ProductId, action: ProductAction, actor: string, at: string): { readonly product: DocumentProduct; readonly release?: ReleaseArtifact } {
+  /** Validate, apply, and record an explicit actor's state transition.
+   * @param session - owning session.
+   * @param id - product identity.
+   * @param action - requested transition.
+   * @param actor - responsible user or service.
+   * @param at - ISO timestamp.
+   * @returns updated product and optional release.
+   */
+  act(
+    session: Session,
+    id: ProductId,
+    action: ProductAction,
+    actor: string,
+    at: string,
+  ): { readonly product: DocumentProduct; readonly release?: ReleaseArtifact } {
     const records = this.records(session)
     const current = records.products.get(id)
     if (!current) throw new Error(`Unknown document product: ${id}`)
@@ -62,6 +100,24 @@ export class DocumentProductService {
     records.products.set(id, result.product)
     if (result.release) records.releases.push(result.release)
     return result
+  }
+  /** Verify and retain an edited draft body with an attributed revision.
+   * @param session - owning session.
+   * @param id - product identity.
+   * @param body - replacement document body.
+   * @param actor - person or service making the edit.
+   * @param at - ISO instant.
+   * @returns updated product.
+   */
+  edit(session: Session, id: ProductId, body: string, actor: string, at: string): DocumentProduct {
+    const records = this.records(session)
+    const current = records.products.get(id)
+    if (!current) throw new Error(`Unknown document product: ${id}`)
+    if (!body.trim()) throw new Error('Edited document body cannot be empty; the required 正文 section needs content')
+    verifyProduct(body, current.provenance, current.citations)
+    const result = editProductInSession(session, current, body, actor, at)
+    records.products.set(id, result.product)
+    return result.product
   }
   private records(session: Session): { products: Map<ProductId, DocumentProduct>; releases: ReleaseArtifact[] } {
     let records = this.bySession.get(session)
@@ -71,12 +127,16 @@ export class DocumentProductService {
 }
 /** Cordis plugin identifier. */
 export const name = 'meteo-document-products'
-/** Data and corpus capability services required to provide generation. */
-export const inject = ['meteoData', 'corpus']
+/** Data, corpus, and tool-registry capability services required to provide generation and the model-facing tool. */
+export const inject = ['meteoData', 'corpus', 'tools']
 declare module '@deepseek-ai/cordis' { interface Context { documentProducts: DocumentProductService } }
-/** Register the scoped product API and remove it when the plugin is disposed. @param ctx - context providing the shared data seams. @param config - validated deployment limits. */
-export function apply(ctx: Context, config: ProductConfig): void {
-  const resolved = config as Required<ProductConfig>
+/** Register the scoped product API and model-facing tool.
+ * @param ctx - context providing the shared data seams and tool registry.
+ * @param config - requested deployment limits.
+ */
+export function apply(ctx: Context, config: ProductRequest): void {
+  const resolved = resolve(config)
   assertConfig(resolved)
   ctx.effect(() => ctx.provide('documentProducts', new DocumentProductService(ctx.meteoData, ctx.corpus, resolved)))
+  applyDocumentProductTool(ctx, resolved)
 }

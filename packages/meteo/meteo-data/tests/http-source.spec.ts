@@ -17,34 +17,34 @@ const BASE = 'https://meteo.example.test/bundle'
 
 const STATIONS = [
   {
-    id: 'ha-xx-01',
-    name: '新乡县城关自动站',
-    county: '新乡县',
-    township: '城关镇',
-    lon: 113.8,
-    lat: 35.05,
-    altitudeM: 42,
+    id: 'hl-wc-01',
+    name: '五常市五常镇自动站',
+    county: '五常市',
+    township: '五常镇',
+    lon: 127.16,
+    lat: 44.93,
+    altitudeM: 150,
   },
   {
-    id: 'ha-xx-02',
-    name: '新乡县翟坡自动站',
-    county: '新乡县',
-    township: '翟坡镇',
-    lon: 113.9,
-    lat: 35.1,
-    altitudeM: 45,
+    id: 'jl-ys-02',
+    name: '榆树市五棵树镇自动站',
+    county: '榆树市',
+    township: '五棵树镇',
+    lon: 126.31,
+    lat: 44.96,
+    altitudeM: 185,
   },
 ]
 
 const OBSERVATION_ROWS = [
-  { time: '2026-09-23T00:00:00Z', elements: { temperature: 18.5, precipitation: 0 } },
-  { time: '2026-09-23T01:00:00Z', elements: { temperature: 18.1, precipitation: 0.4 } },
+  { time: '2026-09-23T00:00:00Z', elements: { temperature: 5.2, precipitation: 0 } },
+  { time: '2026-09-23T01:00:00Z', elements: { temperature: 4.8, precipitation: 0 } },
 ]
 
 const FORECAST_POINTS = [
-  { time: '2026-09-24T00:00:00Z', elements: { temperature: 20.2, windSpeed: 3.4 } },
-  { time: '2026-09-24T03:00:00Z', elements: { temperature: 21.6, windSpeed: 2.8 } },
-  { time: '2026-09-24T06:00:00Z', elements: { temperature: 23.1, windSpeed: 2.1 } },
+  { time: '2026-09-24T00:00:00Z', elements: { temperature: 2.1, windSpeed: 3.4 } },
+  { time: '2026-09-24T03:00:00Z', elements: { temperature: 1.5, windSpeed: 3.2 } },
+  { time: '2026-09-24T06:00:00Z', elements: { temperature: 2.8, windSpeed: 3.8 } },
 ]
 
 const RAIN_CRITERION = {
@@ -57,7 +57,7 @@ const RAIN_CRITERION = {
 }
 
 const DROUGHT_CRITERION = {
-  disaster: '干旱',
+  disaster: '春旱',
   element: 'soilMoisture',
   op: '<=',
   value: 40,
@@ -66,14 +66,14 @@ const DROUGHT_CRITERION = {
 }
 
 /** A catalogue row is one criterion plus the crops it is issued for. */
-const RAIN_ROW = { ...RAIN_CRITERION, crops: ['冬小麦'] }
-const DROUGHT_ROW = { ...DROUGHT_CRITERION, crops: ['夏玉米'] }
+const RAIN_ROW = { ...RAIN_CRITERION, crops: ['玉米'] }
+const DROUGHT_ROW = { ...DROUGHT_CRITERION, crops: ['大豆'] }
 
 const SOWING_WINDOW = {
-  crop: '冬小麦',
+  crop: '玉米',
   activity: '播种',
-  windowStart: '10-15',
-  windowEnd: '10-25',
+  windowStart: '04-25',
+  windowEnd: '05-15',
   criteria: [RAIN_CRITERION],
 }
 
@@ -94,10 +94,10 @@ const VERSIONS = {
 function published(): Record<string, unknown> {
   return {
     'stations.json': STATIONS,
-    'observations/ha-xx-01.json': OBSERVATION_ROWS,
-    'observations/ha-xx-02.json': OBSERVATION_ROWS,
-    'forecast/ha-xx-01.json': FORECAST_POINTS,
-    'forecast/ha-xx-02.json': FORECAST_POINTS,
+    'observations/hl-wc-01.json': OBSERVATION_ROWS,
+    'observations/jl-ys-02.json': OBSERVATION_ROWS,
+    'forecast/hl-wc-01.json': FORECAST_POINTS,
+    'forecast/jl-ys-02.json': FORECAST_POINTS,
     'thresholds.json': [RAIN_ROW, DROUGHT_ROW],
     'crop-calendar.json': [SOWING_WINDOW],
     'synonyms.json': { 暴雨: ['强降水', '大雨'] },
@@ -159,12 +159,12 @@ describe('an origin serving the bundle', () => {
   it('answers every seam method over HTTP', async () => {
     const data = seam(serving(published()))
     expect(await data.stations()).toEqual(STATIONS)
-    expect(await data.station('ha-xx-02')).toEqual(STATIONS[1])
-    expect(await data.observations({ stationId: 'ha-xx-01' })).toEqual([
-      { stationId: 'ha-xx-01', time: '2026-09-23T00:00:00Z', elements: { temperature: 18.5, precipitation: 0 } },
-      { stationId: 'ha-xx-01', time: '2026-09-23T01:00:00Z', elements: { temperature: 18.1, precipitation: 0.4 } },
+    expect(await data.station('jl-ys-02')).toEqual(STATIONS[1])
+    expect(await data.observations({ stationId: 'hl-wc-01' })).toEqual([
+      { stationId: 'hl-wc-01', time: '2026-09-23T00:00:00Z', elements: { temperature: 5.2, precipitation: 0 } },
+      { stationId: 'hl-wc-01', time: '2026-09-23T01:00:00Z', elements: { temperature: 4.8, precipitation: 0 } },
     ])
-    expect(await data.forecast({ stationId: 'ha-xx-01', hours: 3 })).toEqual([FORECAST_POINTS[0], FORECAST_POINTS[1]])
+    expect(await data.forecast({ stationId: 'hl-wc-01', hours: 3 })).toEqual([FORECAST_POINTS[0], FORECAST_POINTS[1]])
     expect(await data.thresholds({ disaster: '暴雨' })).toEqual([RAIN_CRITERION])
     expect(await data.cropCalendar({ disaster: '暴雨' })).toEqual([SOWING_WINDOW])
     expect(await data.expandTerm('暴雨')).toEqual(['强降水', '大雨'])
@@ -176,21 +176,21 @@ describe('an origin serving the bundle', () => {
     const data = seam(serving(published()))
     await data.stations()
     await data.stations()
-    await data.observations({ stationId: 'ha-xx-01' })
-    await data.observations({ stationId: 'ha-xx-01' })
+    await data.observations({ stationId: 'hl-wc-01' })
+    await data.observations({ stationId: 'hl-wc-01' })
     expect(urls).toEqual([
       `${BASE}/stations.json`,
-      `${BASE}/observations/ha-xx-01.json`,
-      `${BASE}/observations/ha-xx-02.json`,
+      `${BASE}/observations/hl-wc-01.json`,
+      `${BASE}/observations/jl-ys-02.json`,
     ])
   })
 
   it('answers nothing for a station the origin has no file for', async () => {
     const routes = published()
-    delete routes['forecast/ha-xx-02.json']
+    delete routes['forecast/jl-ys-02.json']
     const data = seam(serving(routes))
-    expect(await data.forecast({ stationId: 'ha-xx-02' })).toEqual([])
-    expect(await data.forecast({ stationId: 'ha-xx-01' })).toHaveLength(3)
+    expect(await data.forecast({ stationId: 'jl-ys-02' })).toEqual([])
+    expect(await data.forecast({ stationId: 'hl-wc-01' })).toHaveLength(3)
   })
 
   it('refuses a dataset the origin does not carry', async () => {

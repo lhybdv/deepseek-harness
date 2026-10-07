@@ -19,6 +19,10 @@ Open the URL the launcher prints, **including its token**, at `http://127.0.0.1`
 Run from the repository root: two values below are resolved against the process
 working directory, because the demonstration fixtures and skills live in the
 repository and are deliberately not published with their packages.
+## Demo data
+
+The fixture bundle publishes 33 stations: eight township stations each in Wuchang City, Heilongjiang (`hl-wc-*`), Yushu City, Jilin (`jl-ys-*`), and Changtu County, Liaoning (`ln-ct-*`), plus three city stations each in Harbin (Daoli, Songbei, Acheng), Changchun (Chaoyang, Nanguan, Jiutai), and Shenyang (Heping, Shenbei New Area, Liaozhong). The bundle has 33 observation files and 33 forecast files; every station has a 24-row series, with observations from 2026-09-23 00:00 UTC through 23:00 UTC and forecasts from 2026-09-24 00:00 UTC through 2026-09-26 21:00 UTC. It covers maize, soybean, and rice, with spring-drought, low-temperature cold-damage, early-frost, heavy-rain, and waterlogging criteria. The data is fixture-first; it does not connect to a live weather source.
+
 
 ## What it adds
 

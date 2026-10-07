@@ -12,7 +12,7 @@
 import { mkdir, mkdtemp, rm } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
-import { afterEach, beforeEach, describe, expect, it } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { Context } from '@deepseek-ai/cordis'
 import { brandString } from '@deepseek-ai/dsh-brand'
 import {
@@ -69,19 +69,25 @@ const DROUGHT_DOC = [
 ].join('\n')
 
 
-/** Deterministic semantic test provider with no external model dependency. */
-function embeddingContext(vectorize: (texts: readonly string[]) => readonly (readonly number[])[] = texts => texts.map(vectorFor)): Context {
-  const ctx = new Context()
+/** Deterministic semantic test registry with no external model dependency. */
+function embeddingService(
+  vectorize: (texts: readonly string[]) => readonly (readonly number[])[] = texts => texts.map(vectorFor),
+): Record<string, unknown> {
   const provider = {
     info: { id: 'fake' as never, name: 'test-vectorizer', location: 'local' as const, model: 'fixture' },
     embedDocuments: async (texts: readonly string[]) => texts.map(vectorFor),
     embedQueries: async (texts: readonly string[]) => texts.map(vectorFor),
   }
-  const service = {
+  return {
     resolve: (request: { texts: readonly string[]; kind: 'documents' | 'queries' }) => ({ ...request, provider }),
     embed: async (spec: { texts: readonly string[] }) => vectorize(spec.texts),
   }
-  ctx.provide('textEmbeddings', service as never)
+}
+
+/** A context with the test embedding registry mounted. */
+function embeddingContext(vectorize?: (texts: readonly string[]) => readonly (readonly number[])[]): Context {
+  const ctx = new Context()
+  ctx.provide('textEmbeddings', embeddingService(vectorize) as never)
   return ctx
 }
 
@@ -112,6 +118,14 @@ function openStore(name: string, overrides: Partial<Config> = {}): SqliteCorpusS
   const store = new SqliteCorpusStore(embeddingContext(), configuration(join(root, `${name}.sqlite`), overrides))
   opened.push(store)
   return store
+}
+
+/** Build a store in a bare context with no embedding registry mounted, tracked for teardown. */
+function openProviderlessStore(name: string, overrides: Partial<Config> = {}): { ctx: Context; store: SqliteCorpusStore } {
+  const ctx = new Context()
+  const store = new SqliteCorpusStore(ctx, configuration(join(root, `${name}.sqlite`), overrides))
+  opened.push(store)
+  return { ctx, store }
 }
 
 beforeEach(async () => {
@@ -415,5 +429,93 @@ describe('remove', () => {
     await expect(store.readChunk(docId, 0)).resolves.toBeUndefined()
     await expect(store.search({ query: '施药' })).resolves.toMatchObject({ hits: [] })
     await expect(store.remove(docId)).resolves.toEqual({ docId, removed: false })
+  })
+})
+
+describe('optional embedding provider', () => {
+  /**
+   * The vectorized synonym the fixture maps to the drought document. The
+   * companion case in `search` pins that the bigram index has no candidate for
+   * it, so a hit here can only come from vector recall.
+   */
+  const SEMANTIC_ONLY_QUERY = '如何补充水分'
+
+  /** The single `count` column of an aggregate row, narrowed rather than asserted. */
+  function rowCount(row: unknown): number {
+    if (row === null || typeof row !== 'object' || !('count' in row) || typeof row.count !== 'number') {
+      throw new Error('meteo-corpus test: aggregate query returned no numeric count')
+    }
+    return row.count
+  }
+
+  /** Rows in one index table, read through a fresh handle. */
+  async function countRows(path: string, table: 'chunks' | 'chunks_fts' | 'chunk_vectors'): Promise<number> {
+    const db = await openCorpusDatabase(path, 'delete')
+    try {
+      return rowCount(db.prepare(`SELECT count(*) AS count FROM ${table}`).get())
+    } finally {
+      db.close()
+    }
+  }
+
+  it('activates without a provider, answers lexically, and reports the missing service once', async () => {
+    const ctx = new Context()
+    const warn = vi.spyOn(ctx.logger, 'warn').mockImplementation(() => undefined)
+    await ctx.plugin(SqliteCorpusStore, configuration(join(root, 'no-provider.sqlite')))
+    const store = ctx.corpus as SqliteCorpusStore
+    opened.push(store)
+    const ingested = await store.ingest({
+      sources: [{ title: '病虫害防治气象指标', text: SPRAY_DOC, source: 'spray.md' }],
+    })
+    expect(ingested.failures).toEqual([])
+    const result = await store.search({ query: '明天下午在临河镇打药行不行', terms: ['打药', '施药'] })
+    expect(result.hits.map(hit => hit.docTitle)).toEqual(['病虫害防治气象指标'])
+    expect(result.matchExpression).toContain('OR')
+    expect(warn).toHaveBeenCalledTimes(1)
+    expect(String(warn.mock.calls[0]?.[0])).toContain('textEmbeddings')
+  })
+
+  it('writes no vectors when no provider is mounted', async () => {
+    const path = join(root, 'no-vectors.sqlite')
+    const { ctx, store } = openProviderlessStore('no-vectors')
+    const warn = vi.spyOn(ctx.logger, 'warn').mockImplementation(() => undefined)
+    await store.ingest({ sources: [{ title: '农业干旱与灌溉建议', text: DROUGHT_DOC, source: 'drought.md' }] })
+    expect(await countRows(path, 'chunks')).toBeGreaterThan(0)
+    expect(await countRows(path, 'chunks_fts')).toBe(await countRows(path, 'chunks'))
+    expect(await countRows(path, 'chunk_vectors')).toBe(0)
+    // With no vectors stored there is no recall path to the semantically
+    // matching document, so the lexical fallback returns nothing for it.
+    await expect(store.search({ query: SEMANTIC_ONLY_QUERY })).resolves.toMatchObject({ hits: [] })
+    expect(warn).toHaveBeenCalledTimes(1)
+  })
+
+  it('stores vectors and reaches semantic-only matches when a provider is mounted', async () => {
+    const path = join(root, 'fused.sqlite')
+    const store = openStore('fused')
+    await store.ingest({ sources: [{ title: '农业干旱与灌溉建议', text: DROUGHT_DOC, source: 'drought.md' }] })
+    expect(await countRows(path, 'chunk_vectors')).toBe(await countRows(path, 'chunks'))
+    const result = await store.search({ query: SEMANTIC_ONLY_QUERY })
+    expect(result.hits.map(hit => hit.docTitle)).toEqual(['农业干旱与灌溉建议'])
+  })
+
+  it('picks up a provider mounted after the store was built', async () => {
+    const path = join(root, 'late-provider.sqlite')
+    const ctx = new Context()
+    const warn = vi.spyOn(ctx.logger, 'warn').mockImplementation(() => undefined)
+    await ctx.plugin(SqliteCorpusStore, configuration(path))
+    const store = ctx.corpus as SqliteCorpusStore
+    opened.push(store)
+    await store.ingest({ sources: [{ title: '农业干旱与灌溉建议', text: DROUGHT_DOC, source: 'drought.md' }] })
+    expect(await countRows(path, 'chunk_vectors')).toBe(0)
+    expect(warn).toHaveBeenCalledTimes(1)
+    // Mounting the registry after the store exists must still enable vectors:
+    // resolution happens at the point of use, so row order stays irrelevant.
+    ctx.provide('textEmbeddings', embeddingService() as never)
+    await store.ingest({ sources: [{ title: '灌溉建议', text: DROUGHT_DOC, source: 'later.md' }] })
+    expect(await countRows(path, 'chunk_vectors')).toBeGreaterThan(0)
+    await expect(store.search({ query: SEMANTIC_ONLY_QUERY })).resolves.toMatchObject({
+      hits: expect.arrayContaining([expect.objectContaining({ docTitle: '灌溉建议' })]),
+    })
+    expect(warn).toHaveBeenCalledTimes(1)
   })
 })

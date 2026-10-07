@@ -13,4 +13,4 @@ The `documentProducts` Remote namespace exposes session-scoped generation, listi
 
 ## Use this package
 
-Mount the Host contribution alongside `@deepseek-ai/dsh-document-products`. Clients can generate drafts, submit them for review, approve or reject them, publish versioned releases, and archive published products. Transitions retain the supplied actor and timestamp.
+Mount the Host contribution alongside `@deepseek-ai/dsh-document-products`. Clients can generate drafts, submit them for review, approve or reject them, publish versioned releases, and archive published products. Transitions retain the supplied actor and timestamp. Every product the namespace answers with carries the actions its current state allows, as the transition table that owns the state machine reports them, so a client offers exactly those controls instead of re-deriving legality.

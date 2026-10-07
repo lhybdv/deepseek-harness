@@ -272,7 +272,7 @@ async function resolveStation(
 
 /**
  * Describe one step's readings in the words the trace shows.
- * @param subject - the rows as a noun phrase, e.g. `observations for station ha-xx-01`.
+ * @param subject - the rows as a noun phrase, e.g. `observations for station hl-wc-01`.
  * @param rows - the rows the step read, oldest first.
  * @returns the count and span when the step read something, the absence when it did not.
  */
@@ -487,11 +487,11 @@ export function presentConsultResult(args: ConsultArgs, result: ToolResult): Gen
 export function applyMeteoConsultTool(ctx: Context, limits: MeteoLimits): void {
   ctx.tools.register(defineTool({
     name: 'meteo_consult',
-    description: 'Gather the published evidence that answers a farming or disaster question for one place. Runs six steps and returns their findings: the station resolve, its recent observations, its forecast horizon, per-day suitability verdicts for the crop windows in force, one disaster grade for the criteria in force, and the indexed corpus chunks that bear on the question. Pass every slot you understood; an omitted slot falls back to the session focus. It returns findings and a step trace, never an answer: you compose the answer from these.',
+    description: 'Gather published meteorological evidence for a place, including observations, forecast, suitability and disaster findings. This deployment covers 五常市, 榆树市, 昌图县, and publishes city stations for 哈尔滨市, 长春市 and 沈阳市. First use meteo_station_lookup to resolve a bare covered city/county to its own published seat station, then pass that station identifier here. For an uncovered place, do not ask which station or for a station id: state coverage in one short sentence, offer the nearest covered point only when supported by available geographic information, and offer to continue with it. Never invent a station, reading or administrative mapping. Pass every understood slot; an omitted slot may use session focus.',
     parameters: {
       question: { type: 'string', required: true, description: "The question, in the caller's own words; it is also the corpus query." },
-      station: { type: 'string', description: 'Station id, station name, or township the question is about. Defaults to the station the session focus holds.' },
-      crop: { type: 'string', description: 'Crop the question is about, e.g. 冬小麦. Defaults to the crop the session focus holds.' },
+      station: { type: 'string', description: 'Station id, station name, township, county, or covered city. Use meteo_station_lookup first for a bare covered city/county and pass its returned seat-station identifier; never resolve by asking the user which station.' },
+      crop: { type: 'string', description: 'Crop the question is about, e.g. 玉米, 大豆, or 水稻. Defaults to the crop the session focus holds.' },
       activity: { type: 'string', description: 'Farming activity the question is about, e.g. 播种. Narrows the suitability verdicts to that activity.' },
       period: { type: 'string', description: 'Period the question is about, in the caller\'s own words; carried through for the answer to name.' },
       disaster: { type: 'string', description: 'Disaster the question asks about, e.g. 倒伏. Selects the criteria the hazard grade is graded from.' },

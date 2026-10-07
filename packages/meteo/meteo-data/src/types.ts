@@ -89,13 +89,13 @@ export interface ForecastPoint {
 export interface ThresholdQuery {
   /** Disaster name the criterion must belong to, e.g. `暴雨`. */
   readonly disaster?: string
-  /** Crop the criterion is issued for, e.g. `冬小麦`. */
+  /** Crop the criterion is issued for, e.g. `玉米`. */
   readonly crop?: string
 }
 
 /** One graded disaster criterion: an element crossing a value for a duration. */
 export interface Threshold {
-  /** Disaster this criterion contributes to, e.g. `晚霜冻`. */
+  /** Disaster this criterion contributes to, e.g. `初霜`. */
   readonly disaster: string
   /** Measured element the criterion reads, matching an elements key. */
   readonly element: string
@@ -111,7 +111,7 @@ export interface Threshold {
 
 /** One farming activity window and the disaster criteria it is judged by. */
 export interface CropWindow {
-  /** Crop the activity belongs to, e.g. `冬小麦`. */
+  /** Crop the activity belongs to, e.g. `水稻`. */
   readonly crop: string
   /** Activity name, e.g. `拔节`. */
   readonly activity: string

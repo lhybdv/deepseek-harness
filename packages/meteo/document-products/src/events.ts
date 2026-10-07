@@ -5,17 +5,74 @@ import { transitionProduct } from './product.ts'
 /** Product creation event carrying the complete initial record for replay. */
 export interface ProductCreatedEvent { readonly kind: 'meteo/product-created'; readonly version: 1; readonly product: DocumentProduct }
 declare module '@deepseek-ai/dsh-session/types' { interface SessionEventMap { 'meteo/product-created': ProductCreatedEvent } }
-/** Append the complete generated product for session replay. @param session - owning session log. @param product - initial generated product. */
+/** Append the complete generated product for session replay.
+ * @param session - owning session log.
+ * @param product - initial generated product.
+ */
 export function appendProductCreated(session: Session, product: DocumentProduct): void {
   session.append('meteo/product-created', { kind: 'meteo/product-created', version: 1, product })
 }
 /** Append-only lifecycle event. */
-export interface ProductSessionEvent { readonly kind: 'meteo/product-transition'; readonly version: 1; readonly productId: ProductId; readonly action: ProductAction; readonly actor: string; readonly from: ProductState; readonly to: ProductState; readonly at: string; readonly release?: ReleaseArtifact }
+export interface ProductSessionEvent { readonly kind: 'meteo/product-transition'; readonly version: 1; readonly productId: ProductId; readonly action: ProductAction; readonly actor: string; readonly from: ProductState; readonly to: ProductState; readonly at: string; readonly body?: string; readonly release?: ReleaseArtifact }
 declare module '@deepseek-ai/dsh-session/types' { interface SessionEventMap { 'meteo/product-transition': ProductSessionEvent } }
-/** Apply and record a transition in the owning session. @param session - session log. @param product - current product. @param action - requested transition. @param actor - actor responsible. @param at - ISO instant. @returns updated product with a release when published. */
-export function transitionInSession(session: Session, product: DocumentProduct, action: ProductAction, actor: string, at: string): ProductTransitionResult {
+/** Apply and record a transition in the owning session.
+ * @param session - session log.
+ * @param product - current product.
+ * @param action - requested transition.
+ * @param actor - actor responsible.
+ * @param at - ISO instant.
+ * @returns updated product with a release when published.
+ */
+export function transitionInSession(
+  session: Session,
+  product: DocumentProduct,
+  action: ProductAction,
+  actor: string,
+  at: string,
+): ProductTransitionResult {
   const result = transitionProduct(product, action, actor, at)
   const { transition } = result
-  session.append('meteo/product-transition', { kind: 'meteo/product-transition', version: 1, productId: product.id, action, actor, from: transition.from, to: transition.to, at, ...(result.release ? { release: result.release } : {}) })
+  session.append('meteo/product-transition', {
+    kind: 'meteo/product-transition',
+    version: 1,
+    productId: product.id,
+    action,
+    actor,
+    from: transition.from,
+    to: transition.to,
+    at,
+    ...(result.release ? { release: result.release } : {}),
+  })
   return result
+}
+/** Apply and record an edit with the accepted body in the session event.
+ * @param session - session log.
+ * @param product - current product.
+ * @param body - replacement document body.
+ * @param actor - actor responsible.
+ * @param at - ISO instant.
+ * @returns updated product.
+ */
+export function editProductInSession(
+  session: Session,
+  product: DocumentProduct,
+  body: string,
+  actor: string,
+  at: string,
+): ProductTransitionResult {
+  const result = transitionProduct(product, 'edit', actor, at)
+  const updated = { ...result.product, body }
+  const { transition } = result
+  session.append('meteo/product-transition', {
+    kind: 'meteo/product-transition',
+    version: 1,
+    productId: product.id,
+    action: 'edit',
+    actor,
+    from: transition.from,
+    to: transition.to,
+    at,
+    body,
+  })
+  return { product: updated, transition }
 }

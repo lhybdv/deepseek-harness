@@ -1,7 +1,7 @@
 /**
- * Shared harness for the consultation tool tests: a stubbed data seam and corpus
- * seam that record every request, the repository's Henan fixtures, and a mounted
- * context whose agent, session log, and projection registry are all live.
+ * Shared harness for the consultation tool tests: stubbed data and corpus seams
+ * that record every request, a Northeast station and weather-series fixture, and
+ * a mounted context whose agent, session log, and projection registry are live.
  */
 
 import { Context } from '@deepseek-ai/cordis'
@@ -47,56 +47,57 @@ import type {
 } from '@deepseek-ai/dsh-tool-meteo'
 
 export const STATIONS: Station[] = [
-  { id: 'ha-xx-01', name: '新乡县城关自动站', county: '新乡县', township: '城关镇', lon: 113.82, lat: 35.18, altitudeM: 73.4 },
-  { id: 'ha-xx-02', name: '新乡县翟坡自动站', county: '新乡县', township: '翟坡镇', lon: 113.75, lat: 35.22, altitudeM: 75.1 },
-  { id: 'ha-yc-03', name: '原阳县齐街自动站', county: '原阳县', township: '齐街镇', lon: 114.02, lat: 35.05, altitudeM: 71.2 },
+  { id: 'hl-wc-01', name: '五常市五常镇自动站', county: '五常市', township: '五常镇', lon: 127.16, lat: 44.93, altitudeM: 150 },
+  { id: 'hl-wc-02', name: '五常市拉林满族镇自动站', county: '五常市', township: '拉林满族镇', lon: 127.27, lat: 45.27, altitudeM: 165 },
+  { id: 'jl-ys-03', name: '榆树市弓棚镇自动站', county: '榆树市', township: '弓棚镇', lon: 126.8, lat: 44.93, altitudeM: 195 },
 ]
 
-/** Hourly readings on a day inside the sowing window: wind holds gale force for six hours. */
+/** Hourly Northeast autumn readings: wind holds gale force for six hours. */
 export const OBSERVATIONS: Observation[] = [
-  { stationId: 'ha-xx-01', time: '2026-10-08T04:00:00Z', elements: { temperature: 21.4, windSpeed: 14.8, soilMoisture: 52.5 } },
-  { stationId: 'ha-xx-01', time: '2026-10-08T05:00:00Z', elements: { temperature: 21.9, windSpeed: 17.6, soilMoisture: 52.1 } },
-  { stationId: 'ha-xx-01', time: '2026-10-08T06:00:00Z', elements: { temperature: 22.3, windSpeed: 16.9, soilMoisture: 51.8 } },
-  { stationId: 'ha-xx-01', time: '2026-10-08T07:00:00Z', elements: { temperature: 23.1, windSpeed: 15.4, soilMoisture: 51.4 } },
-  { stationId: 'ha-xx-01', time: '2026-10-08T08:00:00Z', elements: { temperature: 24.2, windSpeed: 14.1, soilMoisture: 50.9 } },
-  { stationId: 'ha-xx-01', time: '2026-10-08T09:00:00Z', elements: { temperature: 25.6, windSpeed: 14.6, soilMoisture: 50.3 } },
-  { stationId: 'ha-xx-01', time: '2026-10-08T10:00:00Z', elements: { temperature: 26.8, windSpeed: 14.2, soilMoisture: 49.8 } },
-  { stationId: 'ha-xx-01', time: '2026-10-08T11:00:00Z', elements: { temperature: 27.1, windSpeed: 13.2, soilMoisture: 49.4 } },
+  { stationId: 'hl-wc-01', time: '2026-10-08T04:00:00Z', elements: { temperature: 2.4, windSpeed: 14.8, soilMoisture: 32.5 } },
+  { stationId: 'hl-wc-01', time: '2026-10-08T05:00:00Z', elements: { temperature: 1.9, windSpeed: 17.6, soilMoisture: 32.1 } },
+  { stationId: 'hl-wc-01', time: '2026-10-08T06:00:00Z', elements: { temperature: 2.3, windSpeed: 16.9, soilMoisture: 31.8 } },
+  { stationId: 'hl-wc-01', time: '2026-10-08T07:00:00Z', elements: { temperature: 3.1, windSpeed: 15.4, soilMoisture: 31.4 } },
+  { stationId: 'hl-wc-01', time: '2026-10-08T08:00:00Z', elements: { temperature: 4.2, windSpeed: 14.1, soilMoisture: 30.9 } },
+  { stationId: 'hl-wc-01', time: '2026-10-08T09:00:00Z', elements: { temperature: 5.6, windSpeed: 14.6, soilMoisture: 30.3 } },
+  { stationId: 'hl-wc-01', time: '2026-10-08T10:00:00Z', elements: { temperature: 6.8, windSpeed: 14.2, soilMoisture: 29.8 } },
+  { stationId: 'hl-wc-01', time: '2026-10-08T11:00:00Z', elements: { temperature: 7.1, windSpeed: 13.2, soilMoisture: 29.4 } },
 ]
 
-/** Three-hourly points, the last one a day out, with no soil moisture at all. */
+/** Three-hourly Northeast autumn points, the last one a day out, with no soil moisture. */
 export const FORECAST: ForecastPoint[] = [
-  { time: '2026-10-08T12:00:00Z', elements: { temperature: 27.4, windSpeed: 9.8, precipitation: 0 } },
-  { time: '2026-10-08T15:00:00Z', elements: { temperature: 24.1, windSpeed: 12.4, precipitation: 6.2 } },
-  { time: '2026-10-08T18:00:00Z', elements: { temperature: 21.8, windSpeed: 18.7, precipitation: 31.5 } },
-  { time: '2026-10-09T18:00:00Z', elements: { temperature: 19.4, windSpeed: 21.3, precipitation: 52.8 } },
+  { time: '2026-10-08T12:00:00Z', elements: { temperature: 8.4, windSpeed: 9.8, precipitation: 0 } },
+  { time: '2026-10-08T15:00:00Z', elements: { temperature: 6.1, windSpeed: 12.4, precipitation: 6.2 } },
+  { time: '2026-10-08T18:00:00Z', elements: { temperature: 3.8, windSpeed: 18.7, precipitation: 31.5 } },
+  { time: '2026-10-09T18:00:00Z', elements: { temperature: 1.4, windSpeed: 21.3, precipitation: 52.8 } },
 ]
 
-/** Two of these govern the sowing window; the third belongs to another disaster. */
+/** Two thresholds govern the early-frost window; the others cover rain and spring drought. */
 export const THRESHOLDS: Threshold[] = [
   { disaster: '大风', element: 'windSpeed', op: '>=', value: 13.9, durationH: 6, level: 'medium' },
   { disaster: '大风', element: 'windSpeed', op: '>=', value: 24.5, durationH: 6, level: 'high' },
   { disaster: '暴雨', element: 'precipitation', op: '>=', value: 50, durationH: 24, level: 'high' },
-  { disaster: '干旱', element: 'soilMoisture', op: '<=', value: 30, durationH: 168, level: 'medium' },
+  { disaster: '春旱', element: 'soilMoisture', op: '<=', value: 30, durationH: 168, level: 'medium' },
+  { disaster: '初霜', element: 'temperature', op: '<=', value: 2, durationH: 6, level: 'medium' },
 ]
 
 export const WINDOWS: CropWindow[] = [
   {
-    crop: '冬小麦',
-    activity: '播种',
+    crop: '玉米',
+    activity: '成熟收获',
     windowStart: '10-05',
     windowEnd: '10-20',
     criteria: [
       { disaster: '大风', element: 'windSpeed', op: '>=', value: 13.9, durationH: 6, level: 'medium' },
-      { disaster: '干旱', element: 'soilMoisture', op: '<=', value: 40, durationH: 72, level: 'medium' },
+      { disaster: '初霜', element: 'temperature', op: '<=', value: 2, durationH: 6, level: 'medium' },
     ],
   },
   {
-    crop: '冬小麦',
-    activity: '施肥',
-    windowStart: '10-25',
-    windowEnd: '11-10',
-    criteria: [{ disaster: '大风', element: 'windSpeed', op: '>=', value: 13.9, durationH: 6, level: 'medium' }],
+    crop: '水稻',
+    activity: '收获',
+    windowStart: '10-05',
+    windowEnd: '10-20',
+    criteria: [{ disaster: '暴雨', element: 'precipitation', op: '>=', value: 50, durationH: 24, level: 'high' }],
   },
 ]
 
@@ -105,13 +106,13 @@ const DOC_ID = brandString<CorpusDocumentId>('guide-1')
 export const CHUNK: CorpusChunk = {
   docId: DOC_ID,
   ordinal: 2,
-  headingPath: '播种期大风防御',
+  headingPath: '玉米成熟收获期初霜防御',
   charStart: 480,
   charEnd: 640,
-  text: '播种期内出现 6 级以上持续大风时，应暂缓播种并做好耙压保墒。',
+  text: '玉米成熟收获期出现初霜时，应及时组织抢收并做好粮食晾晒和防潮。',
 }
 
-export const HIT: CorpusHit = { ...CHUNK, docTitle: '河南冬小麦栽培技术指南', score: 2.4 }
+export const HIT: CorpusHit = { ...CHUNK, docTitle: '东北玉米初霜防御技术指南', score: 2.4 }
 
 /** Data seam double that records every request the consultation issues. */
 export class StubMeteoData extends MeteoData {
@@ -123,12 +124,12 @@ export class StubMeteoData extends MeteoData {
   readonly stationQueries: { county?: string; text?: string }[] = []
   readonly stationLookups: string[] = []
   readonly expansions: string[] = []
-  stationRows: Station[] = STATIONS
+  stationRows: Station[] = STATIONS.map(station => ({ ...station }))
   observationRows: Observation[] = OBSERVATIONS
   forecastPoints: ForecastPoint[] = FORECAST
   thresholdRows: Threshold[] = THRESHOLDS
   windows: CropWindow[] = WINDOWS
-  synonyms: Record<string, string[]> = { 大风: ['狂风'], 干旱: ['旱灾'] }
+  synonyms: Record<string, string[]> = { 大风: ['狂风'], 春旱: ['墒情不足', '春季缺墒'] }
   datasetVersions: Record<MeteoDatasetKind, string> = {
     stations: 'st-1',
     observations: 'obs-9',

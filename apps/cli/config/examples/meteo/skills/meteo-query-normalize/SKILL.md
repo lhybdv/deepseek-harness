@@ -33,18 +33,10 @@ stated; never invent a value to fill the schema.
    synonym table rather than in this skill. A place name stays as written.
 4. **Resolve a relative period against the session's current time**, and keep the
    literal wording in the structured output so a reader can see what was asked.
-5. **Carry confirmed slots forward across turns.** When a follow-up omits a slot
-   the session already holds — "那后天呢？" after a question that named a station
-   and a crop — inherit the held value instead of treating the follow-up as a new
-   question. Say which values were inherited so the user can correct them.
-6. **Ask when a required slot is missing and no session value covers it.** Ask one
-   question at a time, offer the candidates the data actually contains, and never
-   pick a station on the user's behalf. A wrong station silently produces a
-   confident, useless answer.
-7. **State the confidence of the parse.** A question whose station or activity was
-   guessed from context is weaker evidence than one that named them, and the
-   answer's wording should show that difference.
-
+5. **Carry confirmed slots forward across turns.** When a follow-up omits a slot the session already holds — "那后天呢？" after a question that named a station and a crop — inherit the held value instead of treating the follow-up as a new question. Say which values were inherited so the user can correct them.
+6. **Ask only for a genuinely missing slot.** When a required crop, activity, or period is absent and no session value covers it, ask one question at a time. Resolve covered cities/counties through `meteo_station_lookup` and handle uncovered places with the coverage response below; do not ask the user for a station id.
+7. **Handle uncovered places without interrogating the user.** Do not ask for a station id or which station they mean. In one short sentence, state the covered counties and city stations, name the nearest covered point when the question implies a nearby area and the data supports that choice, then offer to continue using it. Never invent a station, reading, or administrative mapping; if the nearest point cannot be established from published data, say so rather than guessing.
+8. **State the confidence of the parse.** A question whose station or activity was guessed from context is weaker evidence than one that named them, and the answer's wording should show that difference.
 ## Do not
 
 - Do not decide suitability or risk here. This step only produces slots; the

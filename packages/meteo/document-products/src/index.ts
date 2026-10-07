@@ -5,6 +5,20 @@ export { legalProductActions, transitionProduct, verifyPolish, verifyProduct } f
 export type { DocumentProduct, ProductAction, ProductCitation, ProductDataValue, ProductId, ProductKind, ProductState, ProductTransition, ProductTransitionResult, ReleaseArtifact } from './product.ts'
 export { transitionInSession } from './events.ts'
 export type { ProductSessionEvent } from './events.ts'
-export { assertConfig, Config, DEFAULT_CITATION_LIMIT, DEFAULT_FORECAST_HOURS } from './config.ts'
-export type { Config as ProductConfig } from './config.ts'
+export { assertConfig, Config, DEFAULT_ARTIFACT_DIR, DEFAULT_CITATION_LIMIT, DEFAULT_DOCUMENT_CHARS, DEFAULT_FORECAST_HOURS, DEFAULT_SNIPPET_CHARS, DEFAULT_TOOL_TIMEOUT_MS, resolve } from './config.ts'
+export type { Config as ProductConfig, ResolvedConfig } from './config.ts'
 export { apply, DocumentProductService, inject, name } from './plugin.ts'
+export { applyDocumentProductTool, documentMetaFromValue, documentResultMetaFromResult, formatDocumentResult, presentDocumentCall, presentDocumentResult } from './tool.ts'
+export type {
+  DocumentCitationMeta,
+  DocumentCitationView,
+  DocumentPeriod,
+  DocumentProductMeta,
+  DocumentProductView,
+  DocumentReleaseView,
+  DocumentResultMeta,
+  DocumentResultValue,
+  DocumentToolAction,
+  DocumentTransitionMeta,
+  DocumentTransitionView,
+} from './tool.ts'

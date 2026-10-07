@@ -11,11 +11,11 @@ import { mountTools, viewMeta } from './harness.ts'
 const CITATION = {
   docId: 'guide-1',
   ordinal: 2,
-  docTitle: '河南冬小麦栽培技术指南',
-  headingPath: '播种期大风防御',
+  docTitle: '东北玉米初霜防御技术指南',
+  headingPath: '玉米成熟收获期初霜防御',
   charStart: 480,
   charEnd: 640,
-  snippet: '播种期大风',
+  snippet: '玉米成熟收获期初霜',
 }
 
 const STEP = { step: 'corpus', status: 'done', detail: '1 chunks for 1 terms (window 6)', count: 1 }
@@ -67,7 +67,7 @@ describe('station list view', () => {
 
   it('shows nothing when a replayed result carries no station metadata', async () => {
     const { call } = await mountTools()
-    const args = { text: '新乡县' }
+    const args = { text: '五常市' }
     const out = await call('meteo_station_lookup', args)
     expect(presentLookupResult(args, { ...out, meta: null })).toBeUndefined()
   })
@@ -77,16 +77,16 @@ describe('slot echo', () => {
   it('echoes the period and disaster the question named alongside crop and activity', async () => {
     const { call } = await mountTools()
     const meta = viewMeta(await call('meteo_consult', {
-      question: '未来24小时大风能播地吗',
-      station: 'ha-xx-01',
-      crop: '冬小麦',
-      activity: '播种',
+      question: '未来24小时初霜会影响玉米收获吗',
+      station: 'hl-wc-01',
+      crop: '玉米',
+      activity: '成熟收获',
       period: '未来24小时',
-      disaster: '大风',
+      disaster: '初霜',
     }))
     expect(meta.slots.period).toBe('未来24小时')
-    expect(meta.slots.disaster).toBe('大风')
+    expect(meta.slots.disaster).toBe('初霜')
     expect(meta.steps[0]?.detail).toContain('period 未来24小时')
-    expect(meta.steps[0]?.detail).toContain('disaster 大风')
+    expect(meta.steps[0]?.detail).toContain('disaster 初霜')
   })
 })

@@ -9,7 +9,7 @@ English | [中文](README.zh.md)
 
 ## Summary
 
-`dsh-meteo-corpus` ingests uploaded documents into heading-scoped chunks and retrieves the chunks that best answer a question, each carrying the document id, ordinal, and character offsets a citation needs. Give it its own SQLite file and mount it as `ctx.corpus`. Retrieval combines dense semantic recall from the configured `ctx.textEmbeddings` provider with the Chinese bigram FTS5 index; lexical BM25 alone is not treated as semantic search.
+`dsh-meteo-corpus` ingests uploaded documents into heading-scoped chunks and retrieves the chunks that best answer a question, each carrying the document id, ordinal, and character offsets a citation needs. Give it its own SQLite file and mount it as `ctx.corpus`. Retrieval combines dense semantic recall with the Chinese bigram FTS5 index whenever an embedding provider is mounted; with none mounted the corpus still ingests and answers, retrieving lexically and reporting the missing service once.
 
 ## Table of Contents
 
@@ -57,7 +57,11 @@ Choose it when a deployment holds professional text that answers questions about
 Give the corpus its own database file. A sibling derived index refuses a file whose `application_id` belongs to someone else and drops every table when `user_version` moves; this store applies the same rules in reverse. Its schema stores each chunk vector beside the text and FTS rows. Updating the schema version rebuilds this derived database, so re-ingest sources after a version or embedding-model change.
 ### Embedding provider
 
-Mount `@deepseek-ai/dsh-text-embeddings` and one provider before this package. The provider's configured model must be identical for indexing and querying; changing models requires re-ingest. Choose the local ONNX provider when model files are deployed with the host, or the OpenAI-compatible provider when an embeddings endpoint is available.
+Semantic retrieval is an optional peer, not a load-time dependency: the corpus resolves `ctx.get('textEmbeddings')` at the point of use, so mounting order is irrelevant and it boots, ingests, and answers with no provider at all.
+
+Mount `@deepseek-ai/dsh-text-embeddings` and one provider to add it. Then `ingest` stores one vector per chunk and `search` fuses vector recall with BM25. With nothing mounted, `ingest` stores no vectors, `search` retrieves lexically over the Chinese bigram index, and the store warns once naming `textEmbeddings` — it never fabricates a vector and never embeds locally.
+
+The provider's configured model must be identical for indexing and querying; changing models requires re-ingest. Choose the local ONNX provider when model files are deployed with the host, or the OpenAI-compatible provider when an embeddings endpoint is available.
 
 ### Supplying expansion terms
 
@@ -75,9 +79,9 @@ Mount `@deepseek-ai/dsh-text-embeddings` and one provider before this package. T
 
 The chunker walks source spans that tile the document exactly — one sentence, terminator included, or one bare newline — and packs contiguous runs of them into a chunk. Because the spans tile, a chunk's `charStart`/`charEnd` address the original text including the newlines between lines, which is what makes a citation rendered from the chunk match the source.
 
-`ingest` writes each document's chunk rows and FTS rows first and its `docs` row last. That row is the visibility gate: retrieval joins through it, so an ingest interrupted part-way leaves only chunk rows no query returns, rather than a document reporting a count it does not have. Failures are per source — one rejected document never aborts its siblings.
+`ingest` writes each document's chunk rows and FTS rows first and its `docs` row last, plus one vector row per chunk when an embedding provider is mounted. That row is the visibility gate: retrieval joins through it, so an ingest interrupted part-way leaves only chunk rows no query returns, rather than a document reporting a count it does not have. Failures are per source — one rejected document never aborts its siblings.
 
-`search` gathers up to `candidateLimit` BM25 candidates and up to `candidateLimit` vector-cosine candidates, then combines their ranks using reciprocal-rank fusion: each list contributes `1 / (60 + rank)` (one-based rank). The fused score is the sum; candidate identity is unique by document and chunk. Fusion preserves exact-vocabulary signals while allowing semantic-only results. `matchExpression` reports the FTS query even when only semantic recall found a hit.
+`search` gathers up to `candidateLimit` BM25 candidates and up to `candidateLimit` vector-cosine candidates, then combines their ranks using reciprocal-rank fusion: each list contributes `1 / (60 + rank)` (one-based rank). The fused score is the sum; candidate identity is unique by document and chunk. Fusion preserves exact-vocabulary signals while allowing semantic-only results. Without an embedding provider the vector half is skipped entirely — no query vector is computed and the vector table is never read — so the same ranking degenerates to the BM25 order. `matchExpression` reports the FTS query even when only semantic recall found a hit.
 
 The database handle opens lazily on first use and closes through a fiber effect, so a composition that mounts this plugin without ingesting or searching pays nothing, and reloading a composition does not leak the file lock. `node:sqlite` is imported dynamically inside that open for the same reason.
 
@@ -109,7 +113,7 @@ No direct invalidation. Retrieved chunks are appended to a request as tool-resul
 
 ## Known Limitations and Deferred Work
 
-- Retrieval is lexical. There is no embedding index and no vector store; ranking beyond BM25 is the caller's job, and the meteorology tools rerank candidates with the model.
+- Semantic retrieval is opt-in. The package bundles no provider and requires none: with no embedding provider mounted, `ingest` stores no vectors and retrieval is lexical (BM25 over the Chinese bigram index). A deployment that wants fused semantic recall mounts `@deepseek-ai/dsh-text-embeddings` plus a provider; see [Embedding provider](#embedding-provider).
 - Chunking is heading- and sentence-aware only. A document with no structure falls back to one sentence-packed stream.
 - Ingest parsing covers plain text and Markdown. Office and PDF extraction is deferred; a caller must supply text.
 - `DatabaseSync` is synchronous, so ingest blocks the event loop for the duration of one document. Very large corpora should be ingested outside a live conversation.

@@ -11,10 +11,10 @@ import type { RuleSample } from '@deepseek-ai/dsh-tool-meteo'
 
 const gale: Threshold = { disaster: '大风', element: 'windSpeed', op: '>=', value: 13.9, durationH: 6, level: 'medium' }
 const galeForce: Threshold = { disaster: '大风', element: 'windSpeed', op: '>=', value: 24.5, durationH: 6, level: 'high' }
-const drought: Threshold = { disaster: '干旱', element: 'soilMoisture', op: '<=', value: 30, durationH: 24, level: 'medium' }
-const lightFrost: Threshold = { disaster: '晚霜冻', element: 'temperature', op: '<=', value: 0, durationH: 0, level: 'low' }
+const drought: Threshold = { disaster: '春旱', element: 'soilMoisture', op: '<=', value: 30, durationH: 24, level: 'medium' }
+const lightFrost: Threshold = { disaster: '初霜', element: 'temperature', op: '<=', value: 0, durationH: 0, level: 'low' }
 
-const sowing: CropWindow = { crop: '冬小麦', activity: '播种', windowStart: '10-05', windowEnd: '10-20', criteria: [gale] }
+const sowing: CropWindow = { crop: '玉米', activity: '成熟收获', windowStart: '10-05', windowEnd: '10-20', criteria: [gale] }
 
 /** Reading series of hourly wind speeds, one value per hour from 04:00. */
 function wind(winds: number[], day = '2026-10-08'): RuleSample[] {
@@ -28,8 +28,8 @@ describe('evaluateSuitability', () => {
   it('judges each day the readings cover against each window that covers it', () => {
     const samples = [...wind([14.8, 15.2]), ...wind([14.8, 15.2], '2026-10-09')]
     expect(evaluateSuitability({ windows: [sowing], criteria: [gale], samples })).toEqual([
-      { day: '2026-10-08', crop: '冬小麦', activity: '播种', verdict: 'suitable', criteria: [] },
-      { day: '2026-10-09', crop: '冬小麦', activity: '播种', verdict: 'suitable', criteria: [] },
+      { day: '2026-10-08', crop: '玉米', activity: '成熟收获', verdict: 'suitable', criteria: [] },
+      { day: '2026-10-09', crop: '玉米', activity: '成熟收获', verdict: 'suitable', criteria: [] },
     ])
   })
 
@@ -53,8 +53,8 @@ describe('evaluateSuitability', () => {
     const [day] = evaluateSuitability({ windows: [sowing], criteria: [gale], samples })
     expect(day).toEqual({
       day: '2026-10-08',
-      crop: '冬小麦',
-      activity: '播种',
+      crop: '玉米',
+      activity: '成熟收获',
       verdict: 'unsuitable',
       criteria: [{ ...gale, hoursHeld: 6, firstTime: '2026-10-08T04:00:00Z' }],
     })

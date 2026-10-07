@@ -2,13 +2,9 @@
  * The model-facing `meteo_station_lookup` tool: the published observing network,
  * so a consultation can name a station instead of guessing at one.
  *
- * A consultation refuses to guess a place, which is right but leaves the model
- * with a question it cannot answer from its own knowledge: which stations does this
- * deployment actually have, and what are they called locally? This tool answers
- * that, narrowed by county or by the place word the farmer used, and returns the
- * identifiers the consultation's station slot accepts. It reads and filters only —
- * it never resolves a station on the model's behalf, because choosing between two
- * stations is a question for the farmer.
+ * It resolves a bare county-level place to that county's first published seat
+ * station, and returns deployment coverage and published seat points when no
+ * station matches. It never invents a station or administrative mapping.
  *
  * @module @deepseek-ai/dsh-tool-meteo/station
  */
@@ -49,15 +45,24 @@ interface LookupArgs {
 const LOOKUP_FIELDS: MetaFields = { id: 'string', name: 'string', county: 'string', township: 'string' }
 
 /**
- * Format a station lookup as the model-facing text block: one line per station,
- * identifier first because that is what the next call has to carry.
+ * Format a station lookup as the model-facing text block.
  * @param stations - the matching stations, in the order the seam published them.
- * @param scope - what the lookup was narrowed to, echoed so an empty result is not
- *   mistaken for an empty network.
- * @returns the rendered list, or the absence the lookup found.
+ * @param scope - what the lookup was narrowed to.
+ * @param coveredCounties - county-level places this deployment publishes.
+ * @param seatStations - first published station in each county, for uncovered-place fallback.
+ * @returns the rendered matches, or a coverage summary when none matched.
  */
-export function formatStationLookup(stations: readonly StationRecord[], scope: string): string {
-  if (stations.length === 0) return `No published station matches ${scope}.`
+export function formatStationLookup(
+  stations: readonly StationRecord[],
+  scope: string,
+  coveredCounties: readonly string[],
+  seatStations: readonly StationRecord[],
+): string {
+  if (stations.length === 0) {
+    const seats = seatStations.map(station => `${station.name} (${station.id}, ${station.lon}, ${station.lat})`).join('; ')
+    return `No published station matches ${scope}. Coverage: ${coveredCounties.join('、')}. `
+      + `Published county seat points (longitude, latitude): ${seats}. Do not claim a nearest point unless supported by geographic information.`
+  }
   const lines = stations.map(station => `- ${station.id} ${station.name} — ${station.county} ${station.township}`
     + `, lon ${station.lon} lat ${station.lat} alt ${station.altitudeM} m`)
   return `${String(stations.length)} stations (${scope}):\n${lines.join('\n')}`
@@ -114,10 +119,10 @@ export function presentLookupResult(_args: LookupArgs, result: ToolResult): Gene
 export function applyMeteoStationLookupTool(ctx: Context, limits: MeteoLimits): void {
   ctx.tools.register(defineTool({
     name: 'meteo_station_lookup',
-    description: 'List the meteorological stations this deployment publishes, narrowed to one county or to a place word. Returns each station\'s identifier, name, county, township, and siting. Call it when a place could mean more than one station, then ask the farmer which one; pass the identifier you settle on as the station slot of meteo_consult.',
+    description: 'List or resolve published stations for this deployment. It covers 五常市, 榆树市, 昌图县, 哈尔滨市, 长春市 and 沈阳市. A bare covered county/city name resolves to its first published seat station; use the returned station directly rather than asking the farmer to choose. For an uncovered place, the result includes the coverage summary and published county-seat points; state coverage in one short sentence and offer the nearest point only when its proximity is supported by the question and published data. Never invent a station, reading, or administrative mapping.',
     parameters: {
-      county: { type: 'string', description: 'County-level division to list, e.g. 新乡县. Omit to list the whole network.' },
-      text: { type: 'string', description: 'Place word to match against station names and townships, e.g. 小冀.' },
+      county: { type: 'string', description: 'Covered county-level division to list, e.g. 五常市, 榆树市, 昌图县, 哈尔滨市, 长春市, or 沈阳市. Omit to list the whole network.' },
+      text: { type: 'string', description: 'Station, township, city, or county name to resolve, e.g. 五常镇, 哈尔滨市, or 五常市. Bare covered county names return that county’s first published seat station.' },
     },
     output: {
       schema: {
@@ -141,9 +146,34 @@ export function applyMeteoStationLookupTool(ctx: Context, limits: MeteoLimits): 
               },
             },
           },
+          coverage: {
+            type: 'object',
+            required: true,
+            additionalProperties: false,
+            properties: {
+              coveredCounties: { type: 'array', required: true, items: { type: 'string' } },
+              seatStations: {
+                type: 'array',
+                required: true,
+                items: {
+                  type: 'object',
+                  additionalProperties: false,
+                  properties: {
+                    id: { type: 'string', required: true },
+                    name: { type: 'string', required: true },
+                    county: { type: 'string', required: true },
+                    township: { type: 'string', required: true },
+                    lon: { type: 'number', required: true },
+                    lat: { type: 'number', required: true },
+                    altitudeM: { type: 'number', required: true },
+                  },
+                },
+              },
+            },
+          },
         },
       },
-      render: (args, value) => [{ type: 'text', text: formatStationLookup(value.stations, lookupScope(args)) }],
+      render: (args, value) => [{ type: 'text', text: formatStationLookup(value.stations, lookupScope(args), value.coverage.coveredCounties, value.coverage.seatStations) }],
       presentationMeta: (_args, value) => ({ stations: value.stations }),
     },
     timeoutMs: limits.timeoutMs,
@@ -152,20 +182,40 @@ export function applyMeteoStationLookupTool(ctx: Context, limits: MeteoLimits): 
     async execute(args) {
       const county = nonEmpty(args.county)
       const text = nonEmpty(args.text)
-      const stations = await ctx.meteoData.stations({
-        ...(county === undefined ? {} : { county }),
-        ...(text === undefined ? {} : { text }),
+      const all = await ctx.meteoData.stations()
+      const aliases = text === undefined ? [] : [text, ...await ctx.meteoData.expandTerm(text)]
+      const matchingCounty = aliases.find(alias => all.some(station => station.county === alias
+        && (county === undefined || station.county === county)))
+      let matchingStation: typeof all[number] | undefined
+      if (matchingCounty !== undefined) {
+        matchingStation = all.find(station => station.county === matchingCounty)
+      }
+      const stations = matchingStation !== undefined
+        ? [matchingStation]
+        : county === undefined && text === undefined
+          ? all
+          : await ctx.meteoData.stations({
+            ...(county === undefined ? {} : { county }),
+            ...(text === undefined ? {} : { text }),
+          })
+      const coveredCounties = [...new Set(all.map(station => station.county))]
+      const seatStations = coveredCounties.map((covered) => {
+        const station = all.find(candidate => candidate.county === covered)
+        if (station === undefined) throw new Error(`No station found for covered county: ${covered}`)
+        return station
       })
+      const stationRecords = (records: typeof all) => records.map(station => ({
+        id: station.id,
+        name: station.name,
+        county: station.county,
+        township: station.township,
+        lon: station.lon,
+        lat: station.lat,
+        altitudeM: station.altitudeM,
+      }))
       return {
-        stations: stations.map(station => ({
-          id: station.id,
-          name: station.name,
-          county: station.county,
-          township: station.township,
-          lon: station.lon,
-          lat: station.lat,
-          altitudeM: station.altitudeM,
-        })),
+        stations: stationRecords(stations),
+        coverage: { coveredCounties, seatStations: stationRecords(seatStations) },
       }
     },
     presentCall: presentLookupCall,

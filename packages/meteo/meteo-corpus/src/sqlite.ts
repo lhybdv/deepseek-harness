@@ -7,6 +7,12 @@
  * opened lazily on first use so a composition that mounts this plugin but never
  * ingests or searches pays nothing.
  *
+ * Vector recall is an optional peer. The store reads `ctx.textEmbeddings` at the
+ * point of use, so a provider mounted later in the same composition still takes
+ * effect: with the registry present it stores one vector per chunk and fuses
+ * vector recall into every query, and without it the store writes no vectors,
+ * answers lexically, and reports the missing service once.
+ *
  * @module @deepseek-ai/dsh-meteo-corpus/sqlite
  */
 
@@ -103,7 +109,10 @@ function toHit(row: HitRow): CorpusHit {
     score: row.score,
   }
 }
-/** Parse a durable vector value and reject corrupt or non-finite contents. @param value - serialized SQLite vector. @returns a finite non-empty numeric vector. */
+/** Parse a durable vector value and reject corrupt or non-finite contents.
+ * @param value - serialized SQLite vector.
+ * @returns a finite non-empty numeric vector.
+ */
 function parseVector(value: string): number[] {
   let parsed: unknown
   try { parsed = JSON.parse(value) }
@@ -154,16 +163,44 @@ export class SqliteCorpusStore extends CorpusStore {
       if (!Number.isInteger(value) || value < 1) throw new Error(`meteo-corpus: ${name} must be a positive integer`)
     }
     if (config.defaultLimit > config.maxLimit) throw new Error('meteo-corpus: defaultLimit must not exceed maxLimit')
-    this.embeddings = ctx.textEmbeddings
     ctx.effect(() => async () => this.close(), 'meteo-corpus: close index')
   }
-  private readonly embeddings: TextEmbeddings
-  private async embed(kind: 'documents' | 'queries', texts: readonly string[]): Promise<readonly (readonly number[])[]> {
+
+  /** Latched by the first lexical fallback so one store reports the missing peer once. */
+  private reportedMissingEmbeddings = false
+
+  /**
+   * Resolve the optional embedding capability for one operation.
+   *
+   * The lookup happens at the point of use rather than at construction, so a
+   * provider mounted after this store still joins the fused path and mounting
+   * order stays irrelevant. A composition with no registry is not an error: the
+   * store keeps working lexically, and the first such fallback names the missing
+   * service so an operator learns why recall has no semantic half.
+   * @returns the embedding registry, or `undefined` when none is mounted.
+   */
+  private embeddings(): TextEmbeddings | undefined {
+    const embeddings = this.ctx.get('textEmbeddings') as TextEmbeddings | undefined
+    if (embeddings !== undefined) return embeddings
+    if (!this.reportedMissingEmbeddings) {
+      this.reportedMissingEmbeddings = true
+      this.ctx.logger.warn(
+        'meteo-corpus: no textEmbeddings provider is mounted; ingest stores no vectors and search retrieves lexically only',
+      )
+    }
+    return undefined
+  }
+
+  private async embed(
+    embeddings: TextEmbeddings,
+    kind: 'documents' | 'queries',
+    texts: readonly string[],
+  ): Promise<readonly (readonly number[])[]> {
     const vectors: (readonly number[])[] = []
     for (let start = 0; start < texts.length; start += this.config.embeddingBatchSize) {
       const batch = texts.slice(start, start + this.config.embeddingBatchSize)
-      const spec = this.embeddings.resolve({ texts: batch, kind })
-      vectors.push(...await this.embeddings.embed(spec))
+      const spec = embeddings.resolve({ texts: batch, kind })
+      vectors.push(...await embeddings.embed(spec))
     }
     return vectors
   }
@@ -218,7 +255,10 @@ export class SqliteCorpusStore extends CorpusStore {
         continue
       }
       const drafts = chunkText(text, this.config.maxChunkChars)
-      const vectors = await this.embed('documents', drafts.map(draft => `${draft.headingPath}\n${draft.text}`))
+      const embeddings = this.embeddings()
+      const vectors = embeddings === undefined
+        ? undefined
+        : await this.embed(embeddings, 'documents', drafts.map(draft => `${draft.headingPath}\n${draft.text}`))
       const docId = brandString<CorpusDocumentId>(randomUUID())
       const ingestedAt = Date.now()
       const insertChunk = db.prepare('INSERT INTO chunks VALUES (?, ?, ?, ?, ?, ?, ?)')
@@ -226,10 +266,13 @@ export class SqliteCorpusStore extends CorpusStore {
       const insertVector = db.prepare('INSERT INTO chunk_vectors VALUES (?, ?, ?, ?)')
       for (const [ordinal, draft] of drafts.entries()) {
         const tokens = indexTokens(`${draft.headingPath}\n${draft.text}`)
-        const vector = vectors[ordinal]
-        if (vector === undefined) throw new Error('Embedding provider omitted a document vector')
         insertChunk.run(docId, ordinal, draft.headingPath, draft.charStart, draft.charEnd, draft.text, tokens)
         insertFts.run(tokens, docId, ordinal)
+        // Without a provider the chunk row and its FTS row are the whole record:
+        // the vector table stays empty rather than holding a fabricated vector.
+        if (vectors === undefined) continue
+        const vector = vectors[ordinal]
+        if (vector === undefined) throw new Error('Embedding provider omitted a document vector')
         insertVector.run(docId, ordinal, vector.length, JSON.stringify(vector))
       }
       // The document row is written last and is the visibility gate: retrieval
@@ -266,17 +309,22 @@ export class SqliteCorpusStore extends CorpusStore {
           LIMIT ?`,
       )
       .all(matchExpression, this.config.candidateLimit) as unknown as HitRow[]
-    const queryVector = (await this.embed('queries', [request.query]))[0]
-    if (queryVector === undefined) throw new Error('Embedding provider omitted the query vector')
-    const vectors = db.prepare(
+    const embeddings = this.embeddings()
+    const queryVector = embeddings === undefined
+      ? undefined
+      : (await this.embed(embeddings, 'queries', [request.query]))[0]
+    if (embeddings !== undefined && queryVector === undefined) {
+      throw new Error('Embedding provider omitted the query vector')
+    }
+    const vectors = (embeddings === undefined ? [] : db.prepare(
       `SELECT c.doc_id, c.ordinal, c.heading_path, c.char_start, c.char_end, c.text,
               d.title, v.dimensions, v.vector
          FROM chunk_vectors v
          JOIN chunks c ON c.doc_id = v.doc_id AND c.ordinal = v.ordinal
          JOIN docs d ON d.doc_id = c.doc_id`,
-    ).all() as (Omit<HitRow, 'score'> & { dimensions: number; vector: string })[]
-    const semantic: RankedChunk[] = vectors
-      .map(row => {
+    ).all()) as (Omit<HitRow, 'score'> & { dimensions: number; vector: string })[]
+    const semantic: RankedChunk[] = queryVector === undefined ? [] : vectors
+      .map((row) => {
         const vector = parseVector(row.vector)
         if (vector.length !== row.dimensions) throw new Error('meteo-corpus: stored embedding dimensions do not match')
         return {

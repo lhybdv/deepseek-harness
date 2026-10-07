@@ -61,7 +61,7 @@ export function applyMeteoSetFocusTool(ctx: Context, limits: MeteoLimits): void 
     description: 'Record the place and crop this session is about, so later turns answer about them without being told again. Naming only one slot keeps whatever the session already held for the other; naming neither releases the focus. The station must be an identifier this deployment publishes — call meteo_station_lookup first, and ask the farmer which station they mean before recording one.',
     parameters: {
       stationId: { type: 'string', description: 'Station identifier to anchor the session to, as returned by meteo_station_lookup. Omit to keep the station the focus already holds.' },
-      crop: { type: 'string', description: 'Crop to anchor the session to, e.g. 冬小麦. Omit to keep the crop the focus already holds.' },
+      crop: { type: 'string', description: 'Crop to anchor the session to, e.g. 玉米, 大豆, or 水稻. Omit to keep the crop the focus already holds.' },
     },
     output: {
       schema: {

@@ -2,15 +2,19 @@
 import { describe, expect, it } from 'vitest'
 import { legalProductActions, transitionProduct, verifyPolish, verifyProduct } from '../src/product.ts'
 import type { DocumentProduct, ProductDataValue } from '../src/product.ts'
-import { assertConfig } from '../src/config.ts'
+import { assertConfig, resolve } from '../src/config.ts'
 const id = 'product-1' as DocumentProduct['id']
 const values: ProductDataValue[] = [{ value: 12.5, source: 'observation:rain', stationId: 'st-1', period: '2026-10-02' }]
 const draft: DocumentProduct = { id, kind: '灾害预警产品', title: '预警', sections: [{ heading: '监测', body: '降水12.5毫米' }], body: '降水12.5毫米', citations: [{ claim: '降水建议', documentId: 'doc-a', ordinal: 1, charStart: 4, charEnd: 12, text: '降水注意' }], provenance: values, state: 'draft', history: [], version: 0 }
 describe('deployment configuration', () => {
-  it('accepts positive integer limits and rejects invalid values', () => {
-    expect(() => assertConfig({ forecastHours: 72, citationLimit: 5 })).not.toThrow()
-    expect(() => assertConfig({ forecastHours: 0, citationLimit: 5 })).toThrow(/forecastHours/)
-    expect(() => assertConfig({ forecastHours: 72, citationLimit: 1.5 })).toThrow(/citationLimit/)
+  it('resolves defaults once and validates positive limits and a non-empty artifact directory', () => {
+    const defaults = resolve({})
+    expect(defaults).toMatchObject({ forecastHours: 72, citationLimit: 5, timeoutMs: 30_000, snippetChars: 200, documentChars: 8_000, artifactDir: 'outputs/meteo-document-products' })
+    const config = resolve({ ...defaults, artifactDir: 'outputs/test-artifacts' })
+    expect(() => assertConfig(config)).not.toThrow()
+    expect(() => assertConfig(resolve({ ...config, forecastHours: 0 }))).toThrow(/forecastHours/)
+    expect(() => assertConfig(resolve({ ...config, citationLimit: 1.5 }))).toThrow(/citationLimit/)
+    expect(() => assertConfig(resolve({ ...config, artifactDir: '  ' }))).toThrow(/artifactDir/)
   })
 })
 describe('data verification', () => {

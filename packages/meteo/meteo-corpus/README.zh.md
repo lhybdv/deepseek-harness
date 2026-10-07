@@ -9,7 +9,7 @@ kind: "package-reference"
 
 ## 概述
 
-`dsh-meteo-corpus` 把上传文档摄取为带标题路径的片段，并检索最能回答问题的内容；每段都带文档 ID、序号和引用所需的字符偏移。请提供独立 SQLite 文件并挂载为 `ctx.corpus`。检索结合配置的 `ctx.textEmbeddings` 提供方生成的稠密语义召回与中文双字 bigram FTS5 索引；BM25 词法排序本身不被视为语义搜索。
+`dsh-meteo-corpus` 把上传文档摄取为带标题路径的片段，并检索最能回答问题的内容；每段都带文档 ID、序号和引用所需的字符偏移。请提供独立 SQLite 文件并挂载为 `ctx.corpus`。挂载了 embedding 提供方时，检索把稠密语义召回与中文双字 bigram FTS5 索引结合；未挂载时语料同样可以摄取与作答，只是走词法检索，并就此报告一次。
 
 ## 目录
 
@@ -57,7 +57,11 @@ kind: "package-reference"
 请给语料一个独立的数据库文件。同类的派生索引会拒绝 `application_id` 属于他人的文件，并在 `user_version` 变化时清空所有表；本 store 反向施加同样规则。其 schema 将每个 chunk 的向量与正文、FTS 行一起保存。schema 版本变化会重建派生数据库，因此需在版本或 embedding 模型变化后重新摄取来源文档。
 ### Embedding 提供方
 
-在本包之前挂载 `@deepseek-ai/dsh-text-embeddings` 与一个提供方。建索引和查询必须使用同一模型；模型变化后需重新摄取。模型文件随 Host 部署时选本地 ONNX 提供方；已有 embeddings API 时选 OpenAI 兼容提供方。
+语义检索是可选的同类依赖，而非加载期依赖：语料在使用点解析 `ctx.get('textEmbeddings')`，因此挂载顺序无关紧要，且完全不在场时同样能启动、摄取与作答。
+
+挂载 `@deepseek-ai/dsh-text-embeddings` 与一个提供方即可启用：此时 `ingest` 为每个片段存一条向量，`search` 把向量召回与 BM25 融合。什么都不挂载时，`ingest` 不写任何向量，`search` 只在中文双字 bigram 索引上做词法检索，且 store 会就 `textEmbeddings` 报告一次——它绝不伪造向量，也绝不在本地做 embedding。
+
+建索引和查询必须使用同一模型；模型变化后需重新摄取。模型文件随 Host 部署时选本地 ONNX 提供方；已有 embeddings API 时选 OpenAI 兼容提供方。
 
 ### 提供扩展词
 
@@ -75,9 +79,9 @@ kind: "package-reference"
 
 切块器遍历"恰好铺满原文"的源跨度——一句（含句末标点）或一个裸换行——并把连续的若干跨度打包成块。因为跨度铺满原文，块的 `charStart`/`charEnd` 精确指向原文（包含行间换行），这正是由块渲染出的引用能与原文对上的原因。
 
-`ingest` 先写文档的 chunk 行与 FTS 行，最后写 `docs` 行。该行是可见性闸门：检索经由它连接，因此被中断的摄取只留下任何查询都取不到的 chunk 行，而不会留下一个报告了它并不拥有的块数的文档。失败按源隔离——一个被拒的文档绝不中断同批其他文档。
+`ingest` 先写文档的 chunk 行与 FTS 行，最后写 `docs` 行；挂载了 embedding 提供方时，每个 chunk 还写一行向量。`docs` 行是可见性闸门：检索经由它连接，因此被中断的摄取只留下任何查询都取不到的 chunk 行，而不会留下一个报告了它并不拥有的块数的文档。失败按源隔离——一个被拒的文档绝不中断同批其他文档。
 
-`search` 收集至多 `candidateLimit` 个 BM25 候选和至多 `candidateLimit` 个向量余弦候选，再以 reciprocal-rank fusion 融合排序：每份列表贡献 `1 / (60 + rank)`（rank 从 1 开始）。融合分数为贡献之和；候选按文档与 chunk 唯一化。融合保留精确术语信号，并让纯语义结果可被召回。即使命中只来自语义召回，`matchExpression` 仍报告 FTS 查询。
+`search` 收集至多 `candidateLimit` 个 BM25 候选和至多 `candidateLimit` 个向量余弦候选，再以 reciprocal-rank fusion 融合排序：每份列表贡献 `1 / (60 + rank)`（rank 从 1 开始）。融合分数为贡献之和；候选按文档与 chunk 唯一化。融合保留精确术语信号，并让纯语义结果可被召回。没有 embedding 提供方时向量这一半被整个跳过——既不计算查询向量，也不读取向量表——同一套排序因此退化为 BM25 顺序。即使命中只来自语义召回，`matchExpression` 仍报告 FTS 查询。
 
 数据库句柄在首次使用时惰性打开，并通过 fiber effect 关闭：只挂载本插件却不摄取、不检索的组合不付出代价，重载组合也不会泄漏文件锁。`node:sqlite` 正是出于同样原因在那次打开内部动态导入。
 
@@ -110,7 +114,7 @@ kind: "package-reference"
 
 ## Known Limitations and Deferred Work
 
-- 检索是词汇级的。没有向量索引与 embedding；BM25 之上的排序由调用方负责，气象工具会用模型对候选重排。
+- 语义检索是可选的。本包不附带提供方，也不要求提供方：未挂载 embedding 提供方时，`ingest` 不存向量，检索为词法检索（中文双字 bigram 索引上的 BM25）。需要融合语义召回的部署需挂载 `@deepseek-ai/dsh-text-embeddings` 与一个提供方，见 [Embedding 提供方](#embedding-provider)。
 - 切块只感知标题与句子。没有结构的文档回落为单条按句打包的流。
 - 摄取解析只覆盖纯文本与 Markdown。Office 与 PDF 抽取已推迟；调用方须自行提供文本。
 - `DatabaseSync` 是同步的，因此摄取会在单文档期间阻塞事件循环。超大语料应在实时会话之外摄取。

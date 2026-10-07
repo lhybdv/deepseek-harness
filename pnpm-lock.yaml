@@ -10301,11 +10301,17 @@ importers:
   packages/meteo/api-document-products:
     devDependencies:
       '@deepseek-ai/cordis':
-        specifier: workspace:*
+        specifier: workspace:~
         version: link:../../../vendor/cordis
+      '@deepseek-ai/dsh-brand':
+        specifier: workspace:*
+        version: link:../../util/brand
       '@deepseek-ai/dsh-document-products':
-        specifier: workspace:^
+        specifier: workspace:*
         version: link:../document-products
+      '@deepseek-ai/dsh-session':
+        specifier: workspace:*
+        version: link:../../core/session
       '@deepseek-ai/dsh-typert-protocol':
         specifier: workspace:*
         version: link:../../typert/protocol
@@ -10378,25 +10384,40 @@ importers:
 
   packages/meteo/document-products:
     dependencies:
+      '@deepseek-ai/dsh-util-values':
+        specifier: workspace:*
+        version: link:../../util/values
       '@deepseek-ai/schemastery':
         specifier: link:../../../vendor/schemastery
         version: link:../../../vendor/schemastery
     devDependencies:
       '@deepseek-ai/cordis':
-        specifier: workspace:^
+        specifier: workspace:~
         version: link:../../../vendor/cordis
+      '@deepseek-ai/dsh-agent':
+        specifier: workspace:*
+        version: link:../../core/agent
       '@deepseek-ai/dsh-brand':
-        specifier: workspace:^
+        specifier: workspace:*
         version: link:../../util/brand
+      '@deepseek-ai/dsh-llm':
+        specifier: workspace:*
+        version: link:../../llm/llm
       '@deepseek-ai/dsh-meteo-corpus':
-        specifier: workspace:^
+        specifier: workspace:*
         version: link:../meteo-corpus
       '@deepseek-ai/dsh-meteo-data':
-        specifier: workspace:^
+        specifier: workspace:*
         version: link:../meteo-data
       '@deepseek-ai/dsh-session':
-        specifier: workspace:^
+        specifier: workspace:*
         version: link:../../core/session
+      '@deepseek-ai/dsh-system-prompt':
+        specifier: workspace:*
+        version: link:../../core/system-prompt
+      '@deepseek-ai/dsh-tools':
+        specifier: workspace:*
+        version: link:../../core/tools
 
   packages/meteo/meteo-corpus:
     dependencies:

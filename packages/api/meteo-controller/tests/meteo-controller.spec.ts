@@ -401,10 +401,10 @@ describe('focusGet', () => {
 
   it('answers with the focus this session last wrote', async () => {
     const { controller, agent, session } = await harness()
-    appendFocus(session, { stationId: STATION.id, crop: '冬小麦', updatedAt: 1_759_000_000_000 })
-    expect(controller.focusGet(agent)).toEqual({ stationId: STATION.id, crop: '冬小麦', updatedAt: 1_759_000_000_000 })
-    appendFocus(session, { crop: '夏玉米', updatedAt: 1_759_003_600_000 })
-    expect(controller.focusGet(agent)).toEqual({ crop: '夏玉米', updatedAt: 1_759_003_600_000 })
+    appendFocus(session, { stationId: STATION.id, crop: '玉米', updatedAt: 1_759_000_000_000 })
+    expect(controller.focusGet(agent)).toEqual({ stationId: STATION.id, crop: '玉米', updatedAt: 1_759_000_000_000 })
+    appendFocus(session, { crop: '大豆', updatedAt: 1_759_003_600_000 })
+    expect(controller.focusGet(agent)).toEqual({ crop: '大豆', updatedAt: 1_759_003_600_000 })
   })
 })
 

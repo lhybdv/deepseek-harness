@@ -1,16 +1,16 @@
 // @vitest-environment jsdom
-import { fireEvent, render, screen, waitFor, within } from '@testing-library/react'
+import { act, cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 vi.mock('@deepseek-ai/dsh-api-document-products/remote', () => ({ default: {} }))
 import type { Context } from '@deepseek-ai/cordis'
 import type { DocumentProduct, ProductAction, ProductId } from '@deepseek-ai/dsh-document-products'
 import { brandString } from '@deepseek-ai/dsh-brand'
-import { transitionProduct } from '@deepseek-ai/dsh-document-products'
+import { legalProductActions, transitionProduct } from '@deepseek-ai/dsh-document-products'
 import { SessionId } from '@deepseek-ai/dsh-session/types'
 import type { UseSessions } from '@deepseek-ai/dsh-client-ui-session/client'
-import { DocumentProductsIcon, DocumentProductsPanel } from '../src/client/DocumentProducts.tsx'
+import { DocumentProducts, DocumentProductsIcon, DocumentProductsPanel } from '../src/client/DocumentProducts.tsx'
 import { en } from '../src/client/locales.ts'
-import { apply } from '../src/client/mount.ts'
+import { apply } from '../src/client/index.ts'
 
 const sessionId = SessionId('document-products-session')
 const secondSessionId = SessionId('document-products-session-2')
@@ -28,34 +28,58 @@ const initialProduct: DocumentProduct = {
   history: [],
   version: 0,
 }
+type ActionableProduct = DocumentProduct & { readonly legalActions: readonly ProductAction[] }
+const withActions = (product: DocumentProduct): ActionableProduct => ({ ...product, legalActions: legalProductActions(product.state) })
 
 type Success<T> = { readonly ok: true; readonly value: T }
 const success = <T,>(value: T): Success<T> => ({ ok: true, value })
 
 type Outcome<T> = Success<T> | { readonly ok: false; readonly error: Error }
 interface ProductRemoteStub {
-  readonly list: (requestedSession: typeof sessionId) => Promise<Outcome<readonly DocumentProduct[]>>
-  readonly generate: (request: { readonly sessionId: typeof sessionId }) => Promise<Outcome<DocumentProduct>>
-  readonly act: (request: { readonly sessionId: typeof sessionId; readonly id: ProductId; readonly action: ProductAction; readonly actor: string; readonly at: string }) => Promise<Outcome<{ readonly product: DocumentProduct }>>
+  readonly list: (requestedSession: typeof sessionId) => Promise<Outcome<readonly ActionableProduct[]>>
+  readonly generate: (request: { readonly sessionId: typeof sessionId }) => Promise<Outcome<ActionableProduct>>
+  readonly act: (request: {
+    readonly sessionId: typeof sessionId
+    readonly id: ProductId
+    readonly action: ProductAction
+    readonly actor: string
+    readonly at: string
+    readonly body?: string
+  }) => Promise<Outcome<{ readonly product: ActionableProduct }>>
 }
 
-afterEach(() => vi.restoreAllMocks())
+afterEach(() => { cleanup(); vi.restoreAllMocks() })
 
 function lifecycleRemote() {
   const products: DocumentProduct[] = []
   let nextId = 1
   const remote = {
-    list: vi.fn(async (_requestedSession: typeof sessionId) => success([...products])),
+    list: vi.fn(async (_requestedSession: typeof sessionId) => success(products.map(withActions))),
     generate: vi.fn(async ({ sessionId: _requestedSession }: { readonly sessionId: typeof sessionId }) => {
       const product = { ...initialProduct, id: brandString<ProductId>(`product-${nextId++}`) }
       products.push(product)
-      return success(product)
+      return success(withActions(product))
     }),
-    act: vi.fn(async ({ sessionId: _requestedSession, id, action, actor, at }: { readonly sessionId: typeof sessionId; readonly id: ProductId; readonly action: ProductAction; readonly actor: string; readonly at: string }) => {
+    act: vi.fn(async ({
+      sessionId: _requestedSession,
+      id,
+      action,
+      actor,
+      at,
+      body,
+    }: {
+      readonly sessionId: typeof sessionId
+      readonly id: ProductId
+      readonly action: ProductAction
+      readonly actor: string
+      readonly at: string
+      readonly body?: string
+    }) => {
       const index = products.findIndex(product => product.id === id)
-      const updated = transitionProduct(products[index]!, action, actor, at).product
+      const transitioned = transitionProduct(products[index]!, action, actor, at).product
+      const updated = action === 'edit' ? { ...transitioned, body: body ?? '' } : transitioned
       products[index] = updated
-      return success({ product: updated })
+      return success({ product: withActions(updated) })
     }),
   }
   return { remote, products }
@@ -74,7 +98,10 @@ function ProductPanel({ remote, sessions = [sessionId] }: {
 
 describe('document products client', () => {
   it('registers the panel in sidebar.panellist and its keyed main body', async () => {
-    const entries: Array<{ options: { name: string; id?: string; key?: string; label?: () => string; inject?: () => unknown }; component: unknown }> = []
+    const entries: Array<{
+      options: { name: string; id?: string; key?: string; label?: () => string; inject?: () => unknown }
+      component: unknown
+    }> = []
     const injected: string[] = []
     const productRemote = lifecycleRemote().remote
     const ctx = {
@@ -85,7 +112,10 @@ describe('document products client', () => {
       },
       slots: {
         inject: (name: string, register: () => unknown) => { injected.push(name); return register() },
-        register: (options: { name: string; id?: string; key?: string; label?: () => string; inject?: () => unknown }, component: unknown) => {
+        register: (
+          options: { name: string; id?: string; key?: string; label?: () => string; inject?: () => unknown },
+          component: unknown,
+        ) => {
           entries.push({ options, component })
           return vi.fn()
         },
@@ -114,6 +144,14 @@ describe('document products client', () => {
     expect(within(product).getByText('监测与预报')).toBeTruthy()
     expect(within(product).getByText(/风险提示/)).toBeTruthy()
 
+    fireEvent.click(within(product).getByRole('button', { name: labels.edit }))
+    const editor = within(product).getByRole('textbox', { name: labels.editBody })
+    fireEvent.change(editor, { target: { value: '修改后的预警正文' } })
+    fireEvent.click(within(product).getByRole('button', { name: labels.save }))
+    await waitFor(() => expect(within(screen.getByRole('article')).getByText('修改后的预警正文')).toBeTruthy())
+    expect(remote.act.mock.calls[0]?.[0]).toMatchObject({ action: 'edit', body: '修改后的预警正文' })
+    await waitFor(() => expect(within(screen.getByRole('article')).getByRole('button', { name: labels.submit })).toHaveProperty('disabled', false))
+    product = screen.getByRole('article')
     fireEvent.click(within(product).getByRole('button', { name: labels.submit }))
     await waitFor(() => expect(within(screen.getByRole('article')).getByText(labels.in_review)).toBeTruthy())
     product = screen.getByRole('article')
@@ -128,7 +166,8 @@ describe('document products client', () => {
     await waitFor(() => expect(within(screen.getByRole('article')).getByText(labels.archived)).toBeTruthy())
 
     fireEvent.click(screen.getByRole('button', { name: labels.generate }))
-    const second = await screen.findAllByRole('article')
+    await waitFor(() => expect(screen.getAllByRole('article')).toHaveLength(2))
+    const second = screen.getAllByRole('article')
     fireEvent.click(within(second[1]!).getByRole('button', { name: labels.submit }))
     await waitFor(() => expect(within(screen.getAllByRole('article')[1]!).getByText(labels.in_review)).toBeTruthy())
     fireEvent.click(within(screen.getAllByRole('article')[1]!).getByRole('button', { name: labels.reject }))
@@ -138,18 +177,24 @@ describe('document products client', () => {
     expect(remote.generate).toHaveBeenCalledTimes(2)
     expect(remote.generate.mock.calls.map(([request]) => request.sessionId)).toEqual([sessionId, sessionId])
     expect(remote.act.mock.calls.map(([request]) => [request.sessionId, request.action])).toEqual([
-      [sessionId, 'submit'], [sessionId, 'approve'], [sessionId, 'publish'], [sessionId, 'archive'],
+      [sessionId, 'edit'], [sessionId, 'submit'], [sessionId, 'approve'], [sessionId, 'publish'], [sessionId, 'archive'],
       [sessionId, 'submit'], [sessionId, 'reject'], [sessionId, 'revise'],
     ])
     expect(remote.list.mock.calls.every(([requestedSession]) => requestedSession === sessionId)).toBe(true)
 
   })
+  it('renders products without controls when no action callbacks are supplied', () => {
+    render(<DocumentProducts products={[withActions(initialProduct)]} pending={false} error="" t={t} />)
+    expect(screen.getByText(labels.draft)).toBeTruthy()
+    expect(screen.queryByRole('button', { name: labels.generate })).toBeNull()
+    expect(screen.queryByRole('button', { name: labels.submit })).toBeNull()
+  })
   it('shows pending and failed list states to the user', async () => {
     let settle!: (value: { readonly ok: false; readonly error: Error }) => void
     const remote = {
-      list: vi.fn(() => new Promise<{ readonly ok: false; readonly error: Error }>(resolve => { settle = resolve })),
-      generate: vi.fn(async () => success(initialProduct)),
-      act: vi.fn(async () => success({ product: initialProduct })),
+      list: vi.fn(() => new Promise<{ readonly ok: false; readonly error: Error }>((resolve) => { settle = resolve })),
+      generate: vi.fn(async () => success(withActions(initialProduct))),
+      act: vi.fn(async () => success({ product: withActions(initialProduct) })),
     }
     render(<ProductPanel remote={remote} />)
     expect(screen.getByRole('status').textContent).toBe(labels.pending)
@@ -174,10 +219,58 @@ describe('document products client', () => {
     fireEvent.click(within(product).getByRole('button', { name: labels.submit }))
     await waitFor(() => expect(screen.getByRole('alert').textContent).toContain('transition unavailable'))
   })
-  it('disables generation when there is no session to address', () => {
+  it('shows failures returned by generation, refresh, and action calls', async () => {
+    const { remote } = lifecycleRemote()
+    remote.generate.mockResolvedValueOnce({ ok: false, error: new Error('generation refused') } as never)
+    remote.list.mockResolvedValueOnce(success([]))
+    remote.list.mockResolvedValueOnce({ ok: false, error: new Error('refresh unavailable') } as never)
+    render(<ProductPanel remote={remote} />)
+    await screen.findByText(labels.empty)
+    fireEvent.click(screen.getByRole('button', { name: labels.generate }))
+    await waitFor(() => expect(screen.getByRole('alert').textContent).toContain('generation refused'))
+
+    fireEvent.click(screen.getByRole('button', { name: labels.generate }))
+    await waitFor(() => expect(screen.getByRole('alert').textContent).toContain('refresh unavailable'))
+    fireEvent.click(screen.getByRole('button', { name: labels.generate }))
+    await waitFor(() => expect(screen.getAllByRole('article')).toHaveLength(2))
+    const product = screen.getAllByRole('article')[0]!
+    remote.act.mockResolvedValueOnce({ ok: false, error: new Error('action refused') } as never)
+    fireEvent.click(within(product).getByRole('button', { name: labels.submit }))
+    await waitFor(() => expect(screen.getByRole('alert').textContent).toContain('action refused'))
+  })
+  it('ignores a session load that finishes after unmount', async () => {
+    let settle!: (value: Outcome<readonly ActionableProduct[]>) => void
+    const remote = {
+      list: vi.fn(() => new Promise<Outcome<readonly ActionableProduct[]>>((resolve) => { settle = resolve })),
+      generate: vi.fn(async () => success(withActions(initialProduct))),
+      act: vi.fn(async () => success({ product: withActions(initialProduct) })),
+    }
+    const view = render(<ProductPanel remote={remote} />)
+    view.unmount()
+    await act(async () => { settle(success([])) })
+    expect(remote.list).toHaveBeenCalledWith(sessionId)
+    let fail!: (reason: Error) => void
+    const rejectingRemote = {
+      list: vi.fn(() => new Promise<Outcome<readonly ActionableProduct[]>>((_, reject) => { fail = reject })),
+      generate: vi.fn(async () => success(withActions(initialProduct))),
+      act: vi.fn(async () => success({ product: withActions(initialProduct) })),
+    }
+    const rejectingView = render(<ProductPanel remote={rejectingRemote} />)
+    rejectingView.unmount()
+    await act(async () => { fail(new Error('late rejection')) })
+  })
+
+  it('shows a rejected initial session-list request', async () => {
+    const { remote } = lifecycleRemote()
+    remote.list.mockRejectedValueOnce(new Error('list transport failed'))
+    render(<ProductPanel remote={remote} />)
+    await waitFor(() => expect(screen.getByRole('alert').textContent).toContain('list transport failed'))
+  })
+  it('shows the no-session state without issuing remote actions', () => {
     const { remote } = lifecycleRemote()
     render(<ProductPanel remote={remote} sessions={[]} />)
-    expect(screen.getByRole('button', { name: labels.generate }).hasAttribute('disabled')).toBe(true)
+    expect(screen.getByText(labels.noSession)).toBeTruthy()
+    expect(screen.queryByRole('button', { name: labels.generate })).toBeNull()
     expect(remote.list).not.toHaveBeenCalled()
   })
   it('loads the newly selected session instead of retaining stale session products', async () => {
@@ -185,8 +278,10 @@ describe('document products client', () => {
     const sessions = [sessionId, secondSessionId]
     const view = render(<ProductPanel remote={remote} sessions={sessions} />)
     await waitFor(() => expect(remote.list).toHaveBeenCalledWith(sessionId))
-    view.rerender(<ProductPanel remote={remote} sessions={[secondSessionId]} />)
+    fireEvent.change(screen.getByRole('combobox'), { target: { value: secondSessionId } })
     await waitFor(() => expect(remote.list).toHaveBeenCalledWith(secondSessionId))
+    view.rerender(<ProductPanel remote={remote} sessions={[sessionId]} />)
+    await waitFor(() => expect(remote.list.mock.calls.at(-1)?.[0]).toBe(sessionId))
   })
 
 

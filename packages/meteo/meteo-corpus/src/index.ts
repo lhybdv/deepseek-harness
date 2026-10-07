@@ -9,6 +9,11 @@
  * retrieval service, an embedding index) that evolves independently gets its own
  * package and registers against the same abstract class.
  *
+ * Vector recall is an optional peer, never a load-time dependency: the provider
+ * reads `ctx.textEmbeddings` at the point of use, so a composition that mounts
+ * no embedding provider still boots, ingests, and answers lexically. Mount the
+ * registry plus one provider to add the fused semantic path.
+ *
  * @module @deepseek-ai/dsh-meteo-corpus
  */
 
@@ -39,8 +44,6 @@ export {
   resolveCorpusPath,
 } from './schema.ts'
 export type { CorpusJournalMode } from './schema.ts'
-/** Capability registry required for document and query vectors. */
-export const inject = ['textEmbeddings']
 export { SqliteCorpusStore } from './sqlite.ts'
 export type { Config } from './sqlite.ts'
 export { SqliteCorpusStore as default } from './sqlite.ts'

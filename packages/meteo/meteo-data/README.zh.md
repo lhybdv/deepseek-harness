@@ -63,7 +63,7 @@ taxonomy.json
 meta.json
 ```
 
-`thresholds.json` 与 `crop-calendar.json` 承载农户被评判的预警指标以及这些指标适用的时段；`synonyms.json` 与 `taxonomy.json` 负责把口语里的 `倒春寒` 归到指标登记所用的灾种名；`meta.json` 发布每个数据集的版本号，回答因此能说清自己用的数字有多新。
+`thresholds.json` 与 `crop-calendar.json` 承载农户被评判的预警指标以及这些指标适用的时段；本示例共发布 33 个站点：黑龙江五常市、吉林榆树市、辽宁昌图县各 8 个乡镇站，另有哈尔滨市（道里区、松北区、阿城区）、长春市（朝阳区、南关区、九台区）、沈阳市（和平区、沈北新区、辽中区）各 3 个市区站。33 个站点对应 33 个观测文件和 33 个预报文件；每个新增市区站均有 24 行观测（2026-09-23 00:00–23:00 UTC）和 24 行预报（2026-09-24 00:00 至 2026-09-26 21:00 UTC）。作物为玉米、大豆与水稻，灾害判据包括春旱、低温冷害、初霜、暴雨与内涝。`synonyms.json` 与 `taxonomy.json` 负责把口语里的灾种别名归到指标登记所用的灾种名；`meta.json` 发布每个数据集的版本号，回答因此能说清自己用的数字有多新。
 
 ### 跨轮次携带焦点
 
@@ -77,7 +77,7 @@ declare const ctx: Context
 declare const session: Session
 declare const agent: Agent
 
-appendFocus(session, { stationId: 'ha-xx-01', crop: '冬小麦', updatedAt: Date.now() })
+appendFocus(session, { stationId: 'hl-wc-01', crop: '玉米', updatedAt: Date.now() })
 const focus = readFocus(ctx, agent)
 ```
 

@@ -3,5 +3,5 @@
 # After editing either side, bring the other along and re-record with:
 #   pnpm run verify-translation-pairing --write packages/meteo/document-products/README.md
 /meteorological-document-products:
-  en: 3c480608ef2d3e2d
-  zh: 14492538fc951ab0
+  en: 30172afa630c2eb0
+  zh: bdf93c5ee82b0498

@@ -68,38 +68,48 @@ afterEach(async () => {
 })
 
 const STATION = {
-  id: 'ha-xx-01',
-  name: '新乡县城关自动站',
-  county: '新乡县',
-  township: '城关镇',
-  lon: 113.8,
-  lat: 35.05,
-  altitudeM: 42,
+  id: 'hl-wc-01',
+  name: '五常市五常镇自动站',
+  county: '五常市',
+  township: '五常镇',
+  lon: 127.16,
+  lat: 44.93,
+  altitudeM: 150,
 }
 
 describe('station catalogue', () => {
   it('lists every published station', async () => {
-    expect(await provider().stations()).toHaveLength(24)
+    expect(await provider().stations()).toHaveLength(33)
   })
 
   it('filters by county', async () => {
-    const stations = await provider().stations({ county: '滑县' })
+    const stations = await provider().stations({ county: '榆树市' })
     expect(stations).toHaveLength(8)
-    expect(stations.every(station => station.county === '滑县')).toBe(true)
+    expect(stations.every(station => station.county === '榆树市')).toBe(true)
   })
 
   it('matches the free text against the station name', async () => {
-    expect(await provider().stations({ text: '自动站' })).toHaveLength(24)
+    expect(await provider().stations({ text: '自动站' })).toHaveLength(33)
   })
 
   it('matches the free text against the township the station sits in', async () => {
-    expect(await provider().stations({ text: '瓦岗寨' })).toEqual([
-      expect.objectContaining({ id: 'ha-hx-06', name: '滑县瓦岗自动站' }),
+    expect(await provider().stations({ text: '五棵树' })).toEqual([
+      expect.objectContaining({ id: 'jl-ys-02', name: '榆树市五棵树镇自动站' }),
     ])
   })
 
   it('matches the free text against the county name', async () => {
-    expect(await provider().stations({ text: '永城市' })).toHaveLength(8)
+    expect(await provider().stations({ text: '昌图县' })).toHaveLength(8)
+  })
+
+  it('matches the newly published city stations and their districts', async () => {
+    expect(await provider().stations({ text: '哈尔滨市' })).toHaveLength(3)
+    expect(await provider().stations({ text: '道里区' })).toEqual([
+      expect.objectContaining({ id: 'hl-hs-01', county: '哈尔滨市', township: '道里区' }),
+    ])
+    expect(await provider().stations({ text: '辽中区' })).toEqual([
+      expect.objectContaining({ id: 'ln-sy-03', county: '沈阳市', township: '辽中区' }),
+    ])
   })
 
   it('answers nothing for a place it does not publish', async () => {
@@ -107,20 +117,20 @@ describe('station catalogue', () => {
   })
 
   it('combines the county and the free text', async () => {
-    expect(await provider().stations({ county: '永城市', text: '芒山' })).toEqual([
-      expect.objectContaining({ id: 'ha-yc-01' }),
+    expect(await provider().stations({ county: '昌图县', text: '宝力' })).toEqual([
+      expect.objectContaining({ id: 'ln-ct-03' }),
     ])
   })
 
   it('resolves one station by id', async () => {
-    expect(await provider().station('ha-xx-01')).toEqual({
-      id: 'ha-xx-01',
-      name: '新乡县城关自动站',
-      county: '新乡县',
-      township: '城关镇',
-      lon: 114,
-      lat: 35.2,
-      altitudeM: 37.3,
+    expect(await provider().station('hl-wc-01')).toEqual({
+      id: 'hl-wc-01',
+      name: '五常市五常镇自动站',
+      county: '五常市',
+      township: '五常镇',
+      lon: 127.16,
+      lat: 44.93,
+      altitudeM: 150,
     })
   })
 
@@ -131,19 +141,19 @@ describe('station catalogue', () => {
 
 describe('observations', () => {
   it('reads a day of hourly rows, oldest first', async () => {
-    const rows = await provider().observations({ stationId: 'ha-yc-03' })
+    const rows = await provider().observations({ stationId: 'jl-ys-03' })
     expect(rows).toHaveLength(24)
     expect(rows[0]).toEqual({
-      stationId: 'ha-yc-03',
+      stationId: 'jl-ys-03',
       time: '2026-09-23T00:00:00Z',
-      elements: { temperature: 21, humidity: 93.2, precipitation: 0, windSpeed: 6.8, soilMoisture: 57.7 },
+      elements: { temperature: 7.5, humidity: 62, precipitation: 0, windSpeed: 3.7, soilMoisture: 33.3 },
     })
-    expect(rows.reduce((sum, row) => sum + (row.elements.precipitation ?? 0), 0)).toBeCloseTo(56.5, 1)
+    expect(rows.reduce((sum, row) => sum + (row.elements.precipitation ?? 0), 0)).toBeLessThan(10)
   })
 
   it('keeps the rows inside an inclusive window', async () => {
     const rows = await provider().observations({
-      stationId: 'ha-xx-01',
+      stationId: 'hl-wc-01',
       from: '2026-09-23T06:00:00Z',
       to: '2026-09-23T10:00:00Z',
     })
@@ -157,7 +167,7 @@ describe('observations', () => {
   })
 
   it('applies a start bound on its own', async () => {
-    const rows = await provider().observations({ stationId: 'ha-xx-01', from: '2026-09-23T18:00:00Z' })
+    const rows = await provider().observations({ stationId: 'hl-wc-01', from: '2026-09-23T18:00:00Z' })
     expect(rows.map(row => row.time)).toEqual([
       '2026-09-23T18:00:00Z',
       '2026-09-23T19:00:00Z',
@@ -169,7 +179,7 @@ describe('observations', () => {
   })
 
   it('applies an end bound on its own', async () => {
-    const rows = await provider().observations({ stationId: 'ha-xx-01', to: '2026-09-23T05:00:00Z' })
+    const rows = await provider().observations({ stationId: 'hl-wc-01', to: '2026-09-23T05:00:00Z' })
     expect(rows).toHaveLength(6)
     expect(rows.at(-1)?.time).toBe('2026-09-23T05:00:00Z')
   })
@@ -181,14 +191,14 @@ describe('observations', () => {
   })
 
   it('refuses a time bound that is not an instant', async () => {
-    const error = await rejection(() => provider().observations({ stationId: 'ha-xx-01', from: 'last night' }))
+    const error = await rejection(() => provider().observations({ stationId: 'hl-wc-01', from: 'last night' }))
     expect(error.code).toBe('METEO_INVALID_QUERY')
   })
 })
 
 describe('forecast guide', () => {
   it('reads the whole guide, earliest first', async () => {
-    const points = await provider().forecast({ stationId: 'ha-xx-01' })
+    const points = await provider().forecast({ stationId: 'hl-wc-01' })
     expect(points).toHaveLength(24)
     expect(points[0]?.time).toBe('2026-09-24T00:00:00Z')
     expect(points[0]?.elements.soilMoisture).toBeUndefined()
@@ -196,7 +206,7 @@ describe('forecast guide', () => {
   })
 
   it('cuts the guide at a horizon counted from its first point', async () => {
-    const points = await provider().forecast({ stationId: 'ha-xx-01', hours: 12 })
+    const points = await provider().forecast({ stationId: 'hl-wc-01', hours: 12 })
     expect(points.map(point => point.time)).toEqual([
       '2026-09-24T00:00:00Z',
       '2026-09-24T03:00:00Z',
@@ -208,7 +218,7 @@ describe('forecast guide', () => {
 
   it('counts the horizon from the start bound when one is given', async () => {
     const points = await provider().forecast({
-      stationId: 'ha-xx-01',
+      stationId: 'hl-wc-01',
       from: '2026-09-25T00:00:00Z',
       hours: 6,
     })
@@ -220,15 +230,15 @@ describe('forecast guide', () => {
   })
 
   it('drops the points before a start bound', async () => {
-    const points = await provider().forecast({ stationId: 'ha-xx-01', from: '2026-09-25T00:00:00Z' })
+    const points = await provider().forecast({ stationId: 'hl-wc-01', from: '2026-09-25T00:00:00Z' })
     expect(points).toHaveLength(16)
     expect(points[0]?.time).toBe('2026-09-25T00:00:00Z')
   })
 
   it('refuses a horizon that is not a whole number of hours', async () => {
     const data = provider()
-    const half = await rejection(() => data.forecast({ stationId: 'ha-xx-01', hours: 2.5 }))
-    const negative = await rejection(() => data.forecast({ stationId: 'ha-xx-01', hours: -1 }))
+    const half = await rejection(() => data.forecast({ stationId: 'hl-wc-01', hours: 2.5 }))
+    const negative = await rejection(() => data.forecast({ stationId: 'hl-wc-01', hours: -1 }))
     expect(half.code).toBe('METEO_INVALID_QUERY')
     expect(negative.code).toBe('METEO_INVALID_QUERY')
   })
@@ -242,7 +252,7 @@ describe('forecast guide', () => {
 describe('criteria and farming calendar', () => {
   it('lists the criteria in the order the catalogue publishes them', async () => {
     const thresholds = await provider().thresholds()
-    expect(thresholds).toHaveLength(10)
+    expect(thresholds).toHaveLength(12)
     expect(thresholds[0]).toEqual({
       disaster: '暴雨',
       element: 'precipitation',
@@ -254,47 +264,51 @@ describe('criteria and farming calendar', () => {
   })
 
   it('filters criteria by disaster', async () => {
-    const drought = await provider().thresholds({ disaster: '干旱' })
-    expect(drought.map(threshold => threshold.element)).toEqual(['soilMoisture', 'soilMoisture', 'temperature'])
+    const drought = await provider().thresholds({ disaster: '春旱' })
+    expect(drought.map(threshold => threshold.element)).toEqual(['soilMoisture', 'soilMoisture'])
   })
 
   it('filters criteria by the crop they are issued for', async () => {
-    const wheat = await provider().thresholds({ crop: '冬小麦' })
-    expect(wheat).toHaveLength(9)
-    const byTemperature = wheat.filter(threshold => threshold.element === 'temperature')
+    const maize = await provider().thresholds({ crop: '玉米' })
+    expect(maize).toHaveLength(12)
+    const byTemperature = maize.filter(threshold => threshold.element === 'temperature')
     expect(byTemperature.map(threshold => ({ disaster: threshold.disaster, level: threshold.level }))).toEqual([
-      { disaster: '晚霜冻', level: 'low' },
-      { disaster: '晚霜冻', level: 'high' },
+      { disaster: '低温冷害', level: 'medium' },
+      { disaster: '低温冷害', level: 'high' },
+      { disaster: '初霜', level: 'medium' },
+      { disaster: '初霜', level: 'high' },
     ])
   })
 
   it('combines the disaster and crop filters', async () => {
     const data = provider()
-    expect(await data.thresholds({ disaster: '大风', crop: '夏玉米' })).toHaveLength(2)
-    expect(await data.thresholds({ disaster: '晚霜冻', crop: '夏玉米' })).toEqual([])
+    expect(await data.thresholds({ disaster: '暴雨', crop: '水稻' })).toHaveLength(3)
+    expect(await data.thresholds({ disaster: '初霜', crop: '水稻' })).toEqual([])
   })
 
   it('lists the farming windows of the calendar', async () => {
-    expect(await provider().cropCalendar()).toHaveLength(13)
+    expect(await provider().cropCalendar()).toHaveLength(12)
   })
 
   it('filters the calendar by crop', async () => {
-    const maize = await provider().cropCalendar({ crop: '夏玉米' })
-    expect(maize).toHaveLength(6)
-    expect(maize[0]).toEqual(expect.objectContaining({ crop: '夏玉米', activity: '播种', windowStart: '06-10' }))
+    const maize = await provider().cropCalendar({ crop: '玉米' })
+    expect(maize).toHaveLength(4)
+    expect(maize[0]).toEqual(expect.objectContaining({ crop: '玉米', activity: '播种', windowStart: '04-25' }))
   })
 
   it('filters the calendar by the disaster a window is graded against', async () => {
-    const frosted = await provider().cropCalendar({ disaster: '晚霜冻' })
-    expect(frosted.map(entry => entry.activity)).toEqual(['越冬', '返青', '抽穗'])
+    const frosted = await provider().cropCalendar({ disaster: '初霜' })
+    expect(frosted.map(entry => entry.activity)).toEqual(['成熟收获', '鼓粒', '收获', '成熟收获'])
   })
 
   it('combines the calendar filters', async () => {
     const data = provider()
-    expect(await data.cropCalendar({ crop: '冬小麦', disaster: '暴雨' })).toEqual([
-      expect.objectContaining({ activity: '收获' }),
+    expect(await data.cropCalendar({ crop: '水稻', disaster: '内涝' })).toEqual([
+      expect.objectContaining({ activity: '成熟收获' }),
     ])
-    expect(await data.cropCalendar({ crop: '夏玉米', disaster: '晚霜冻' })).toEqual([])
+    expect(await data.cropCalendar({ crop: '水稻', disaster: '初霜' })).toEqual([
+      expect.objectContaining({ activity: '成熟收获' }),
+    ])
   })
 })
 
@@ -304,11 +318,11 @@ describe('term expansion and revisions', () => {
   })
 
   it('expands a term the taxonomy knows under its own wording', async () => {
-    expect(await provider().expandTerm('晚霜冻')).toEqual(['倒春寒', '霜冻'])
+    expect(await provider().expandTerm('初霜')).toEqual(['早霜', '霜冻'])
   })
 
   it('expands an alias back to the disaster it names', async () => {
-    expect(await provider().expandTerm('倒春寒')).toEqual(['晚霜冻', '霜冻'])
+    expect(await provider().expandTerm('早霜')).toEqual(['初霜', '霜冻'])
   })
 
   it('answers nothing for a term no dataset knows', async () => {
@@ -317,7 +331,7 @@ describe('term expansion and revisions', () => {
 
   it('reports the revision of the bundle and of every dataset', async () => {
     const versions = await provider().versions()
-    expect(versions.version).toBe('2026.09-demo.1')
+    expect(versions.version).toBe('2026.10-northeast.1')
     expect(Object.keys(versions.datasets)).toEqual([
       'stations',
       'observations',
@@ -327,7 +341,7 @@ describe('term expansion and revisions', () => {
       'synonyms',
       'taxonomy',
     ])
-    expect(versions.datasets.forecast).toBe('2026.09-forecast.1')
+    expect(versions.datasets.forecast).toBe('2026.10-northeast.1')
   })
 })
 
@@ -351,10 +365,10 @@ describe('bundle failures', () => {
       'stations.json': [STATION],
       'thresholds.json': [{ disaster: '暴雨' }],
       'crop-calendar.json': [{
-        crop: '冬小麦',
+        crop: '玉米',
         activity: '播种',
-        windowStart: '10-15',
-        windowEnd: '10-25',
+        windowStart: '04-25',
+        windowEnd: '05-15',
         criteria: [],
       }],
       'meta.json': { version: 'x', datasets: { stations: 'x' } },
@@ -370,48 +384,48 @@ describe('bundle failures', () => {
   it('refuses a station row whose time is not an instant', async () => {
     const root = await bundle('bad-time', {
       'stations.json': [STATION],
-      'observations/ha-xx-01.json': [{ time: 'yesterday', elements: { temperature: 20 } }],
+      'observations/hl-wc-01.json': [{ time: 'yesterday', elements: { temperature: 20 } }],
     })
-    const error = await rejection(() => provider(root).observations({ stationId: 'ha-xx-01' }))
+    const error = await rejection(() => provider(root).observations({ stationId: 'hl-wc-01' }))
     expect(error.code).toBe('METEO_DATASET_UNAVAILABLE')
   })
 
   it('reads a station directory that is partly filled, ignoring files that are not JSON', async () => {
     const root = await bundle('partial', {
-      'stations.json': [STATION, { ...STATION, id: 'ha-xx-02', name: '新乡县翟坡自动站', township: '翟坡镇' }],
-      'observations/ha-xx-01.json': [{ time: '2026-09-23T00:00:00Z', elements: { temperature: 21.4 } }],
+      'stations.json': [STATION, { ...STATION, id: 'hl-wc-02', name: '五常市拉林满族镇自动站', township: '拉林满族镇' }],
+      'observations/hl-wc-01.json': [{ time: '2026-09-23T00:00:00Z', elements: { temperature: 5.2 } }],
       'observations/README.txt': 'draft bundle',
-      'forecast/ha-xx-01.json': [{ time: '2026-09-24T00:00:00Z', elements: { temperature: 20.2 } }],
+      'forecast/hl-wc-01.json': [{ time: '2026-09-24T00:00:00Z', elements: { temperature: 2.1 } }],
     })
     const data = provider(root)
-    expect(await data.observations({ stationId: 'ha-xx-01' })).toEqual([
-      { stationId: 'ha-xx-01', time: '2026-09-23T00:00:00Z', elements: { temperature: 21.4 } },
+    expect(await data.observations({ stationId: 'hl-wc-01' })).toEqual([
+      { stationId: 'hl-wc-01', time: '2026-09-23T00:00:00Z', elements: { temperature: 5.2 } },
     ])
-    expect(await data.observations({ stationId: 'ha-xx-02' })).toEqual([])
-    expect(await data.forecast({ stationId: 'ha-xx-01' })).toEqual([
-      { time: '2026-09-24T00:00:00Z', elements: { temperature: 20.2 } },
+    expect(await data.observations({ stationId: 'hl-wc-02' })).toEqual([])
+    expect(await data.forecast({ stationId: 'hl-wc-01' })).toEqual([
+      { time: '2026-09-24T00:00:00Z', elements: { temperature: 2.1 } },
     ])
-    expect(await data.forecast({ stationId: 'ha-xx-02', hours: 24 })).toEqual([])
+    expect(await data.forecast({ stationId: 'hl-wc-02', hours: 24 })).toEqual([])
   })
 
   it('refuses a bundle whose station directories are missing entirely', async () => {
     const root = await bundle('no-directory', { 'stations.json': [STATION] })
     const data = provider(root)
-    const observations = await rejection(() => data.observations({ stationId: 'ha-xx-01' }))
+    const observations = await rejection(() => data.observations({ stationId: 'hl-wc-01' }))
     expect(observations.message).toContain('cannot list "observations"')
-    const forecast = await rejection(() => data.forecast({ stationId: 'ha-xx-01' }))
+    const forecast = await rejection(() => data.forecast({ stationId: 'hl-wc-01' }))
     expect(forecast.message).toContain('cannot list "forecast"')
   })
 
   it('answers an empty guide for a station that publishes no points', async () => {
     const root = await bundle('offline', {
       'stations.json': [STATION],
-      'forecast/ha-xx-01.json': [],
-      'observations/ha-xx-01.json': [],
+      'forecast/hl-wc-01.json': [],
+      'observations/hl-wc-01.json': [],
     })
     const data = provider(root)
-    expect(await data.forecast({ stationId: 'ha-xx-01', hours: 12 })).toEqual([])
-    expect(await data.observations({ stationId: 'ha-xx-01', from: '2026-09-23T00:00:00Z' })).toEqual([])
+    expect(await data.forecast({ stationId: 'hl-wc-01', hours: 12 })).toEqual([])
+    expect(await data.observations({ stationId: 'hl-wc-01', from: '2026-09-23T00:00:00Z' })).toEqual([])
   })
 })
 

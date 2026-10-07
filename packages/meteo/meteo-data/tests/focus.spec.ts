@@ -49,31 +49,31 @@ describe('session focus', () => {
 
   it('answers with the focus the session last wrote', async () => {
     const { ctx, session } = await harness()
-    appendFocus(session, { stationId: 'ha-xx-01', crop: '冬小麦', updatedAt: 1_759_000_000_000 })
+    appendFocus(session, { stationId: 'hl-wc-01', crop: '玉米', updatedAt: 1_759_000_000_000 })
     expect(readFocus(ctx, { session })).toEqual({
-      stationId: 'ha-xx-01',
-      crop: '冬小麦',
+      stationId: 'hl-wc-01',
+      crop: '玉米',
       updatedAt: 1_759_000_000_000,
     })
-    appendFocus(session, { crop: '夏玉米', updatedAt: 1_759_003_600_000 })
-    expect(readFocus(ctx, { session })).toEqual({ crop: '夏玉米', updatedAt: 1_759_003_600_000 })
+    appendFocus(session, { crop: '大豆', updatedAt: 1_759_003_600_000 })
+    expect(readFocus(ctx, { session })).toEqual({ crop: '大豆', updatedAt: 1_759_003_600_000 })
   })
 
   it('releases the focus when the session writes null', async () => {
     const { ctx, session } = await harness()
-    appendFocus(session, { stationId: 'ha-yc-03', updatedAt: 1_759_000_000_000 })
-    expect(readFocus(ctx, { session })).toEqual({ stationId: 'ha-yc-03', updatedAt: 1_759_000_000_000 })
+    appendFocus(session, { stationId: 'ln-ct-03', updatedAt: 1_759_000_000_000 })
+    expect(readFocus(ctx, { session })).toEqual({ stationId: 'ln-ct-03', updatedAt: 1_759_000_000_000 })
     appendFocus(session, null)
     expect(readFocus(ctx, { session })).toBeNull()
   })
 
   it('leaves the focus alone across events that carry none', async () => {
     const { ctx, session } = await harness()
-    appendFocus(session, { stationId: 'ha-hx-06', crop: '夏玉米', updatedAt: 1_759_000_000_000 })
+    appendFocus(session, { stationId: 'jl-ys-06', crop: '水稻', updatedAt: 1_759_000_000_000 })
     session.append('turn/start', { turn: 1 })
     expect(readFocus(ctx, { session })).toEqual({
-      stationId: 'ha-hx-06',
-      crop: '夏玉米',
+      stationId: 'jl-ys-06',
+      crop: '水稻',
       updatedAt: 1_759_000_000_000,
     })
   })
@@ -81,22 +81,22 @@ describe('session focus', () => {
   it('keeps each session on its own focus', async () => {
     const first = await harness()
     const second = await harness()
-    appendFocus(first.session, { stationId: 'ha-xx-01', updatedAt: 1_759_000_000_000 })
-    appendFocus(second.session, { crop: '冬小麦', updatedAt: 1_759_000_000_001 })
+    appendFocus(first.session, { stationId: 'hl-wc-01', updatedAt: 1_759_000_000_000 })
+    appendFocus(second.session, { crop: '大豆', updatedAt: 1_759_000_000_001 })
     expect(readFocus(first.ctx, { session: first.session })).toEqual({
-      stationId: 'ha-xx-01',
+      stationId: 'hl-wc-01',
       updatedAt: 1_759_000_000_000,
     })
     expect(readFocus(second.ctx, { session: second.session })).toEqual({
-      crop: '冬小麦',
+      crop: '大豆',
       updatedAt: 1_759_000_000_001,
     })
   })
 
   it('has no focus to report once the provider is unloaded', async () => {
     const { ctx, session, fiber } = await harness()
-    appendFocus(session, { stationId: 'ha-xx-01', updatedAt: 1_759_000_000_000 })
-    expect(readFocus(ctx, { session })).toEqual({ stationId: 'ha-xx-01', updatedAt: 1_759_000_000_000 })
+    appendFocus(session, { stationId: 'hl-wc-01', updatedAt: 1_759_000_000_000 })
+    expect(readFocus(ctx, { session })).toEqual({ stationId: 'hl-wc-01', updatedAt: 1_759_000_000_000 })
     await fiber.dispose()
     expect(readFocus(ctx, { session })).toBeNull()
   })

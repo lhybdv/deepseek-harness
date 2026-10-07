@@ -33,6 +33,26 @@
         fixtureDir: !!js process.cwd() + '/packages/meteo/meteo-data/fixtures'
         timeoutMs: 15000
 
+    # ── the document products the conversation drives ──────────────────────
+    # The product service plus its model-facing `meteo_document` tool: generation
+    # and the 编–审–发–存 transitions, so the whole loop is demonstrable from the
+    # conversation without the browser panel. Omitted fields keep the package's
+    # own defaults (forecastHours 72, citationLimit 5, timeoutMs 30000,
+    # snippetChars 200).
+    - id: meteo-document-products
+      name: '@deepseek-ai/dsh-document-products'
+
+    # ── the zoning comparison and the document lifecycle's Remote bridge ────────
+    # Both are host plugins. The zoning tool returns the two uploaded rasters to the
+    # model as image content blocks and renders the comparison; the bridge exposes
+    # the document service to the client panel. Their client halves join the client
+    # bundle separately, so their rows are added with the bundle that contains them.
+    - id: tool-zone-image
+      name: '@deepseek-ai/dsh-tool-zone-image'
+
+    - id: api-document-products
+      name: '@deepseek-ai/dsh-api-document-products'
+
     # ── the model-facing tools ─────────────────────────────────────────────
     - id: tool-corpus
       name: '@deepseek-ai/dsh-tool-corpus'
@@ -70,20 +90,26 @@
 # ── the spoken question, recognized by the account's cloud service ──────────
 # The microphone beside the composer records one question and inserts the
 # transcript as text, so nothing about the consultation changes downstream.
-# Voice input itself arrives with the Voice Input bundle, switched on from the
-# Plugins page; these two rows configure that layer and stay inert (Loader warns
-# and continues) while it is off. The recognizer reads its application id and
-# access key id from IFLYTEK_RTASR_APP_ID / IFLYTEK_RTASR_ACCESS_KEY_ID, and its
-# access key secret from the credential IFLYTEK_RTASR_ACCESS_KEY_SECRET — set
-# through `dsh` credentials, the environment, or the repository `.env`. A
-# missing value fails that one recording with the field named; it never falls
-# back to another recognizer, and the rest of the demonstration runs without it.
-- id: speech-to-text-rtasr
-  disabled: false
-
-- id: speech-to-text
-  config:
-    defaultProvider: iflytek-rtasr
+# These are the Voice Input bundle's own rows, inserted here so the bench boots
+# with voice input available instead of requiring a manual Plugins-page step.
+# Cloud recognition is chosen and enabled because this bench has the account's
+# credentials; the recognizer reads its application id and access key id from
+# IFLYTEK_RTASR_APP_ID / IFLYTEK_RTASR_ACCESS_KEY_ID and its access key secret
+# from the credential IFLYTEK_RTASR_ACCESS_KEY_SECRET — set through `dsh`
+# credentials, the environment, or the repository `.env`. A missing value fails
+# that one recording with the field named; it never falls back to another
+# recognizer, and the rest of the demonstration runs without it.
+- insert:
+    - id: speech-to-text
+      name: '@deepseek-ai/dsh-experimental-speech-to-text'
+      config:
+        defaultProvider: iflytek-rtasr
+    - id: speech-to-text-rtasr
+      name: '@deepseek-ai/dsh-experimental-speech-to-text-rtasr'
+    - id: api-speech-to-text
+      name: '@deepseek-ai/dsh-experimental-api-speech-to-text'
+    - id: ui-voice-input
+      name: '@deepseek-ai/dsh-experimental-client-ui-voice-input'
 
 # `--host 0.0.0.0` is refused on the command line ("would expose remote code
 # execution to the network"), while the webserver's own config declares all
